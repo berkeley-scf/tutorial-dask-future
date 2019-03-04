@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+<title>Parallel Processing using the R future package</title>
+
+<script type="text/javascript">
+window.onload = function() {
+  var imgs = document.getElementsByTagName('img'), i, img;
+  for (i = 0; i < imgs.length; i++) {
+    img = imgs[i];
+    // center an image if it is the only element of its parent
+    if (img.parentElement.childElementCount === 1)
+      img.parentElement.style.textAlign = 'center';
+  }
+};
+</script>
+
+<!-- Styles for R syntax highlighter -->
+<style type="text/css">
+   pre .operator,
+   pre .paren {
+     color: rgb(104, 118, 135)
+   }
+
+   pre .literal {
+     color: #990073
+   }
+
+   pre .number {
+     color: #099;
+   }
+
+   pre .comment {
+     color: #998;
+     font-style: italic
+   }
+
+   pre .keyword {
+     color: #900;
+     font-weight: bold
+   }
+
+   pre .identifier {
+     color: rgb(0, 0, 0);
+   }
+
+   pre .string {
+     color: #d14;
+   }
+</style>
+
+<!-- R syntax highlighter -->
+<script type="text/javascript">
+var hljs=new function(){function m(p){return p.replace(/&/gm,"&amp;").replace(/</gm,"&lt;")}function f(r,q,p){return RegExp(q,"m"+(r.cI?"i":"")+(p?"g":""))}function b(r){for(var p=0;p<r.childNodes.length;p++){var q=r.childNodes[p];if(q.nodeName=="CODE"){return q}if(!(q.nodeType==3&&q.nodeValue.match(/\s+/))){break}}}function h(t,s){var p="";for(var r=0;r<t.childNodes.length;r++){if(t.childNodes[r].nodeType==3){var q=t.childNodes[r].nodeValue;if(s){q=q.replace(/\n/g,"")}p+=q}else{if(t.childNodes[r].nodeName=="BR"){p+="\n"}else{p+=h(t.childNodes[r])}}}if(/MSIE [678]/.test(navigator.userAgent)){p=p.replace(/\r/g,"\n")}return p}function a(s){var r=s.className.split(/\s+/);r=r.concat(s.parentNode.className.split(/\s+/));for(var q=0;q<r.length;q++){var p=r[q].replace(/^language-/,"");if(e[p]){return p}}}function c(q){var p=[];(function(s,t){for(var r=0;r<s.childNodes.length;r++){if(s.childNodes[r].nodeType==3){t+=s.childNodes[r].nodeValue.length}else{if(s.childNodes[r].nodeName=="BR"){t+=1}else{if(s.childNodes[r].nodeType==1){p.push({event:"start",offset:t,node:s.childNodes[r]});t=arguments.callee(s.childNodes[r],t);p.push({event:"stop",offset:t,node:s.childNodes[r]})}}}}return t})(q,0);return p}function k(y,w,x){var q=0;var z="";var s=[];function u(){if(y.length&&w.length){if(y[0].offset!=w[0].offset){return(y[0].offset<w[0].offset)?y:w}else{return w[0].event=="start"?y:w}}else{return y.length?y:w}}function t(D){var A="<"+D.nodeName.toLowerCase();for(var B=0;B<D.attributes.length;B++){var C=D.attributes[B];A+=" "+C.nodeName.toLowerCase();if(C.value!==undefined&&C.value!==false&&C.value!==null){A+='="'+m(C.value)+'"'}}return A+">"}while(y.length||w.length){var v=u().splice(0,1)[0];z+=m(x.substr(q,v.offset-q));q=v.offset;if(v.event=="start"){z+=t(v.node);s.push(v.node)}else{if(v.event=="stop"){var p,r=s.length;do{r--;p=s[r];z+=("</"+p.nodeName.toLowerCase()+">")}while(p!=v.node);s.splice(r,1);while(r<s.length){z+=t(s[r]);r++}}}}return z+m(x.substr(q))}function j(){function q(x,y,v){if(x.compiled){return}var u;var s=[];if(x.k){x.lR=f(y,x.l||hljs.IR,true);for(var w in x.k){if(!x.k.hasOwnProperty(w)){continue}if(x.k[w] instanceof Object){u=x.k[w]}else{u=x.k;w="keyword"}for(var r in u){if(!u.hasOwnProperty(r)){continue}x.k[r]=[w,u[r]];s.push(r)}}}if(!v){if(x.bWK){x.b="\\b("+s.join("|")+")\\s"}x.bR=f(y,x.b?x.b:"\\B|\\b");if(!x.e&&!x.eW){x.e="\\B|\\b"}if(x.e){x.eR=f(y,x.e)}}if(x.i){x.iR=f(y,x.i)}if(x.r===undefined){x.r=1}if(!x.c){x.c=[]}x.compiled=true;for(var t=0;t<x.c.length;t++){if(x.c[t]=="self"){x.c[t]=x}q(x.c[t],y,false)}if(x.starts){q(x.starts,y,false)}}for(var p in e){if(!e.hasOwnProperty(p)){continue}q(e[p].dM,e[p],true)}}function d(B,C){if(!j.called){j();j.called=true}function q(r,M){for(var L=0;L<M.c.length;L++){if((M.c[L].bR.exec(r)||[null])[0]==r){return M.c[L]}}}function v(L,r){if(D[L].e&&D[L].eR.test(r)){return 1}if(D[L].eW){var M=v(L-1,r);return M?M+1:0}return 0}function w(r,L){return L.i&&L.iR.test(r)}function K(N,O){var M=[];for(var L=0;L<N.c.length;L++){M.push(N.c[L].b)}var r=D.length-1;do{if(D[r].e){M.push(D[r].e)}r--}while(D[r+1].eW);if(N.i){M.push(N.i)}return f(O,M.join("|"),true)}function p(M,L){var N=D[D.length-1];if(!N.t){N.t=K(N,E)}N.t.lastIndex=L;var r=N.t.exec(M);return r?[M.substr(L,r.index-L),r[0],false]:[M.substr(L),"",true]}function z(N,r){var L=E.cI?r[0].toLowerCase():r[0];var M=N.k[L];if(M&&M instanceof Array){return M}return false}function F(L,P){L=m(L);if(!P.k){return L}var r="";var O=0;P.lR.lastIndex=0;var M=P.lR.exec(L);while(M){r+=L.substr(O,M.index-O);var N=z(P,M);if(N){x+=N[1];r+='<span class="'+N[0]+'">'+M[0]+"</span>"}else{r+=M[0]}O=P.lR.lastIndex;M=P.lR.exec(L)}return r+L.substr(O,L.length-O)}function J(L,M){if(M.sL&&e[M.sL]){var r=d(M.sL,L);x+=r.keyword_count;return r.value}else{return F(L,M)}}function I(M,r){var L=M.cN?'<span class="'+M.cN+'">':"";if(M.rB){y+=L;M.buffer=""}else{if(M.eB){y+=m(r)+L;M.buffer=""}else{y+=L;M.buffer=r}}D.push(M);A+=M.r}function G(N,M,Q){var R=D[D.length-1];if(Q){y+=J(R.buffer+N,R);return false}var P=q(M,R);if(P){y+=J(R.buffer+N,R);I(P,M);return P.rB}var L=v(D.length-1,M);if(L){var O=R.cN?"</span>":"";if(R.rE){y+=J(R.buffer+N,R)+O}else{if(R.eE){y+=J(R.buffer+N,R)+O+m(M)}else{y+=J(R.buffer+N+M,R)+O}}while(L>1){O=D[D.length-2].cN?"</span>":"";y+=O;L--;D.length--}var r=D[D.length-1];D.length--;D[D.length-1].buffer="";if(r.starts){I(r.starts,"")}return R.rE}if(w(M,R)){throw"Illegal"}}var E=e[B];var D=[E.dM];var A=0;var x=0;var y="";try{var s,u=0;E.dM.buffer="";do{s=p(C,u);var t=G(s[0],s[1],s[2]);u+=s[0].length;if(!t){u+=s[1].length}}while(!s[2]);if(D.length>1){throw"Illegal"}return{r:A,keyword_count:x,value:y}}catch(H){if(H=="Illegal"){return{r:0,keyword_count:0,value:m(C)}}else{throw H}}}function g(t){var p={keyword_count:0,r:0,value:m(t)};var r=p;for(var q in e){if(!e.hasOwnProperty(q)){continue}var s=d(q,t);s.language=q;if(s.keyword_count+s.r>r.keyword_count+r.r){r=s}if(s.keyword_count+s.r>p.keyword_count+p.r){r=p;p=s}}if(r.language){p.second_best=r}return p}function i(r,q,p){if(q){r=r.replace(/^((<[^>]+>|\t)+)/gm,function(t,w,v,u){return w.replace(/\t/g,q)})}if(p){r=r.replace(/\n/g,"<br>")}return r}function n(t,w,r){var x=h(t,r);var v=a(t);var y,s;if(v){y=d(v,x)}else{return}var q=c(t);if(q.length){s=document.createElement("pre");s.innerHTML=y.value;y.value=k(q,c(s),x)}y.value=i(y.value,w,r);var u=t.className;if(!u.match("(\\s|^)(language-)?"+v+"(\\s|$)")){u=u?(u+" "+v):v}if(/MSIE [678]/.test(navigator.userAgent)&&t.tagName=="CODE"&&t.parentNode.tagName=="PRE"){s=t.parentNode;var p=document.createElement("div");p.innerHTML="<pre><code>"+y.value+"</code></pre>";t=p.firstChild.firstChild;p.firstChild.cN=s.cN;s.parentNode.replaceChild(p.firstChild,s)}else{t.innerHTML=y.value}t.className=u;t.result={language:v,kw:y.keyword_count,re:y.r};if(y.second_best){t.second_best={language:y.second_best.language,kw:y.second_best.keyword_count,re:y.second_best.r}}}function o(){if(o.called){return}o.called=true;var r=document.getElementsByTagName("pre");for(var p=0;p<r.length;p++){var q=b(r[p]);if(q){n(q,hljs.tabReplace)}}}function l(){if(window.addEventListener){window.addEventListener("DOMContentLoaded",o,false);window.addEventListener("load",o,false)}else{if(window.attachEvent){window.attachEvent("onload",o)}else{window.onload=o}}}var e={};this.LANGUAGES=e;this.highlight=d;this.highlightAuto=g;this.fixMarkup=i;this.highlightBlock=n;this.initHighlighting=o;this.initHighlightingOnLoad=l;this.IR="[a-zA-Z][a-zA-Z0-9_]*";this.UIR="[a-zA-Z_][a-zA-Z0-9_]*";this.NR="\\b\\d+(\\.\\d+)?";this.CNR="\\b(0[xX][a-fA-F0-9]+|(\\d+(\\.\\d*)?|\\.\\d+)([eE][-+]?\\d+)?)";this.BNR="\\b(0b[01]+)";this.RSR="!|!=|!==|%|%=|&|&&|&=|\\*|\\*=|\\+|\\+=|,|\\.|-|-=|/|/=|:|;|<|<<|<<=|<=|=|==|===|>|>=|>>|>>=|>>>|>>>=|\\?|\\[|\\{|\\(|\\^|\\^=|\\||\\|=|\\|\\||~";this.ER="(?![\\s\\S])";this.BE={b:"\\\\.",r:0};this.ASM={cN:"string",b:"'",e:"'",i:"\\n",c:[this.BE],r:0};this.QSM={cN:"string",b:'"',e:'"',i:"\\n",c:[this.BE],r:0};this.CLCM={cN:"comment",b:"//",e:"$"};this.CBLCLM={cN:"comment",b:"/\\*",e:"\\*/"};this.HCM={cN:"comment",b:"#",e:"$"};this.NM={cN:"number",b:this.NR,r:0};this.CNM={cN:"number",b:this.CNR,r:0};this.BNM={cN:"number",b:this.BNR,r:0};this.inherit=function(r,s){var p={};for(var q in r){p[q]=r[q]}if(s){for(var q in s){p[q]=s[q]}}return p}}();hljs.LANGUAGES.cpp=function(){var a={keyword:{"false":1,"int":1,"float":1,"while":1,"private":1,"char":1,"catch":1,"export":1,virtual:1,operator:2,sizeof:2,dynamic_cast:2,typedef:2,const_cast:2,"const":1,struct:1,"for":1,static_cast:2,union:1,namespace:1,unsigned:1,"long":1,"throw":1,"volatile":2,"static":1,"protected":1,bool:1,template:1,mutable:1,"if":1,"public":1,friend:2,"do":1,"return":1,"goto":1,auto:1,"void":2,"enum":1,"else":1,"break":1,"new":1,extern:1,using:1,"true":1,"class":1,asm:1,"case":1,typeid:1,"short":1,reinterpret_cast:2,"default":1,"double":1,register:1,explicit:1,signed:1,typename:1,"try":1,"this":1,"switch":1,"continue":1,wchar_t:1,inline:1,"delete":1,alignof:1,char16_t:1,char32_t:1,constexpr:1,decltype:1,noexcept:1,nullptr:1,static_assert:1,thread_local:1,restrict:1,_Bool:1,complex:1},built_in:{std:1,string:1,cin:1,cout:1,cerr:1,clog:1,stringstream:1,istringstream:1,ostringstream:1,auto_ptr:1,deque:1,list:1,queue:1,stack:1,vector:1,map:1,set:1,bitset:1,multiset:1,multimap:1,unordered_set:1,unordered_map:1,unordered_multiset:1,unordered_multimap:1,array:1,shared_ptr:1}};return{dM:{k:a,i:"</",c:[hljs.CLCM,hljs.CBLCLM,hljs.QSM,{cN:"string",b:"'\\\\?.",e:"'",i:"."},{cN:"number",b:"\\b(\\d+(\\.\\d*)?|\\.\\d+)(u|U|l|L|ul|UL|f|F)"},hljs.CNM,{cN:"preprocessor",b:"#",e:"$"},{cN:"stl_container",b:"\\b(deque|list|queue|stack|vector|map|set|bitset|multiset|multimap|unordered_map|unordered_set|unordered_multiset|unordered_multimap|array)\\s*<",e:">",k:a,r:10,c:["self"]}]}}}();hljs.LANGUAGES.r={dM:{c:[hljs.HCM,{cN:"number",b:"\\b0[xX][0-9a-fA-F]+[Li]?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+(?:[eE][+\\-]?\\d*)?L\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+\\.(?!\\d)(?:i\\b)?",e:hljs.IMMEDIATE_RE,r:1},{cN:"number",b:"\\b\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\.\\d+(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"keyword",b:"(?:tryCatch|library|setGeneric|setGroupGeneric)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\.",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\d+(?![\\w.])",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\b(?:function)",e:hljs.IMMEDIATE_RE,r:2},{cN:"keyword",b:"(?:if|in|break|next|repeat|else|for|return|switch|while|try|stop|warning|require|attach|detach|source|setMethod|setClass)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"literal",b:"(?:NA|NA_integer_|NA_real_|NA_character_|NA_complex_)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"literal",b:"(?:NULL|TRUE|FALSE|T|F|Inf|NaN)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"identifier",b:"[a-zA-Z.][a-zA-Z0-9._]*\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"<\\-(?!\\s*\\d)",e:hljs.IMMEDIATE_RE,r:2},{cN:"operator",b:"\\->|<\\-",e:hljs.IMMEDIATE_RE,r:1},{cN:"operator",b:"%%|~",e:hljs.IMMEDIATE_RE},{cN:"operator",b:">=|<=|==|!=|\\|\\||&&|=|\\+|\\-|\\*|/|\\^|>|<|!|&|\\||\\$|:",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"%",e:"%",i:"\\n",r:1},{cN:"identifier",b:"`",e:"`",r:0},{cN:"string",b:'"',e:'"',c:[hljs.BE],r:0},{cN:"string",b:"'",e:"'",c:[hljs.BE],r:0},{cN:"paren",b:"[[({\\])}]",e:hljs.IMMEDIATE_RE,r:0}]}};
+hljs.initHighlightingOnLoad();
+</script>
+
+
+
+<style type="text/css">
+body, td {
+   font-family: sans-serif;
+   background-color: white;
+   font-size: 13px;
+}
+
+body {
+  max-width: 800px;
+  margin: auto;
+  padding: 1em;
+  line-height: 20px;
+}
+
+tt, code, pre {
+   font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace;
+}
+
+h1 {
+   font-size:2.2em;
+}
+
+h2 {
+   font-size:1.8em;
+}
+
+h3 {
+   font-size:1.4em;
+}
+
+h4 {
+   font-size:1.0em;
+}
+
+h5 {
+   font-size:0.9em;
+}
+
+h6 {
+   font-size:0.8em;
+}
+
+a:visited {
+   color: rgb(50%, 0%, 50%);
+}
+
+pre, img {
+  max-width: 100%;
+}
+pre {
+  overflow-x: auto;
+}
+pre code {
+   display: block; padding: 0.5em;
+}
+
+code {
+  font-size: 92%;
+  border: 1px solid #ccc;
+}
+
+code[class] {
+  background-color: #F8F8F8;
+}
+
+table, td, th {
+  border: none;
+}
+
+blockquote {
+   color:#666666;
+   margin:0;
+   padding-left: 1em;
+   border-left: 0.5em #EEE solid;
+}
+
+hr {
+   height: 0px;
+   border-bottom: none;
+   border-top-width: thin;
+   border-top-style: dotted;
+   border-top-color: #999999;
+}
+
+@media print {
+   * {
+      background: transparent !important;
+      color: black !important;
+      filter:none !important;
+      -ms-filter: none !important;
+   }
+
+   body {
+      font-size:12pt;
+      max-width:100%;
+   }
+
+   a, a:visited {
+      text-decoration: underline;
+   }
+
+   hr {
+      visibility: hidden;
+      page-break-before: always;
+   }
+
+   pre, blockquote {
+      padding-right: 1em;
+      page-break-inside: avoid;
+   }
+
+   tr, img {
+      page-break-inside: avoid;
+   }
+
+   img {
+      max-width: 100% !important;
+   }
+
+   @page :left {
+      margin: 15mm 20mm 15mm 10mm;
+   }
+
+   @page :right {
+      margin: 15mm 10mm 15mm 20mm;
+   }
+
+   p, h2, h3 {
+      orphans: 3; widows: 3;
+   }
+
+   h2, h3 {
+      page-break-after: avoid;
+   }
+}
+</style>
+
+
+
+</head>
+
+<body>
+<h1>Parallel Processing using the R future package</h1>
+
+<p>Chris Paciorek, Department of Statistics, UC Berkeley</p>
+
+<h1>1) Overview: Futures and the  R future package</h1>
+
+<p>What is a future? It&#39;s basically a flag used to tag a given operation such that when and where that operation is carried out is controlled at a higher level. If there are multiple operations tagged then this allows for parallelization across those operations.</p>
+
+<p>According to Henrik Bengtsson (the package developer) and those who developed the concept:</p>
+
+<ul>
+<li>a future is an abstraction for a value that will be available later</li>
+<li>the value is the result of an evaluated expression</li>
+<li>the state of a future is either unresolved or resolved</li>
+</ul>
+
+<h2>Why use futures?</h2>
+
+<p>The future package allows one to write one&#39;s computational code without hard-coding whether or how parallelization would be done. Instead one writes the code in a generic way and at the top of one&#39;s code sets the &#39;plan&#39; for how the parallel computation should be done given the computational resources available. Simply changing the &#39;plan&#39; changes how parallelization is done for any given run of the code.</p>
+
+<p>More concisely:</p>
+
+<ul>
+<li>separate what to parallelize from where it is parallelized</li>
+<li>different users can run the same code on different computational resources (without touching the actual code that does the computation)</li>
+</ul>
+
+<h1>2) Overview of parallel backends</h1>
+
+<p>One uses <code>plan()</code> to control how parallelization is done, including what machine(s) to use and how many cores on each machine to use.</p>
+
+<p>For example,</p>
+
+<pre><code>plan(multiprocess)  ## spreads work across multiple cores
+# also, can control number of workers
+plan(multiprocess, workers = 4)
+</code></pre>
+
+<p>This table gives an overview of the different plans. </p>
+
+<table><thead>
+<tr>
+<th>Type</th>
+<th>Description</th>
+<th>Multi-node</th>
+<th>Copies of objects made?</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>multiprocess</td>
+<td>either multicore (non-Windows) or multisession (Windows)</td>
+<td>no</td>
+<td>NA</td>
+</tr>
+<tr>
+<td>multisession</td>
+<td>background R sessions</td>
+<td>no</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>multicore</td>
+<td>forked R processes</td>
+<td>no</td>
+<td>not if object not modified</td>
+</tr>
+<tr>
+<td>remote</td>
+<td>R process on another machine</td>
+<td>yes</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>cluster</td>
+<td>R sessions on other machines</td>
+<td>yes</td>
+<td>yes</td>
+</tr>
+</tbody></table>
+
+<p>For the next section (Section 3), we&#39;ll just assume use of multiprocess and will provide more details on the other plans in the following section (Section 4).</p>
+
+<h1>3) Implementing operations in parallel</h1>
+
+<p>The future package has a few main patterns for how you might parallelize a computation.</p>
+
+<h2>Parallelized lapply statements and related</h2>
+
+<p>You can parallelize lapply and related functions easily. This is a nice replacement for confusing set of similar functions like <code>parLapply</code>, <code>mclapply</code>, and <code>mpi.parSapply</code>.</p>
+
+<pre><code class="r">plan(multisession)  # or some other plan
+output = future_lapply(1:100, function(i) mean(rnorm(1e7)), future.seed = 1)
+output = future_sapply(1:100, function(i) mean(rnorm(1e7)), future.seed = 1)
+</code></pre>
+
+<h2>foreach</h2>
+
+<p>You can also continue to use <code>foreach</code> if you like that approach. (Note the code here is not safe in terms of parallel randon number generation - see section later in this document.)</p>
+
+<pre><code class="r">library(doFuture)
+registerDoFuture()
+
+plan(multisession)  # or some other plan
+out &lt;- foreach(i = 1:100) %dopar% {
+      mean(rnorm(1e7))
+}
+</code></pre>
+
+<h2>Using futures for parallelization</h2>
+
+<p>While future_lapply and foreach are fine, the future package introduces a new style of parallelizing code using an explicit &ldquo;future&rdquo;. Here we include the code for individual iterations inside <code>future()</code> to mark as a unit of computation. The future package will then distribute the individual iterations to run in parallel, based on the plan.</p>
+
+<p>(Note the code here is not safe in terms of parallel randon number generation - see section later in this document.)</p>
+
+<pre><code class="future">plan(multiprocess)   # or some other plan
+n &lt;- 100
+out &lt;- list(); length(out) &lt;- n
+for(i in seq_len(n)) {
+     out[[i]] &lt;- future( {
+       ## some code here as in foreach
+       tmp &lt;- rnorm(1e7)
+       c(mean(tmp), sd(tmp))
+     })
+}
+## Note that this is a blocking (non-asynchronous) call
+## Return value is a wrapper, so use value() to access:
+value(out[[1]])
+</code></pre>
+
+<h2>Using implicit futures (with listenvs)</h2>
+
+<p>In addition to using <code>future()</code>, one can use the  special <code>%&lt;-%</code> operator to denote a future.
+The <code>%&lt;-%</code> operator can only operate with an environment.
+So we create a listenv, which is basically an environment that can be treated like a list.</p>
+
+<p>This approach creates implicit futures, and one does not need to use <code>value</code> to get the result.</p>
+
+<p>(Note the code here is not safe in terms of parallel randon number generation - see section later in this document.)</p>
+
+<pre><code class="future">library(listenv)
+
+plan(multiprocess, workers = 3)
+n &lt;- 100
+out &lt;- listenv()
+for(i in seq_len(n)) {
+     out[[i]] %&lt;-% {
+       # some code here as in foreach
+       tmp &lt;- rnorm(1e7)
+       c(mean(tmp), sd(tmp))
+      }
+      }
+
+out[[2]]
+out &lt;- as.list(out)
+</code></pre>
+
+<h2>Blocking and non-blocking calls</h2>
+
+<p>A &#39;blocking call&#39; prevents the user from continuing to evaluate more expressions. Often, futures are evaluated in an asynchronous way and therefore are non-blocking except for when the actual evaluated value of the expression is requested.</p>
+
+<p>Here we see that control returns to the user right away but asking for the value of the expression is a blocking call.</p>
+
+<pre><code># non-blocking
+system.time(
+     out &lt;- future( {
+       ## some code here as in foreach
+       tmp &lt;- rnorm(1e8)
+       c(mean(tmp), sd(tmp))
+       })
+         )
+# blocking
+system.time(value(out))
+
+# non-blocking
+system.time(
+     out %&lt;-% {
+       ## some code here as in foreach
+       tmp &lt;- rnorm(1e8)
+       c(mean(tmp), sd(tmp))
+       })
+# blocking
+system.time(out)
+</code></pre>
+
+<h3>Blocking in the context of a loop over futures</h3>
+
+<p>In contrast, in a for loop, creation of additional futures is blocked if all workers are busy evaluating other futures. So in this case, evaluation of the first four futures blocks, but once the last two futures start to be evaluated, control returns to the user while those futures are evaluated in the background.</p>
+
+<pre><code>plan(multiprocess, workers = 2)
+n &lt;- 6
+out &lt;- listenv()
+## blocks until all futures are dispatched
+system.time(
+for(i in seq_len(n)) {
+     out[[i]] %&lt;-% {
+       tmp &lt;- rnorm(1e8)
+       c(mean(tmp), sd(tmp))
+     }})
+## not blocked as result already available
+system.time(out[[2]])
+## not blocked as result already available
+system.time(out[[4]])
+## blocked as result still being evaluated
+system.time(out[[6]])
+</code></pre>
+
+<h1>4) A tour of different backends</h1>
+
+<h2>Serial (sequential) processing</h2>
+
+<p>The <code>sequential</code> plan allows you to run code on a single local core. This might not seem all that useful since the goal is to parallelize but this helps in debugging and allows someone to run the code even if they only have one core available.</p>
+
+<pre><code>plan(sequential)
+## future_lapply, foreach with doFuture, etc. all will still work
+</code></pre>
+
+<p>Actually even better for debugging is the <code>transparent</code> plan, which provides additional useful output.</p>
+
+<h2>Multicore processing on one machine</h2>
+
+<p>We&#39;ve already seen that we can use the <code>multiprocess</code> plan to parallelize across the cores of one machine.</p>
+
+<h2>Distributed processing across multiple machines via an ad hoc cluster</h2>
+
+<p>If we know the names of the machines and can access them via password-less SSH, then we can simply provide the names of the machines to create a cluster and use the &#39;cluster&#39; plan.</p>
+
+<p>Here we want to use four cores on one machine.</p>
+
+<pre><code class="r">cl &lt;- makeCluster(rep(&#39;arwen&#39;,4)) # socket by default, not at 100%;
+plan(cluster, workers = cl)
+</code></pre>
+
+<p>Here we want to use two cores on one machine and two on another.</p>
+
+<pre><code class="r">cl &lt;- makeCluster(c(rep(&#39;arwen&#39;, 2), rep(&#39;beren&#39;, 2)))
+plan(cluster, workers = cl)
+</code></pre>
+
+<p>One can also pass the vector of worker names directly to the <code>workers</code> argument of <code>plan</code>.</p>
+
+<h2>Distributed processing across multiple machines within a SLURM scheduler job</h2>
+
+<p>If you are using SLURM and in your sbatch or srun command you use <code>--ntasks</code>, then the following will allow you to use as many R workers as the value of <code>ntasks</code>.</p>
+
+<pre><code>cl &lt;- makeCluster(system(&#39;srun hostname&#39;, intern = TRUE))
+plan(cluster, workers = cl)
+tmp &lt;- future_sapply(1:100, function(i) mean(rnorm(1e7)), future.seed = 1)
+</code></pre>
+
+<p>That works because <code>srun hostname</code> will print out the node IDs associated with each task within a SLURM job.</p>
+
+<h2>Off-loading work to another machine</h2>
+
+<p>One can run a chunk of code on a remote machine, for example if you need a machine with more memory.</p>
+
+<p>Here&#39;s an example where I create a plot remotely and view it locally. </p>
+
+<pre><code>plan(remote, workers = &#39;gandalf.berkeley.edu&#39;)
+## requires password-less SSH
+
+## future is evaluated remotely
+g %&lt;-% R.devices::capturePlot({
+   filled.contour(volcano, color.palette = terrain.colors)
+   title(main = &quot;volcano data: filled contour map&quot;
+)
+
+## plot locally
+g
+</code></pre>
+
+<h1>5) Load-balancing and static vs. dynamic task allocation</h1>
+
+<p>The future_lapply functionality by default groups iterations into tasks and creates only as many tasks as there are workers. See  the <code>future.scheduling</code> argument for user control over how the allocation is done. This is good for reducing overhead but can potentially result in bad load-balancing if the tasks assigned to one worker take a very different time to complete from those assigned to a different worker.</p>
+
+<p>In contrast, using explicit or implicit futures involves dispatching one task per iteration, with the resulting overhead. </p>
+
+<h1>6) Avoiding copies when doing multi-process parallelization on a single node</h1>
+
+<p>If you&#39;re working with large objects, making a copy of the objects for each
+of the worker processes can be a significant time cost and can greatly increase
+your memory use.</p>
+
+<p>On non-Windows machines, the multicore plan (which is what is used by the
+multiprocess plan on such machines) forks the main R process. This creates
+R worker processes with the same state as the original R process.
+Interestingly, this means that global variables in the forked worker processes are just references to the objects in memory in the original R process. So the additional processes do not use additional memory for those objects (despite what is shown in <em>top</em>) and there is no time involved in making copies. However, if you modify objects in the worker processes then copies are made. </p>
+
+<p>Unfortunately, the <em>top</em> program on a Linux machine or a Mac will make it look like additional memory is being used. On Linux machine the command <code>free -h</code> shows the usable remaining memory under the &#39;Available&#39; column of the &#39;Mem&#39; row, e.g., here we see 6.5 GB available and 8.2 GB used. (Note that the &#39;free&#39; column omits memory that is actually available but is temporarily in use for caching.)</p>
+
+<pre><code>paciorek@smeagol:~/staff/workshops/r-future&gt; free -h
+              total        used        free      shared  buff/cache   available
+Mem:            15G        8.2G        4.3G        453M        3.1G        6.5G
+Swap:          7.6G        2.9G        4.7G
+</code></pre>
+
+<p>Here&#39;s some test code you can run while monitoring <code>free -h</code> (e.g., via <code>watch -n 0.1 free -h</code> to see the output of <code>free</code> in real time.</p>
+
+<pre><code class="r">options(future.globals.maxSize= 1e9)
+x &lt;- rnorm(1e8)
+plan(multiprocess, workers = 3)  # forks (where supported, not Windows); no copying!
+tmp &lt;- future_sapply(1:100, function(i) mean(x))
+
+options(future.globals.maxSize= 1e9)
+x &lt;- rnorm(1e8)
+plan(multisession, workers = 3) # new processes - copying!
+tmp &lt;- future_sapply(1:100, function(i) mean(x))
+</code></pre>
+
+<h1>7) Nested futures/for loops</h1>
+
+<p>You can set up nested parallelization and use various plans to parallelize at each level.</p>
+
+<p>For example, suppose you are running a simulation study with four scenarios and
+each scenario involving <code>n</code> simulations. In that case you have two
+loops over which you could choose to parallelize.</p>
+
+<p>Here&#39;s some syntax to setup up parallelization over the scenarios only. Note that
+when the plan involves multiple levels we need to use <code>tweak</code> if we want to
+modify the defaults for a type of future.</p>
+
+<p>(Note the code here is not safe in terms of parallel randon number generation - see section later in this document.)</p>
+
+<pre><code>plan(list(tweak(multiprocess, workers = 4), sequential))
+
+params &lt;- cbind(c(0,0,1,1), c(1,2,1,2))
+p &lt;- nrow(params)  # 4 in this case
+n &lt;- 20
+out &lt;- listenv()
+for(k in seq_len(p)) {   # outer loop: parameter sweep
+     out[[k]] %&lt;-% {    
+        out_single_param &lt;- listenv()
+        for(i in seq_len(n)) {   # inner loop: replications
+          out_single_param[[i]] %&lt;-% {
+            tmp &lt;- rnorm(1e8, params[k, 1], params[k, 2])
+            c(mean(tmp), sd(tmp))
+          }
+        }
+        matrix(unlist(out_single_param), ncol = 2, byrow = TRUE)
+     }
+}
+## non-blocking - note that control returns to the user
+out
+## asking for an actual value is a blocking call
+out[[1]]
+</code></pre>
+
+<p>Note that these are &ldquo;asynchronous&rdquo; futures that are evaluated in the background while
+control returns to the user.</p>
+
+<h2>Nested futures/for loops - some example plans</h2>
+
+<p>Let&#39;s see a few different plans one could use for the nested loops.</p>
+
+<p>To use eight cores on the current machine, two cores per outer iteration:</p>
+
+<pre><code>## One option:
+plan(list(tweak(multisession, workers=4),tweak(multiprocess, workers=2)))
+## Another option
+nodes &lt;- rep(&#39;localhost&#39;, 4)
+plan(list(tweak(cluster, workers = nodes), tweak(multiprocess, workers = 2)))
+</code></pre>
+
+<p>To run each parameter across as many workers as are available on each of multiple machines:</p>
+
+<pre><code>nodes &lt;- c(&#39;arwen&#39;, &#39;beren&#39;, &#39;radagast&#39;, &#39;gandalf&#39;)
+plan(list(tweak(cluster, workers = nodes), multiprocess))
+</code></pre>
+
+<p>If there are many inner iterations and few outer iterations, we might simply do the
+outer iterations sequentially:</p>
+
+<pre><code>plan(list(sequential, multiprocess))
+</code></pre>
+
+<p>Note that you can&#39;t use a multicore future at multiple levels (or equivalently multiprocess on a machine where it does multicore) as future prevents nested multicore parallelization:</p>
+
+<p>Once you&#39;ve set your code to allow parallelization at multiple levels, you can change the plan without ever touching the core code again.</p>
+
+<h2>Hybrid parallelization: multiple processes plus threaded linear algebra</h2>
+
+<p>If you have access to threaded BLAS (e.g., MKL or openBLAS), as long as you set OMP_NUM_THREADS greater than 1, then any linear algebra should be parallelized within the &ldquo;outer&rdquo; parallelization across the iterations in a loop or apply statement.</p>
+
+<h1>8) RNG</h1>
+
+<p>In the code above, I was cavalier about the seeds for the random number generation in the different parallel computations.</p>
+
+<p>The future package seems to integrate well with the L&#39;Ecuyer parallel RNG approach, but I&#39;m having trouble finding good documentation. There is a good discussion about seeds for <code>future_lapply</code> and <code>future_sapply</code> in the help for those functions.</p>
+
+<h2>future_lapply</h2>
+
+<p>Here we can set a single seed. Behind the scenes the L&#39;Ecuyer-CMRG RNG is used so that the random numbers generated for each iteration are independent. Note there is some overhead here when the number of iterations is large.</p>
+
+<pre><code>library(future.apply)
+future_sapply(1:n, function(i) rnorm(1), future.seed = 1)
+</code></pre>
+
+<p>Basically future_lapply pregenerates a seed for each iteration using the parallel:::nextRNGStream, which uses the L&#39;Ecuyer algorithm. See <a href="https://github.com/HenrikBengtsson/future/issues/126">more details here</a>.</p>
+
+<h2>using future()</h2>
+
+<p>You can (and should when using RNG) set the seed in <code>future()</code>. You&#39;ll need to set it to a L&#39;Ecuyer-CMRG seed, which is a vector of six integers. Here&#39;s how you can do it, advancing the seed for each iteration using nextRNGStream().</p>
+
+<pre><code>RNGkind(&quot;L&#39;Ecuyer-CMRG&quot;)
+set.seed(1)
+nextSeed &lt;- .Random.seed
+plan(multiprocess)   # or some other plan
+n &lt;- 10
+out &lt;- list(); length(out) &lt;- n
+for(i in seq_len(n)) {
+     out[[i]] &lt;- future( {
+       ## some code here as in foreach
+       tmp &lt;- rnorm(1e7)
+       c(mean(tmp), sd(tmp))
+     }, seed = nextSeed)
+     nextSeed &lt;- parallel::nextRNGStream(nextSeed)
+}
+valExpl &lt;- sapply(out, value)
+</code></pre>
+
+<p>or with implicit futures:</p>
+
+<pre><code>library(listenv)
+RNGkind(&quot;L&#39;Ecuyer-CMRG&quot;)
+set.seed(1)
+nextSeed &lt;- .Random.seed
+plan(multiprocess)   # or some other plan
+n &lt;- 10
+out &lt;- listenv()
+for(i in seq_len(n)) {
+     out[[i]] %&lt;-% {
+       ## some code here as in foreach
+       tmp &lt;- rnorm(1e7)
+       c(mean(tmp), sd(tmp))
+     } %seed% nextSeed
+     nextSeed &lt;- parallel::nextRNGStream(nextSeed)
+}
+as.list(out)
+
+valImpl &lt;- do.call(cbind, as.list(out))
+identical(valImpl, valExpl)
+</code></pre>
+
+<h2>Using foreach</h2>
+
+<p>See the example code <code>help(doFuture)</code> for template code on how to use the <code>%doRNG%</code> operator with foreach to ensure correct RNG with foreach.</p>
+
+<h1>9) Submitting SLURM jobs from future using batchtools</h1>
+
+<p>We can use the <code>future.batchtools</code> package to submit jobs to a cluster scheduler from within R.</p>
+
+<p>One downside is that this submits one job per worker. On clusters (such as Savio) that schedule
+an entire node at once, that won&#39;t work.</p>
+
+<p>On the SCF it is fine. Here&#39;s an example</p>
+
+<pre><code>library(future.apply)
+library(future.batchtools)
+## Starts five workers as separate jobs.
+plan(batchtools_slurm, workers = 5,
+                       resources = list(nodes = &quot;1&quot;, ntasks = &quot;1&quot;, cpus_per_task = &quot;1&quot;, walltime = &quot;00:05:00&quot;),
+                       template = &quot;batchtools.slurm.tmpl&quot;)
+
+tmp &lt;- future_sapply(1:100, function(i) mean(rnorm(1e7)))
+</code></pre>
+
+<p>You can use nested futures to deal with the one job per worker issue. Here the outer future is just a wrapper to allow the overall code to be run within a single SLURM job.</p>
+
+<pre><code>library(future.apply)
+library(future.batchtools)
+numWorkers &lt;- 5
+## five workers
+plan(list(tweak(batchtools_slurm, workers = 1,
+                       resources = list(nodes = &quot;1&quot;, ntasks = as.character(numWorkers), cpus_per_task = &quot;1&quot;,
+                       partition = &quot;high&quot;, walltime = &quot;00:05:00&quot;),
+                       template = &quot;batchtools.slurm.tmpl&quot;), tweak(multiprocess, workers = numWorkers)))
+
+myfuture &lt;- future({ future_sapply(1:100, function(i) mean(rnorm(1e7)), future.seed = 1) })
+out &lt;- value(myfuture)
+</code></pre>
+
+<p>While this is feasible, I prefer to set up my cluster jobs outside of R and have the R code not have to know anything about how the scheduler works or what scheduler is available on a given cluster.</p>
+
+<h1>10) Futurizing your code</h1>
+
+<p>[expand this]</p>
+
+<p>You could even do this to futurize someone else&#39;s code:</p>
+
+<pre><code>lapply &lt;- future_lapply
+sapply &lt;- future_sapply
+</code></pre>
+
+<p>and then just set a plan and run, since the arguments to <code>future_lapply</code> are the same as <code>lapply</code>.</p>
+
+</body>
+
+</html>
