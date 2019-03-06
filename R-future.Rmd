@@ -35,7 +35,8 @@ More concisely:
 One uses `plan()` to control how parallelization is done, including what machine(s) to use and how many cores on each machine to use.
 
 For example,
-```
+
+```{r, plan}
 plan(multiprocess)  ## spreads work across multiple cores
 # also, can control number of workers
 plan(multiprocess, workers = 4)
@@ -64,9 +65,11 @@ The future package has a few main patterns for how you might parallelize a compu
 You can parallelize lapply and related functions easily. This is a nice replacement for confusing set of similar functions like `parLapply`, `mclapply`, and `mpi.parSapply`.
 
 ```{r, future_lapply}
-plan(multisession)  # or some other plan
-output = future_lapply(1:100, function(i) mean(rnorm(1e7)), future.seed = 1)
-output = future_sapply(1:100, function(i) mean(rnorm(1e7)), future.seed = 1)
+library(future.apply)
+plan(multiprocess)  # or some other plan
+output <- future_lapply(1:20, function(i) mean(rnorm(1e7)), future.seed = 1)
+# or sapply:
+# output <- future_sapply(1:20, function(i) mean(rnorm(1e7)), future.seed = 1)
 ```
 
 ## foreach
@@ -77,11 +80,14 @@ You can also continue to use `foreach` if you like that approach. (Note the code
 library(doFuture)
 registerDoFuture()
 
-plan(multisession)  # or some other plan
-out <- foreach(i = 1:100) %dopar% {
-      mean(rnorm(1e7))
+plan(multiprocess)  # or some other plan
+out <- foreach(i = 1:20) %dopar% {
+    print(i)
+    mean(rnorm(1e7))
 }
 ```
+
+Note that unlike with `doParallel`, the delay in printing the iteration values may indicate that tasks are preallocated and dispatched to the workers at once. I haven't investigated this.
 
 ## Using futures for parallelization
 
@@ -89,20 +95,23 @@ While future_lapply and foreach are fine, the future package introduces a new st
 
 (Note the code here is not safe in terms of parallel randon number generation - see section later in this document.)
 
-```{future}
-plan(multiprocess)   # or some other plan
-n <- 100
+HERE HERE
+
+
+```{r, future}
+plan(multiprocess, workers = 4)   # or some other plan
+n <- 20
 out <- list(); length(out) <- n
-for(i in seq_len(n)) {
+system.time(for(i in seq_len(n)) {
      out[[i]] <- future( {
-       ## some code here as in foreach
-       tmp <- rnorm(1e7)
+       ## simply insert code here as in foreach; for example:
+       tmp <- rnorm(1e8)
        c(mean(tmp), sd(tmp))
      })
-}
-## Note that this is a blocking (non-asynchronous) call
-## Return value is a wrapper, so use value() to access:
-value(out[[1]])
+})
+## Return value ('out') is a wrapper, so use value() to access:
+system.time(value(out[[1]]))
+system.time(value(out[[20]]))
 ```
 
 ## Using implicit futures (with listenvs)
@@ -493,3 +502,5 @@ sapply <- future_sapply
 ```
 
 and then just set a plan and run, since the arguments to `future_lapply` are the same as `lapply`.
+
+Note it's not possible to do this with `parLapply` as it requires passing a cluster object, but something like this would be possible with `mclapply`.
