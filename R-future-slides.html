@@ -68,10 +68,10 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <div id="why-use-futures" class="slide section level1">
 <h1>1.1. Why use futures?</h1>
 <p>The future package allows one to write one's computational code without hard-coding whether or how parallelization would be done. Instead one writes the code in a generic way and at the top of one's code sets the 'plan' for how the parallel computation should be done given the computational resources available. Simply changing the 'plan' changes how parallelization is done for any given run of the code.</p>
-<p>More concisely:</p>
+<p>More concisely, the key ideas are:</p>
 <ul>
-<li>separate what to parallelize from where it is parallelized</li>
-<li>different users can run the same code on different computational resources (without touching the actual code that does the computation)</li>
+<li>Separate what to parallelize from how the parallelization is actually carried out.where it is parallelized</li>
+<li>Different users can run the same code on different computational resources (without touching the actual code that does the computation).</li>
 </ul>
 </div>
 <div id="overview-of-parallel-backends" class="slide section level1">
@@ -82,7 +82,13 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <span class="co"># also, can control number of workers</span>
 <span class="kw">plan</span>(multiprocess, <span class="dt">workers =</span> <span class="dv">4</span>)</code></pre></div>
 <p>This table gives an overview of the different plans.</p>
-<table>
+<table style="width:100%;">
+<colgroup>
+<col width="12%" />
+<col width="55%" />
+<col width="8%" />
+<col width="23%" />
+</colgroup>
 <thead>
 <tr class="header">
 <th align="left">Type</th>
@@ -96,7 +102,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <td align="left">multiprocess</td>
 <td align="left">either multicore (non-Windows) or multisession (Windows)</td>
 <td align="left">no</td>
-<td align="left">NA</td>
+<td align="left">see below</td>
 </tr>
 <tr class="even">
 <td align="left">multisession</td>
@@ -118,7 +124,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 </tr>
 <tr class="odd">
 <td align="left">cluster</td>
-<td align="left">R sessions on other machines</td>
+<td align="left">R sessions on other machine(s)</td>
 <td align="left">yes</td>
 <td align="left">yes</td>
 </tr>
@@ -132,7 +138,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 </div>
 <div id="parallelized-lapply-statements-and-related" class="slide section level1">
 <h1>3.1. Parallelized lapply statements and related</h1>
-<p>You can parallelize lapply and related functions easily. This is a nice replacement for confusing set of similar functions like <code>parLapply</code>, <code>mclapply</code>, and <code>mpi.parSapply</code>.</p>
+<p>You can parallelize lapply and related functions easily. This is a nice replacement for the confusingly similar set of such as <code>parLapply</code>, <code>mclapply</code>, and <code>mpi.parSapply</code>.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(future.apply)
 <span class="kw">plan</span>(multiprocess)  <span class="co"># or some other plan</span>
 output &lt;-<span class="st"> </span><span class="kw">future_lapply</span>(<span class="dv">1</span>:<span class="dv">20</span>, function(i) <span class="kw">mean</span>(<span class="kw">rnorm</span>(<span class="fl">1e7</span>)), <span class="dt">future.seed =</span> <span class="dv">1</span>)
@@ -142,13 +148,14 @@ output &lt;-<span class="st"> </span><span class="kw">future_lapply</span>(<span
 <div id="foreach" class="slide section level1">
 <h1>3.2. foreach</h1>
 <p>You can also continue to use <code>foreach</code> if you like that approach. (Note the code here is not safe in terms of parallel randon number generation - see section later in this document.)</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(doFuture)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plan</span>(multiprocess)  <span class="co"># or some other plan</span>
+
+<span class="kw">library</span>(doFuture)</code></pre></div>
 <pre><code>## Loading required package: foreach</code></pre>
 <pre><code>## Loading required package: iterators</code></pre>
 <pre><code>## Loading required package: parallel</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">registerDoFuture</span>()
 
-<span class="kw">plan</span>(multiprocess)  <span class="co"># or some other plan</span>
 out &lt;-<span class="st"> </span><span class="kw">foreach</span>(<span class="dt">i =</span> <span class="dv">1</span>:<span class="dv">20</span>) %dopar%<span class="st"> </span>{
     <span class="kw">print</span>(i)
     <span class="kw">mean</span>(<span class="kw">rnorm</span>(<span class="fl">1e7</span>))
@@ -177,21 +184,24 @@ out &lt;-<span class="st"> </span><span class="kw">foreach</span>(<span class="d
 </div>
 <div id="using-futures-for-parallelization" class="slide section level1">
 <h1>3.3. Using futures for parallelization</h1>
-<p>While future_lapply and foreach are fine, the future package introduces a new style of parallelizing code using an explicit &quot;future&quot;. Here we include the code for individual iterations inside <code>future()</code> to mark as a unit of computation. The future package will then distribute the individual iterations to run in parallel, based on the plan.</p>
+<p>While future_lapply and foreach are fine, the future package introduces a new style of parallelizing code using an explicit &quot;future&quot;. Here we include the code for individual iterations inside <code>future()</code> to mark the unit of computation. The future package will then distribute the individual iterations to run in parallel, based on the plan.</p>
 <p>(Note the code here is not safe in terms of parallel randon number generation - see section later in this document.)</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plan</span>(multiprocess, <span class="dt">workers =</span> <span class="dv">4</span>)   <span class="co"># or some other plan</span>
 n &lt;-<span class="st"> </span><span class="dv">20</span>
 out &lt;-<span class="st"> </span><span class="kw">list</span>(); <span class="kw">length</span>(out) &lt;-<span class="st"> </span>n
 for(i in <span class="kw">seq_len</span>(n)) {
      out[[i]] &lt;-<span class="st"> </span><span class="kw">future</span>( {
-       ## simply insert code here as in foreach; for example:
+       ## simply insert code here as you would with foreach; for example:
        tmp &lt;-<span class="st"> </span><span class="kw">rnorm</span>(<span class="fl">1e7</span>)
        <span class="kw">c</span>(<span class="kw">mean</span>(tmp), <span class="kw">sd</span>(tmp))
      })
 }
-## Return value (&#39;out&#39;) is a wrapper, so use value() to access:
+<span class="kw">class</span>(out[[<span class="dv">1</span>]])</code></pre></div>
+<pre><code>## [1] &quot;MulticoreFuture&quot;    &quot;MultiprocessFuture&quot; &quot;Future&quot;            
+## [4] &quot;environment&quot;</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Each return values (e.g., &#39;out[[1]]&#39;) is a wrapper, so use value() to access:
 <span class="kw">value</span>(out[[<span class="dv">1</span>]])</code></pre></div>
-<pre><code>## [1] -0.0001401629  0.9999419450</code></pre>
+<pre><code>## [1] -0.0001599593  1.0003773577</code></pre>
 </div>
 <div id="using-implicit-futures-with-listenvs" class="slide section level1">
 <h1>3.4. Using implicit futures (with listenvs)</h1>
@@ -205,14 +215,14 @@ n &lt;-<span class="st"> </span><span class="dv">20</span>
 out &lt;-<span class="st"> </span><span class="kw">listenv</span>()
 for(i in <span class="kw">seq_len</span>(n)) {
      out[[i]] %&lt;-%<span class="st"> </span>{
-       <span class="co"># some code here as in foreach</span>
+       <span class="co"># some code here as you would with foreach</span>
        tmp &lt;-<span class="st"> </span><span class="kw">rnorm</span>(<span class="fl">1e7</span>)
        <span class="kw">c</span>(<span class="kw">mean</span>(tmp), <span class="kw">sd</span>(tmp))
       }
 }
 
 out[[<span class="dv">2</span>]]</code></pre></div>
-<pre><code>## [1] 6.821441e-05 1.000199e+00</code></pre>
+<pre><code>## [1] -0.0001275984  0.9997863547</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">out</code></pre></div>
 <pre><code>## A &#39;listenv&#39; vector with 20 elements (unnamed).</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">out &lt;-<span class="st"> </span><span class="kw">as.list</span>(out)</code></pre></div>
@@ -228,13 +238,13 @@ out[[<span class="dv">2</span>]]</code></pre></div>
        tmp &lt;-<span class="st"> </span><span class="kw">rnorm</span>(<span class="fl">2e7</span>)
        <span class="kw">c</span>(<span class="kw">mean</span>(tmp), <span class="kw">sd</span>(tmp))
        })
-         )</code></pre></div>
+)</code></pre></div>
 <pre><code>##    user  system elapsed 
 ##   0.004   0.000   0.005</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># getting the value is blocking</span>
 <span class="kw">system.time</span>(<span class="kw">value</span>(out))</code></pre></div>
 <pre><code>##    user  system elapsed 
-##   0.896   0.044   1.648</code></pre>
+##   0.872   0.056   1.677</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># %&lt;-% is non-blocking</span>
 <span class="kw">system.time</span>(
      out %&lt;-%<span class="st"> </span>{
@@ -243,11 +253,11 @@ out[[<span class="dv">2</span>]]</code></pre></div>
        <span class="kw">c</span>(<span class="kw">mean</span>(tmp), <span class="kw">sd</span>(tmp))
        })</code></pre></div>
 <pre><code>##    user  system elapsed 
-##   0.004   0.004   0.005</code></pre>
+##   0.008   0.000   0.005</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># getting the value is blocking</span>
 <span class="kw">system.time</span>(out)</code></pre></div>
 <pre><code>##    user  system elapsed 
-##   1.672   0.044   1.656</code></pre>
+##   1.676   0.072   1.652</code></pre>
 <h3 id="blocking-in-the-context-of-a-loop-over-futures">Blocking in the context of a loop over futures</h3>
 <p>In contrast, in a for loop, creation of additional futures is blocked if all workers are busy evaluating other futures. So in this case, evaluation of the first four futures blocks, but once the last two futures start to be evaluated, control returns to the user while those futures are evaluated in the background.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plan</span>(multiprocess, <span class="dt">workers =</span> <span class="dv">2</span>)
@@ -255,7 +265,7 @@ n &lt;-<span class="st"> </span><span class="dv">6</span>
 out &lt;-<span class="st"> </span><span class="kw">listenv</span>()
 <span class="kw">system.time</span>(<span class="kw">rnorm</span>(<span class="fl">2e7</span>))</code></pre></div>
 <pre><code>##    user  system elapsed 
-##   1.532   0.036   1.568</code></pre>
+##   1.588   0.024   1.611</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## blocks until all futures are dispatched, so this should
 ## take twice the time it takes for rnorm(2e7) to occur
 <span class="kw">system.time</span>(
@@ -265,7 +275,7 @@ for(i in <span class="kw">seq_len</span>(n)) {
        <span class="kw">c</span>(<span class="kw">mean</span>(tmp), <span class="kw">sd</span>(tmp))
      }})</code></pre></div>
 <pre><code>##    user  system elapsed 
-##   6.808   0.264   3.740</code></pre>
+##   6.820   0.316   3.789</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## not blocked as result already available
 <span class="kw">system.time</span>(out[[<span class="dv">2</span>]])</code></pre></div>
 <pre><code>##    user  system elapsed 
@@ -277,14 +287,14 @@ for(i in <span class="kw">seq_len</span>(n)) {
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## blocked as result still being evaluated
 <span class="kw">system.time</span>(out[[<span class="dv">6</span>]])</code></pre></div>
 <pre><code>##    user  system elapsed 
-##   1.676   0.084   1.620</code></pre>
+##   1.712   0.084   1.635</code></pre>
 </div>
 <div id="a-tour-of-different-backends" class="slide section level1">
 <h1>4. A tour of different backends</h1>
 </div>
 <div id="serial-sequential-processing" class="slide section level1">
 <h1>4.1. Serial (sequential) processing</h1>
-<p>The <code>sequential</code> plan allows you to run code on a single local core. This might not seem all that useful since the goal is to parallelize, but this helps in debugging and allows someone to run future-based code even if they only have one core available.</p>
+<p>The <code>sequential</code> plan allows you to run code on a single local core. This might not seem all that useful since the goal is usually to parallelize, but this helps in debugging and allows someone to run future-based code even if they only have one core available.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plan</span>(sequential)
 ## future_lapply, foreach with doFuture, etc. all will still work</code></pre></div>
 <p>Actually even better for debugging is the <code>transparent</code> plan, which provides additional useful output.</p>
@@ -292,6 +302,7 @@ for(i in <span class="kw">seq_len</span>(n)) {
 <div id="multicore-processing-on-one-machine" class="slide section level1">
 <h1>4.2. Multicore processing on one machine</h1>
 <p>We've already seen that we can use the <code>multiprocess</code> plan to parallelize across the cores of one machine.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plan</span>(multiprocess, <span class="dt">workers =</span> <span class="dv">2</span>)</code></pre></div>
 </div>
 <div id="distributed-processing-across-multiple-machines-via-an-ad-hoc-cluster" class="slide section level1">
 <h1>4.3. Distributed processing across multiple machines via an ad hoc cluster</h1>
@@ -334,8 +345,8 @@ g %&lt;-%<span class="st"> </span>{ <span class="kw">ggplot</span>(mydf, <span c
 ## plot locally
 g</code></pre></div>
 <div class="figure">
-<img src="figure/off-load-1.png" alt="plot of chunk off-load" />
-<p class="caption">plot of chunk off-load</p>
+<img src="figure/off-load-1.png" />
+
 </div>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">g %&lt;-%<span class="st"> </span>R.devices::<span class="kw">capturePlot</span>({
    <span class="kw">filled.contour</span>(volcano, <span class="dt">color.palette =</span> terrain.colors)
@@ -347,14 +358,22 @@ g</code></pre></div>
 <pre><code>## Warning in restoreRecordedPlot(x, reloadPkgs): snapshot recorded in
 ## different R version (3.5.1)</code></pre>
 <div class="figure">
-<img src="figure/off-load-2.png" alt="plot of chunk off-load" />
-<p class="caption">plot of chunk off-load</p>
+<img src="figure/off-load-2.png" />
+
 </div>
 </div>
 <div id="load-balancing-and-static-vs.-dynamic-task-allocation" class="slide section level1">
 <h1>5. Load-balancing and static vs. dynamic task allocation</h1>
-<p>The future_lapply functionality by default groups iterations into tasks and creates only as many tasks as there are workers. See the <code>future.scheduling</code> argument for user control over how the allocation is done. This is good for reducing overhead but can potentially result in bad load-balancing if the tasks assigned to one worker take a very different time to complete from those assigned to a different worker.</p>
-<p>In contrast, using explicit or implicit futures involves dispatching one task per iteration, with the resulting overhead.</p>
+<ul>
+<li>future_lapply uses static (non-load-balanced) allocation.
+<ul>
+<li>The future_lapply functionality by default groups iterations into tasks and creates only as many tasks as there are workers. See the <code>future.scheduling</code> argument for user control over how the allocation is done. This is good for reducing overhead but can potentially result in bad load-balancing if the tasks assigned to one worker take a very different time to complete from those assigned to a different worker.</li>
+</ul></li>
+<li>explicit or implicit futures use dynamic (load-balanced) allocation
+<ul>
+<li>involves dispatching one task per iteration, with the resulting overhead</li>
+</ul></li>
+</ul>
 </div>
 <div id="avoiding-copies-when-doing-multi-process-parallelization-on-a-single-node" class="slide section level1">
 <h1>6. Avoiding copies when doing multi-process parallelization on a single node</h1>
@@ -365,7 +384,8 @@ g</code></pre></div>
               total        used        free      shared  buff/cache   available
 Mem:            15G        8.2G        4.3G        453M        3.1G        6.5G
 Swap:          7.6G        2.9G        4.7G</code></pre>
-<p>Here's some test code you can run while monitoring <code>free -h</code> (e.g., via <code>watch -n 0.1 free -h</code> to see the output of <code>free</code> in real time.</p>
+<p>Here's some test code you can run while monitoring <code>free -h</code>. E.g., here is a good way to invoke it to see the output in real time.</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">watch</span> -n 0.1 free -h</code></pre></div>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># allow total size of global variables to be large enough...</span>
 <span class="kw">options</span>(<span class="dt">future.globals.maxSize =</span> <span class="fl">1e9</span>)
 x &lt;-<span class="st"> </span><span class="kw">rnorm</span>(<span class="fl">5e7</span>)
@@ -408,26 +428,26 @@ out</code></pre></div>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## asking for an actual value is a blocking call
 out[[<span class="dv">1</span>]]</code></pre></div>
 <pre><code>##                [,1]      [,2]
-##  [1,]  2.084917e-04 0.9998822
-##  [2,]  5.445425e-04 0.9999213
-##  [3,]  2.785714e-04 0.9999445
-##  [4,]  5.333402e-04 1.0002874
-##  [5,]  1.023586e-04 1.0000427
-##  [6,] -2.338702e-04 0.9998984
-##  [7,]  2.358338e-04 1.0001106
-##  [8,]  2.892359e-04 1.0001253
-##  [9,]  6.143307e-05 0.9999867
-## [10,] -3.306772e-04 0.9999627
-## [11,]  1.335956e-04 1.0002728
-## [12,] -4.618141e-04 1.0000834
-## [13,] -1.987254e-04 0.9998746
-## [14,] -3.336269e-04 1.0000219
-## [15,] -4.409948e-04 1.0000246
-## [16,]  1.539721e-04 0.9998740
-## [17,] -1.364522e-04 1.0000752
-## [18,]  2.516771e-04 1.0000024
-## [19,]  4.867008e-05 0.9996629
-## [20,]  1.968993e-04 0.9999875</code></pre>
+##  [1,] -1.391511e-04 1.0001714
+##  [2,]  3.108419e-04 1.0001711
+##  [3,] -2.184853e-05 0.9998283
+##  [4,]  2.541342e-04 1.0000951
+##  [5,] -6.951263e-05 0.9996835
+##  [6,]  1.300580e-04 0.9998255
+##  [7,] -2.368193e-04 0.9999162
+##  [8,]  2.879333e-04 0.9999809
+##  [9,]  3.176297e-04 0.9998759
+## [10,]  2.885506e-04 0.9999126
+## [11,]  1.070792e-04 1.0001878
+## [12,]  1.837390e-04 1.0000719
+## [13,] -2.013386e-04 1.0000220
+## [14,]  2.762816e-04 0.9999021
+## [15,]  4.480969e-05 1.0002998
+## [16,]  1.630323e-04 0.9999765
+## [17,] -2.634163e-04 0.9999027
+## [18,] -4.366473e-04 1.0000185
+## [19,] -7.605198e-05 1.0002011
+## [20,]  3.402845e-05 1.0001137</code></pre>
 <p>Note that these are &quot;asynchronous&quot; futures that are evaluated in the background while control returns to the user.</p>
 </div>
 <div id="nested-futuresfor-loops---some-example-plans" class="slide section level1">
@@ -435,7 +455,7 @@ out[[<span class="dv">1</span>]]</code></pre></div>
 <p>Let's see a few different plans one could use for the nested loops.</p>
 <p>To use eight cores on the current machine, two cores per outer iteration:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## One option:
-<span class="kw">plan</span>(<span class="kw">list</span>(<span class="kw">tweak</span>(multisession, <span class="dt">workers=</span><span class="dv">4</span>), <span class="kw">tweak</span>(multiprocess, <span class="dt">workers=</span><span class="dv">2</span>)))
+<span class="kw">plan</span>(<span class="kw">list</span>(<span class="kw">tweak</span>(multisession, <span class="dt">workers =</span> <span class="dv">4</span>), <span class="kw">tweak</span>(multiprocess, <span class="dt">workers =</span> <span class="dv">2</span>)))
 ## Another option
 nodes &lt;-<span class="st"> </span><span class="kw">rep</span>(<span class="st">&#39;localhost&#39;</span>, <span class="dv">4</span>)
 <span class="kw">plan</span>(<span class="kw">list</span>(<span class="kw">tweak</span>(cluster, <span class="dt">workers =</span> nodes), <span class="kw">tweak</span>(multiprocess, <span class="dt">workers =</span> <span class="dv">2</span>)))</code></pre></div>
@@ -446,13 +466,16 @@ nodes &lt;-<span class="st"> </span><span class="kw">rep</span>(<span class="st"
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plan</span>(<span class="kw">list</span>(sequential, multiprocess))</code></pre></div>
 <p>Note that you can't use a multicore future at multiple levels (or equivalently multiprocess on a machine where it does multicore) as future prevents nested multicore parallelization:</p>
 <p>Once you've set your code to allow parallelization at multiple levels, you can change the plan without ever touching the core code again.</p>
-<h2 id="hybrid-parallelization-multiple-processes-plus-threaded-linear-algebra">Hybrid parallelization: multiple processes plus threaded linear algebra</h2>
+</div>
+<div id="hybrid-parallelization-multiple-processes-plus-threaded-linear-algebra" class="slide section level1">
+<h1>7.2. Hybrid parallelization: multiple processes plus threaded linear algebra</h1>
 <p>If you have access to threaded BLAS (e.g., MKL or openBLAS), as long as you set OMP_NUM_THREADS greater than 1, then any linear algebra should be parallelized within each of the iterations in a loop or apply statement.</p>
 </div>
 <div id="rng" class="slide section level1">
 <h1>8. RNG</h1>
 <p>In the code above, I was cavalier about the seeds for the random number generation in the different parallel computations.</p>
-<p>The future package seems to integrate well with the L'Ecuyer parallel RNG approach, but I'm having trouble finding good documentation. There is a good discussion about seeds for <code>future_lapply</code> and <code>future_sapply</code> in the help for those functions.</p>
+<p>The future package integrates well with the L'Ecuyer parallel RNG approach, although the documentation is not great. There is a good discussion about seeds for <code>future_lapply</code> and <code>future_sapply</code> in the help for those functions.</p>
+<p>Here's what I have been able to learn.</p>
 </div>
 <div id="future_lapply" class="slide section level1">
 <h1>8.1. future_lapply</h1>
@@ -466,10 +489,11 @@ n &lt;-<span class="st"> </span><span class="dv">4</span>
 <div id="using-future" class="slide section level1">
 <h1>8.2. using future()</h1>
 <p>You can (and should when using RNG) set the seed in <code>future()</code>. You'll need to set it to a L'Ecuyer-CMRG seed, which is a vector of six integers. Here's how you can do it, advancing the seed for each iteration using nextRNGStream().</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">RNGkind</span>(<span class="st">&quot;L&#39;Ecuyer-CMRG&quot;</span>)
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plan</span>(multiprocess)   <span class="co"># or some other plan</span>
+
+<span class="kw">RNGkind</span>(<span class="st">&quot;L&#39;Ecuyer-CMRG&quot;</span>)
 <span class="kw">set.seed</span>(<span class="dv">1</span>)
 nextSeed &lt;-<span class="st"> </span>.Random.seed
-<span class="kw">plan</span>(multiprocess)   <span class="co"># or some other plan</span>
 n &lt;-<span class="st"> </span><span class="dv">10</span>
 out &lt;-<span class="st"> </span><span class="kw">list</span>(); <span class="kw">length</span>(out) &lt;-<span class="st"> </span>n
 for(i in <span class="kw">seq_len</span>(n)) {
@@ -533,21 +557,22 @@ for(i in <span class="kw">seq_len</span>(n)) {
 </div>
 <div id="using-foreach" class="slide section level1">
 <h1>8.3. Using foreach</h1>
-<p>See the example code <code>help(doFuture)</code> for template code on how to use the <code>%doRNG%</code> operator with foreach to ensure correct RNG with foreach.</p>
+<p>See the example code in <code>help(doFuture)</code> for template code on how to use the <code>%doRNG%</code> operator with foreach to ensure correct RNG with foreach.</p>
 </div>
 <div id="submitting-slurm-jobs-from-future-using-batchtools" class="slide section level1">
 <h1>9. Submitting SLURM jobs from future using batchtools</h1>
 <p>We can use the <code>future.batchtools</code> package to submit jobs to a cluster scheduler from within R.</p>
 <p>One downside is that this submits one job per worker. On clusters (such as Savio) that schedule an entire node at once, that won't work.</p>
-<p>On the SCF it is fine. Here's an example. Note that the <code>resources</code> argument tells what the SLURM arguments should be for <em>each</em> worker.</p>
+<p>On the SCF it is fine (so long as you don't have, say, tens of thousands of jobs). Here's an example. Note that the <code>resources</code> argument tells what the SLURM arguments should be for <em>each</em> worker.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(future.apply)
 <span class="kw">library</span>(future.batchtools)
 ## Starts five workers as separate jobs.
 <span class="kw">plan</span>(batchtools_slurm, <span class="dt">workers =</span> <span class="dv">5</span>,
-                       <span class="dt">resources =</span> <span class="kw">list</span>(<span class="dt">nodes =</span> <span class="st">&quot;1&quot;</span>, <span class="dt">ntasks =</span> <span class="st">&quot;1&quot;</span>, <span class="dt">cpus_per_task =</span> <span class="st">&quot;1&quot;</span>, <span class="dt">walltime =</span> <span class="st">&quot;00:05:00&quot;</span>),
+                       <span class="dt">resources =</span> <span class="kw">list</span>(<span class="dt">nodes =</span> <span class="st">&quot;1&quot;</span>, <span class="dt">ntasks =</span> <span class="st">&quot;1&quot;</span>,
+                       <span class="dt">cpus_per_task =</span> <span class="st">&quot;1&quot;</span>, <span class="dt">walltime =</span> <span class="st">&quot;00:05:00&quot;</span>),
                        <span class="dt">template =</span> <span class="st">&quot;batchtools.slurm.tmpl&quot;</span>)
 
-output &lt;-<span class="st"> </span><span class="kw">future_sapply</span>(<span class="dv">1</span>:<span class="dv">100</span>, function(i) <span class="kw">mean</span>(<span class="kw">rnorm</span>(<span class="fl">1e7</span>)))</code></pre></div>
+output &lt;-<span class="st"> </span><span class="kw">future_sapply</span>(<span class="dv">1</span>:<span class="dv">100</span>, function(i) <span class="kw">mean</span>(<span class="kw">rnorm</span>(<span class="fl">1e7</span>)), <span class="dt">future.seed =</span> <span class="dv">1</span>)</code></pre></div>
 </div>
 <div id="submitting-slurm-jobs-that-are-allocated-per-node" class="slide section level1">
 <h1>9.1. Submitting SLURM jobs that are allocated per node</h1>
@@ -557,12 +582,17 @@ output &lt;-<span class="st"> </span><span class="kw">future_sapply</span>(<span
 numWorkers &lt;-<span class="st"> </span><span class="dv">5</span>
 ## five workers
 <span class="kw">plan</span>(<span class="kw">list</span>(<span class="kw">tweak</span>(batchtools_slurm, <span class="dt">workers =</span> <span class="dv">1</span>,
-                       <span class="dt">resources =</span> <span class="kw">list</span>(<span class="dt">nodes =</span> <span class="st">&quot;1&quot;</span>, <span class="dt">ntasks =</span> <span class="kw">as.character</span>(numWorkers), <span class="dt">cpus_per_task =</span> <span class="st">&quot;1&quot;</span>,
-                       <span class="dt">partition =</span> <span class="st">&quot;high&quot;</span>, <span class="dt">walltime =</span> <span class="st">&quot;00:05:00&quot;</span>),
+                       <span class="dt">resources =</span> <span class="kw">list</span>(
+                                 <span class="dt">nodes =</span> <span class="st">&quot;1&quot;</span>,
+                                 <span class="dt">ntasks =</span> <span class="kw">as.character</span>(numWorkers),
+                                 <span class="dt">cpus_per_task =</span> <span class="st">&quot;1&quot;</span>,
+                                 <span class="dt">partition =</span> <span class="st">&quot;high&quot;</span>,
+                                 <span class="dt">walltime =</span> <span class="st">&quot;00:05:00&quot;</span>),
                        <span class="dt">template =</span> <span class="st">&quot;batchtools.slurm.tmpl&quot;</span>),
           <span class="kw">tweak</span>(multiprocess, <span class="dt">workers =</span> numWorkers)))
 
-myfuture &lt;-<span class="st"> </span><span class="kw">future</span>({ <span class="kw">future_sapply</span>(<span class="dv">1</span>:<span class="dv">100</span>, function(i) <span class="kw">mean</span>(<span class="kw">rnorm</span>(<span class="fl">1e7</span>)), <span class="dt">future.seed =</span> <span class="dv">1</span>) })
+myfuture &lt;-<span class="st"> </span><span class="kw">future</span>({ <span class="kw">future_sapply</span>(<span class="dv">1</span>:<span class="dv">100</span>, function(i) <span class="kw">mean</span>(<span class="kw">rnorm</span>(<span class="fl">1e7</span>)),
+                                   <span class="dt">future.seed =</span> <span class="dv">1</span>) })
 out &lt;-<span class="st"> </span><span class="kw">value</span>(myfuture)</code></pre></div>
 <p>While this is feasible, I prefer to set up my cluster jobs outside of R and have the R code not have to know anything about how the scheduler works or what scheduler is available on a given cluster.</p>
 </div>
