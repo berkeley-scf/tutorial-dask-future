@@ -4,7 +4,7 @@ Parallel Processing using  Python's Dask package
 Chris Paciorek, Department of Statistics, UC Berkeley
 
 
-# 1) Overview of Dask
+# 1. Overview of Dask
 
 The Dask package provides a variety of tools for managing parallel computations.
 
@@ -13,8 +13,14 @@ In particular, Dask allows you to:
   - separate what to parallelize from where it is parallelized
   - different users can run the same code on different computational resources (without touching the actual code that does the computation)
 
+Let's import dask to get started.
 
-# 2) Overview of parallel schedulers
+```
+import dask
+```
+
+
+# 2. Overview of parallel schedulers
 
 One specifies a `scheduler` to control how parallelization is done, including what machine(s) to use and how many cores on each machine to use.
 
@@ -26,7 +32,7 @@ dask.config.set(scheduler='processes', num_workers = 4)  # spread work across mu
 ```
 
 
-This table gives an overview of the different plans. 
+This table gives an overview of the different scheduler. 
 
 
 |Type|Description|Multi-node|Copies of objects made?|
@@ -41,20 +47,26 @@ Note that because of Python's Global Interpreter Lock (GIL), many computations d
 For the next section (Section 3), we'll just assume use of the 'processes' schduler and will provide more details on the other schedulers in the following section (Section 4).
 
 
-# 3) Implementing operations in parallel "by hand"
+# 3. Implementing operations in parallel "by hand"
 
 Dask has a large variety of patterns for how you might parallelize a computation.
+
+[PUT calc_mean in a module and import it?]
 
 We'll simply parallelize computation of the mean of a large number of random numbers across multiple replicates:
 
 ```
 def calc_mean(i, n):
     import numpy as np
+    np.random.seed(i)
     data = np.random.normal(size = n)
     return([np.mean(data), np.std(data)])
 ```
 
-## Using a 'future' via `delayed`
+(Note the code here is not safe in terms of parallel random number generation - see section later in this document.)
+
+
+# 3.1. Using a 'future' via `delayed`
 
 The basic pattern for setting up a parallel loop is:
 
@@ -64,13 +76,14 @@ The basic pattern for setting up a parallel loop is:
 import dask.multiprocessing
 dask.config.set(scheduler='processes', num_workers = 4)  
 
-results = []
+futures = []
 n = 10000000
 p = 10
 for i in range(p):
-    results.append(dask.delayed(calc_mean)(i, n))  # add lazy task
+    futures.append(dask.delayed(calc_mean)(i, n))  # add lazy task
 
-output = dask.compute(*results)  # compute all in parallel
+futures
+results = dask.compute(*futures)  # compute all in parallel
 ```
 
 ### list comprehension
@@ -81,9 +94,9 @@ dask.config.set(scheduler='processes', num_workers = 4)
 
 n = 10000000
 p = 10
-future = [dask.delayed(calc_mean)(i, n) for i in range(p)]
-future
-results = dask.compute(*future)
+futures = [dask.delayed(calc_mean)(i, n) for i in range(p)]
+futures
+results = dask.compute(*futures)
 ```
 
 You could set the scheduler in the `compute` call, but it is best practice to separate what is parallelized from where the parallelization is done. The latter can be specified at the start of your code.
@@ -92,9 +105,12 @@ You could set the scheduler in the `compute` call, but it is best practice to se
 results = dask.compute(*future, scheduler = 'processes')
 ```
 
-## Parallel maps
+# 3.2. Parallel maps
 
-I'm still investigating whether this is only possible with the Distributed scheduler.
+We can do parallel map operations (i.e., a map in the map-reduce or functional programming sense, akin to `lapply` in R).
+
+For this we need to use the distributed scheduler, which we'll discuss more later.
+But note that the distributed scheduler can work on one or more nodes.
 
 ```
 # We need a version of calc_mean() that takes a single input.
@@ -110,14 +126,16 @@ c = Client(cluster)
 
 # set up and execute the parallel map
 inputs = [(i, n) for i in range(p)]
-t0 = time.time()
 # execute the function across the array of input values
 future = c.map(calc_mean_vargs, inputs)
 results = c.gather(future)
-time.time() - t0
+results
 ```
 
-## Delayed evaluation and task graphs
+The map operation appears to cache results. If you rerun the above with the same inputs, you get the same result back essentially instantaneously.
+
+
+# 3.3. Delayed evaluation and task graphs
 
 You can use `delayed` in more complicated situations than the simple iterations shown above.
 
@@ -133,10 +151,10 @@ y = dask.delayed(inc)(2)
 z = dask.delayed(add)(x, y)
 z.compute()
 
-z.visualize()
+z.visualize(filename = 'task_graph.svg')
 ```
 
-`visualize` uses the graphviz package to illustrate the task graph (similar to a directed acyclic graph in a statistical model and to how tensorflow organizes its computations).
+`visualize` uses the `graphviz` package to illustrate the task graph (similar to a directed acyclic graph in a statistical model and to how tensorflow organizes its computations).
 
 One can also tell Dask to always delay evaluation of a given function:
 
@@ -156,11 +174,11 @@ z.compute()
 ```
 
 
-## The Futures interface
+# 3.4. The Futures interface
 
 You can also control evaluation of tasks using the [Futures interface for managing tasks](https://docs.dask.org/en/latest/futures.html). Unlike use of `delayed`, the evaluation occurs immediately.
 
-# 4) Dask distributed datastructures and "automatic" parallel operations on them
+# 4. Dask distributed datastructures and "automatic" parallel operations on them
 
 Dask provides the ability to work on data structures that are split (sharded/chunked) across workers. There are two big advantages of this:
 
@@ -169,11 +187,13 @@ Dask provides the ability to work on data structures that are split (sharded/chu
 
 Because computations are done in external compiled code (e.g., via numpy) it's effective to use the threaded scheduler when operating on one node to avoid having to copy and move the data. 
 
-## Arrays (numpy)
+# 4.1. Arrays (numpy)
 
 Dask arrays are numpy-like arrays where each array is split up by both rows and columns into smaller numpy arrays.
 
 One can do a lot of the kinds of computations that you would do on a numpy array on a Dask array, but many operations are not possible. See [here](http://docs.dask.org/en/latest/array-api.html).
+
+By default arrays are handled via the threads scheduler.
 
 ### Non-distributed arrays
 
@@ -181,7 +201,7 @@ Let's first see operations on a single node, using a single 13 GB 2-d array. Not
 
 ```
 import dask
-dask.config.set(scheduler='threads', num_workers = 4)  
+dask.config.set(scheduler = 'threads', num_workers = 4) 
 import dask.array as da
 x = da.random.normal(0, 1, size=(40000,40000), chunks=(10000, 10000))
 # square 10k x 10k chunks
@@ -193,14 +213,16 @@ time.time() - t0  # 41 sec.
 ```
 
 For a row-based operation, we would presumably only want to chunk things up by row,
-but this doesn't seem to actually make a difference
+but this doesn't seem to actually make a difference, presumably because the
+mean calculation can be done in pieces and only a small number of summary statistics
+moved between workers.
 
 ```
 import dask
 dask.config.set(scheduler='threads', num_workers = 4)  
 import dask.array as da
-x = da.random.normal(0, 1, size=(40000,40000), chunks=(2500, 40000))
 # x = da.from_array(x, chunks=(2500, 40000))  # adjust chunk size of existing array
+x = da.random.normal(0, 1, size=(40000,40000), chunks=(2500, 40000))
 mycalc = da.mean(x, axis = 1)  # row means
 import time
 t0 = time.time()
@@ -211,7 +233,7 @@ time.time() - t0   # 42 sec.
 Of course, given the lazy evaluation, this timing comparison is not just timing the
 actual row mean calculations.
 
-But this doesn't really clarify the Dask story...
+But this doesn't really clarify the story...
 
 ```
 import dask
@@ -221,19 +243,21 @@ import numpy as np
 import time
 t0 = time.time()
 x = np.random.normal(0, 1, size=(40000,40000))
-time.time() - t0   # 130 sec.
+time.time() - t0   # 110 sec.
 # for some reason the from_array and da.mean calculations are not done lazily here
 t0 = time.time()
 dx = da.from_array(x, chunks=(2500, 40000))
-mycalc = da.mean(x, axis = 1)  # row means
+time.time() - t0   # 27 sec.
+t0 = time.time()
+mycalc = da.mean(x, axis = 1)  # what is this doing given .compute() also takes time?
 time.time() - t0   # 28 sec.
 t0 = time.time()
 rs = mycalc.compute()
-time.time() - t0   # 28 sec.
+time.time() - t0   # 21 sec.
 ```
 
 Dask will avoid storing all the chunks in memory. (It appears to just generate them on the fly.)
-Here we have an 80 GB array but we never use more than a few GB of memory.
+Here we have an 80 GB array but we never use more than a few GB of memory (based on `top` or `free -h`).
 
 
 ```
@@ -245,7 +269,8 @@ mycalc = da.mean(x, axis = 1)  # row means
 import time
 t0 = time.time()
 rs = mycalc.compute()
-time.time() - t0   # 256 sec.
+time.time() - t0   # 205 sec.
+rs[0:5]
 ```
 
 
@@ -255,36 +280,54 @@ This should be straightforward based on using Dask distributed. However, one wou
 be careful about creating arrays by distributing the data from a single Python process
 as that would involve copying between machines.
 
-## Dataframes (pandas)
+# 4.2. Dataframes (pandas)
 
-Dask dataframes are pandas-like dataframes where each dataframe is split by row into smaller Pandas dataframes.
+Dask dataframes are Pandas-like dataframes where each dataframe is split by row into smaller Pandas dataframes.
 
 One can do a lot of the kinds of computations that you would do on a Pandas dataframe on a Dask dataframe, but many operations are not possible. See [here](http://docs.dask.org/en/latest/dataframe-api.html).
 
-Here's an example of reading from a dataset of flight delays.
+By default dataframes are handled by the threads scheduler.
+
+Here's an example of reading from a dataset of flight delays (about 11 GB data).
+You can get the data [here](https://www.stat.berkeley.edu/share/paciorek/1987-2008.csvs.tgz).
+
 
 ```
 import dask
 dask.config.set(scheduler='threads', num_workers = 4)  
-import dask.dataframe as df
-air = df.read_csv('/scratch/users/paciorek/243/AirlineData/csvs/*.csv.bz2',
+import dask.dataframe as ddf
+air = ddf.read_csv('/scratch/users/paciorek/243/AirlineData/csvs/*.csv.bz2',
       compression = 'bz2',
-      encoding = 'latin1',   # there are (unexpectedly latin1 value in the year 2001 file TailNum vfield
+      encoding = 'latin1',   # there is/are (unexpectedly) latin1 value(s) in the year 2001 file TailNum field
       dtype = {'Distance': 'float64', 'CRSElapsedTime': 'float64',
       'TailNum': 'object', 'CancellationCode': 'object'})  # so Pandas doesn't complain about column type heterogeneity
-air.DepDelay.max().compute()
+      
+air.DepDelay.max().compute()   # this takes a while
 sub = air[(air.UniqueCarrier == 'UA') & (air.Origin == 'SFO')]
 byDest = sub.groupby('Dest').DepDelay.mean()
-byDest.compute()
+byDest.compute()               # this takes a while too
 ```
 
-## Bags
+You should see this:
+```
+Dest
+ACV    26.200000
+BFL     1.000000
+BOI    12.855069
+BOS     9.316795
+CLE     4.000000
+...
+```
+
+# 4.3. Bags
 
 Bags are like lists but there is no particular ordering, so it doesn't make sense to ask for the i'th element.
 
 You can think of operations on Dask bags as being like parallel map operations on lists in Python or R.
 
 Let's see some basic operations on a large dataset of Wikipedia log files.
+You can get a subset of the Wikipedia data [here](https://www.stat.berkeley.edu/share/paciorek/wikistats_example.tar.gz).
+
 
 ```
 import dask.multiprocessing
@@ -294,7 +337,7 @@ wiki = db.read_text('/scratch/users/paciorek/wikistats/dated_2017/part-0000*gz')
 import time
 t0 = time.time()
 wiki.count().compute()
-time.time() - t0
+time.time() - t0   # 136 sec.
 
 import re
 def find(line, regex = "Obama", language = "en"):
@@ -313,13 +356,13 @@ obama = wiki.filter(find).compute()
 obama[0:5]
 ```
 
-Note that it is inefficient to do the `find()` (and implicitly reading the data in)
-and then compute on top of that
-intermediate result in two separate calls to `compute()`. More in Section X.
+Note that it is quite inefficient to do the `find()` (and implicitly reading
+the data in) and then compute on top of that intermediate result in
+two separate calls to `compute()`. More in Section 6.
 
-# 5) Using different schedulers
+# 5. Using different schedulers
 
-## Using threads (no copying)
+# 5.1. Using threads (no copying)
 
 ```
 dask.config.set(scheduler='threads', num_workers = 4)  
@@ -329,7 +372,7 @@ futures = [dask.delayed(calc_mean)(i, n) for i in range(p)]
 
 t0 = time.time()
 results = dask.compute(*futures)
-time.time() - t0
+time.time() - t0    # 20 sec.
 ```
 
 In this case the parallelization is not very effective, as computation for a single iteration is about 5 seconds.
@@ -337,7 +380,7 @@ In this case the parallelization is not very effective, as computation for a sin
 Note that because of Python's Global Interpreter Lock (GIL), many computations done in pure Python code cannot be parallelized using the 'threaded' scheduler; however computations on numeric data in numpy arrays, pandas dataframes and other C/C++/Cython-based code will parallelize.
 
 
-## Multi-process parallelization via Dask Multiprocessing
+# 5.2. Multi-process parallelization via Dask Multiprocessing
 
 We can more effectively parallelize by using multiple Python processes. 
 
@@ -351,10 +394,10 @@ futures = [dask.delayed(calc_mean)(i, n) for i in range(p)]
 
 t0 = time.time()
 results = dask.compute(*futures)
-time.time() - t0
+time.time() - t0  # 5 sec.
 ```
 
-## Multi-process parallelization via Dask Distributed (local)
+# 5.3. Multi-process parallelization via Dask Distributed (local)
 
 According to the Dask documentation, using Distributed on a local machine
 has advantages over multiprocessing, including the diagnostic dashboard
@@ -369,19 +412,22 @@ c = Client(cluster)
 futures = [dask.delayed(calc_mean)(i, n) for i in range(p)]
 t0 = time.time()
 results = dask.compute(*futures)
-time.time() - t0
+time.time() - t0   # 7 sec.
 ```
 
-## Distributed processing across multiple machines via an ad hoc cluster
+# 5.4. Distributed processing across multiple machines via an ad hoc cluster
 
 We need to set up a scheduler on one machine (possibly the machine we are on)
 and workers on whatever machines we want to do the computation on.
 
+
 One option is to use the `dask-ssh` command to start up the scheduler and workers.
+(Note that for this to work we need to have password-less SSH working to connect
+to the various machines.)
 
 ```
 export SCHED=$(hostname)
-dask-ssh --scheduler ${SCHED} radagast radagast arwen arwen
+dask-ssh --scheduler ${SCHED} radagast radagast arwen arwen &
 ## or:
 ## echo -e "radagast radagast arwen arwen" > .hosts
 ## dask-ssh --scheduler ${SCHED} --hostfile .hosts
@@ -392,21 +438,23 @@ Then in Python, connect to the cluster via the scheduler.
 ```
 from dask.distributed import Client
 c = Client(address = os.getenv('SCHED') + ':8786')
+n = 100000000
+p = 4
 
 futures = [dask.delayed(calc_mean)(i, n) for i in range(p)]
-t0 = time.time()
 results = dask.compute(*futures)
-time.time() - t0
+c.close()
 ```
 
-I'm not seeing a clean way to close the cluster, so do it the hard way...
+I don't see that `c.close` shuts down the scheduler and worker processes,
+so do it the hard way...
 
 ```
 ps aux | grep dask-ssh | head -n 1 | awk -F' ' '{print $2}' | xargs kill
 ```
 
 
-## Distributed processing using multiple machines within a SLURM scheduler job
+# 5.5. Distributed processing using multiple machines within a SLURM scheduler job
 
 To run within a SLURM job we can use `dask-ssh` or a combination of `dask-scheduler`
 and `dask-worker`.. 
@@ -431,6 +479,8 @@ Then in Python, connect to the cluster via the scheduler.
 import os
 from dask.distributed import Client
 c = Client(address = os.getenv('SCHED') + ':8786')
+n = 100000000
+p = 24
 
 futures = [dask.delayed(calc_mean)(i, n) for i in range(p)]
 t0 = time.time()
@@ -438,8 +488,9 @@ results = dask.compute(*futures)
 time.time() - t0
 ```
 
-Let's process the 500 GB of Wikipedia log data.
-(Doing this on SCF causes 'unresponsive event loop'. Parallel I/O not good?)
+Let's process the 500 GB of Wikipedia log data on Savio. (Note that
+when I tried this on the SCF I had some errors that might be related
+to the SCF not being set up for fast parallel I/O.
 
 ```
 import os
@@ -467,7 +518,6 @@ def find(line, regex = "Obama", language = "en"):
 wiki.filter(find).count().compute()
 # obama = wiki.filter(find).compute()
 # obama[0:5]
-
 ```
 
 
@@ -482,13 +532,16 @@ srun hostname > .hosts
 dask-ssh --scheduler ${SCHED} --hostfile .hosts
 ```
 
-# 6) Effective parallelization and common issues
+# 6. Effective parallelization and common issues
 
-## Nested parallelization and pipelines
+# 6.1. Nested parallelization and pipelines
 
 We can set up nested parallelization and just have Dask's delayed functionality figure out how to do the parallelization.
 
 ```
+import dask.multiprocessing
+dask.config.set(scheduler='processes', num_workers = 4)  
+
 @dask.delayed
 def calc_mean_vargs2(inputs, nobs):
     import numpy as np
@@ -506,27 +559,28 @@ for param in params:
     out.append(out_single_param)
 
 t0 = time.time()
-output = dask.compute(*out)
+output = dask.compute(*out)  # 15 sec. on 4 cores
 time.time() - t0
 ```
 
-## Load-balancing and static vs. dynamic task allocation
+
+# 6.2. Load-balancing and static vs. dynamic task allocation
 
 When using `delayed`, Dask starts up each delayed evaluation separately (i.e., dynamic allocation).
 This is good for load-balancing, but each task induces
 some overhead (a few hundred microseconds).  If you have many quick tasks, you probably
-want to break them up into batches, to reduce the impact of the overhead.
+want to break them up into batches manually, to reduce the impact of the overhead.
 
 Even with a distributed `map()` it doesn't appear possible to ask that the tasks
 be broken up into batches.
 
-## Avoid repeated calculations by embedding tasks within one call to compute
+# 6.3. Avoid repeated calculations by embedding tasks within one call to compute
 
 As far as I can tell, Dask avoids keeping all the pieces of a distributed object or
 computation in memory.  However, in many cases this could mean repeating
 computations or reading data if you need to do multiple operations on a dataset.
 
-For example, if you are create a Dask array from data on disk, I think this means that
+For example, if you are create a Dask distributed dataset from data on disk, I think this means that
 every distinct set of computations (each computational graph) will involve reading
 the data from disk again.
 
@@ -562,22 +616,29 @@ cnt
 obama[0:5]
 ```
 
-## Copies are usually made 
+If you time doing the computations above, you'll see that doing it all together is much faster than the time of each of the three operations done separately.
+
+Note that when reading from disk, disk caching by the operating system (saving files that are used repeatedly in memory) can also greatly speed up I/O (and can easily confuse you in terms of timing your code...).
+
+# 6.4. Copies are usually made 
 
 Except for the 'threads' scheduler, copies will be made of all objects passed to the workers.
 
-Also, unless you delay the actual object(s), a copy will be made for every task, not for each
+In general you want to delay the input objects. There are a couple reasons why:
+
+  - Dask hashes the object to create a name, and if you pass the same object as an argument multiple times, it will repeat that hashing.
+  - When using the distributed scheduler, delaying the inputs will prevent sending the data separately for every task (rather it should send the data separately for each worker).
 worker, even if the tasks all use the same objects.
 
 In this example, most of the "computational" time is actually spent transferring the data
 rather than computing the mean.
 
 ```
-dask.config.set(scheduler='processes', num_workers = 4)  
+dask.config.set(scheduler = 'processes', num_workers = 4)  
 
 import numpy as np
 x = np.random.normal(size = 40000000) 
-x = dask.delayed(x)  # recommended to delay the data, as Dask hashes the objects to produce a name
+x = dask.delayed(x)   # here we delay the data
 
 def calc(x, i):
     return(np.mean(x))
@@ -585,10 +646,10 @@ def calc(x, i):
 out = [dask.delayed(calc)(x, i) for i in range(20)]
 t0 = time.time()
 output = dask.compute(*out)
-time.time() - t0
+time.time() - t0   # about 20 sec. so ~4 sec. per task
 
 
-## Actual computation is much faster than 1 s. per task
+## Actual computation is much faster than 4 sec. per task
 y = np.random.normal(size = 40000000) 
 t0 = time.time()
 calc(y, 1)
@@ -606,7 +667,7 @@ c = Client(cluster)
 
 import numpy as np
 x = np.random.normal(size = 40000000) 
-x = dask.delayed(x)  # recommended to delay the data, as Dask hashes the objects to produce a name
+x = dask.delayed(x)  # here we delay the data
 
 def calc(x, i):
     return(np.mean(x))
@@ -614,11 +675,15 @@ def calc(x, i):
 out = [dask.delayed(calc)(x, i) for i in range(20)]
 t0 = time.time()
 output = dask.compute(*out)
-time.time() - t0
+time.time() - t0    # 2.5 sec. 
 ```
 
+That took a few seconds if we delay the data but takes ~40 seconds if we don't.
+Note that Dask does warn us if it detects a situation like this where we
+haven't delayed the data.
 
-## Parallel I/O
+
+# 6.4. Parallel I/O
 
 For this to make sense we want to be on a system where we can read multiple files
 without having the bottleneck of accessing a single disk. For example the
@@ -629,14 +694,14 @@ with the workers starting when using a Distributed (local) cluster.)
 
 ```
 import dask.multiprocessing
-dask.config.set(scheduler='processes', num_workers = 24) 
+dask.config.set(scheduler = 'processes', num_workers = 24) 
 
 
 ## define a function that reads data but doesn't need to return entire
 ## dataset back to master process to avoid copying cost
 def readfun(yr):
     import pandas as pd
-    out = pd.read_csv(str(yr) + '.csv.bz2', header = 0, encoding = 'latin1')
+    out = pd.read_csv('/global/scratch/paciorek/airline/' + str(yr) + '.csv.bz2', header = 0, encoding = 'latin1')
     return(len(out))
 
 results = []
@@ -652,18 +717,18 @@ time.time() - t0   ## 75 seconds for 21 files
 
 results2 = []
 t0 = time.time()
-for yr in range(1988, 1992):
+for yr in range(1988, 1990):
     results2.append(readfun(yr))
 
 
-time.time() - t0  ## 70 sec. just for the first four
+time.time() - t0  ## 40 sec. just for the first two
 ```
 
-## Adaptive scaling
+# 6.5. Adaptive scaling
 
 With a resource manager like Kubernetes, Dask can scale the number of workers up and down to adapt to the computational needs of a workflow.
 
-# 7) Monitoring jobs
+# 7. Monitoring jobs
 
 By default Dask wants to use port 8787 for a web interface showing status.
 This port is occupied on my machine, so I'll select a different port.
@@ -684,7 +749,7 @@ results = dask.compute(*futures)
 time.time() - t0
 ```
 
-# 8) RNG
+# 8. Random number generation (RNG)
 
 In the code above, I was cavalier about the seeds for the random number generation in the different parallel computations.
 
@@ -693,8 +758,7 @@ Using the basic numpy RNG, one could simply set different seeds for each task. W
 Here's some template code for using RandomGen and jumping ahead by 2^128 numbers in the Mersenne-Twister
 
 ```
-
-
+n = 5
 import randomgen as rg
 seed = 1
 rng = rg.MT19937(seed)
@@ -714,7 +778,7 @@ def calc_mean(i, n, rng):
     return([np.mean(data), np.std(data)])
 
 import dask.multiprocessing
-dask.config.set(scheduler='processes', num_workers = 4)  
+dask.config.set(scheduler = 'processes', num_workers = 4)  
 
 results = []
 n = 10000000
@@ -729,15 +793,16 @@ for i in range(p):
 output = dask.compute(*results)  # compute all in parallel
 ```
 
-You can also set the random in dask.array...
+Apparently you may be able to address this issue in dask.array using the RandomState class
+but I'm having trouble finding documentation on this.
 
 ```
 import dask.array as da
-state = da.random.RandomState(1234) 
-# chunks arg is not well documented
+state = da.random.RandomState(1234)
+help(state)  # chunks arg is not well documented
 ```
 
-# 9) Submitting SLURM jobs from Dask
+# 9. Submitting SLURM jobs from Dask
 
 One can submit jobs to a scheduler such as SLURM from within Python. In general I don't recommend
 this as it requires you to be running Python within a stand-alone server while the SLURM
@@ -754,8 +819,10 @@ is required.)
 The `queue` argument is the SLURM partition you want to submit to.
 
 ```
+import dask_jobqueue
 ## Each job will include 16 Dask workers and a total of 16 cores (1 per worker)
-cluster = dask_jobqueue.SLURMCluster(processes = 16, cores=16, memory='24 GB', queue='low')
+cluster = dask_jobqueue.SLURMCluster(processes=16, cores=16, memory='24 GB',
+                                     queue='low', walltime = '3:00:00')
 
 ## This will now start 32 Dask workers, which in this case
 ## requires two SLURM jobs of 16 workers each.
@@ -766,7 +833,6 @@ c = Client(cluster)
 ## carry out your parallel computations
 
 cluster.close()
-
 ```
 
 On a cluster like Savio where you may need to provide an account (-A flag), you pass
