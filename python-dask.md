@@ -8,10 +8,11 @@ Chris Paciorek, Department of Statistics, UC Berkeley
 
 The Dask package provides a variety of tools for managing parallel computations.
 
-In particular, Dask allows you to:
+In particular, some of the key ideas/features of Dask are:
 
-  - separate what to parallelize from where it is parallelized
-  - different users can run the same code on different computational resources (without touching the actual code that does the computation)
+  - Separate what to parallelize from how and where the parallelization is actually carried out.
+  - Different users can run the same code on different computational resources (without touching the actual code that does the computation).
+  - Dask provides distributed data structures that can be treated as a single data structures when runnig operations on them (like Spark and pbdR). 
 
 Let's import dask to get started.
 
@@ -22,13 +23,14 @@ import dask
 
 # 2. Overview of parallel schedulers
 
-One specifies a `scheduler` to control how parallelization is done, including what machine(s) to use and how many cores on each machine to use.
+One specifies a "scheduler" to control how parallelization is done, including what machine(s) to use and how many cores on each machine to use.
 
 For example,
 
 ```
 import dask.multiprocessing
-dask.config.set(scheduler='processes', num_workers = 4)  # spread work across multiple cores, one worker per core
+# spread work across multiple cores, one worker per core
+dask.config.set(scheduler='processes', num_workers = 4)  
 ```
 
 
@@ -37,12 +39,12 @@ This table gives an overview of the different scheduler.
 
 |Type|Description|Multi-node|Copies of objects made?|
 |----|-----------|----------|-----------------------|
-|synchronous|not in parallel|no|NA|
-|threaded|threads within current Python|no|no|
+|synchronous|not in parallel|no|no|
+|threaded|threads within current Python session|no|no|
 |processes|background Python sessions|no|yes|
 |distributed|Python sessions across multiple nodes|yes or no|yes|
 
-Note that because of Python's Global Interpreter Lock (GIL), many computations done in pure Python code cannot be parallelized using the 'threaded' scheduler; however computations on numeric data in numpy arrays, pandas dataframes and other C/C++/Cython-based code will parallelize.
+Note that because of Python's Global Interpreter Lock (GIL), many computations done in pure Python code won't be parallelized using the 'threaded' scheduler; however computations on numeric data in numpy arrays, Pandas dataframes and other C/C++/Cython-based code will parallelize.
 
 For the next section (Section 3), we'll just assume use of the 'processes' schduler and will provide more details on the other schedulers in the following section (Section 4).
 
@@ -51,16 +53,10 @@ For the next section (Section 3), we'll just assume use of the 'processes' schdu
 
 Dask has a large variety of patterns for how you might parallelize a computation.
 
-[PUT calc_mean in a module and import it?]
-
 We'll simply parallelize computation of the mean of a large number of random numbers across multiple replicates:
 
 ```
-def calc_mean(i, n):
-    import numpy as np
-    np.random.seed(i)
-    data = np.random.normal(size = n)
-    return([np.mean(data), np.std(data)])
+from calc_mean import *
 ```
 
 (Note the code here is not safe in terms of parallel random number generation - see section later in this document.)
@@ -113,12 +109,6 @@ For this we need to use the distributed scheduler, which we'll discuss more late
 But note that the distributed scheduler can work on one or more nodes.
 
 ```
-# We need a version of calc_mean() that takes a single input.
-def calc_mean_vargs(inputs):
-    import numpy as np
-    data = np.random.normal(size = inputs[1])
-    return([np.mean(data), np.std(data)])
-
 # ignore this setup for now; we'll see it again later
 from dask.distributed import Client, LocalCluster
 cluster = LocalCluster(n_workers = 4)

@@ -11,19 +11,21 @@
 <h1 id="parallel-processing-using-pythons-dask-package">Parallel Processing using Python's Dask package</h1>
 <p>Chris Paciorek, Department of Statistics, UC Berkeley</p>
 <h1 id="overview-of-dask">1. Overview of Dask</h1>
-<p>The <code>Dask</code> package provides a variety of tools for managing parallel computations.</p>
-<p>In particular, Dask allows you to:</p>
+<p>The Dask package provides a variety of tools for managing parallel computations.</p>
+<p>In particular, some of the key ideas/features of Dask are:</p>
 <ul>
-<li>separate what to parallelize from where it is parallelized</li>
-<li>different users can run the same code on different computational resources (without touching the actual code that does the computation)</li>
+<li>Separate what to parallelize from how and where the parallelization is actually carried out.</li>
+<li>Different users can run the same code on different computational resources (without touching the actual code that does the computation).</li>
+<li>Dask provides distributed data structures that can be treated as a single data structures when runnig operations on them (like Spark and pbdR).</li>
 </ul>
 <p>Let's import dask to get started.</p>
 <pre><code>import dask</code></pre>
 <h1 id="overview-of-parallel-schedulers">2. Overview of parallel schedulers</h1>
-<p>One specifies a <code>scheduler</code> to control how parallelization is done, including what machine(s) to use and how many cores on each machine to use.</p>
+<p>One specifies a &quot;scheduler&quot; to control how parallelization is done, including what machine(s) to use and how many cores on each machine to use.</p>
 <p>For example,</p>
 <pre><code>import dask.multiprocessing
-dask.config.set(scheduler=&#39;processes&#39;, num_workers = 4)  # spread work across multiple cores, one worker per core</code></pre>
+# spread work across multiple cores, one worker per core
+dask.config.set(scheduler=&#39;processes&#39;, num_workers = 4)  </code></pre>
 <p>This table gives an overview of the different scheduler.</p>
 <table>
 <thead>
@@ -39,11 +41,11 @@ dask.config.set(scheduler=&#39;processes&#39;, num_workers = 4)  # spread work a
 <td align="left">synchronous</td>
 <td align="left">not in parallel</td>
 <td align="left">no</td>
-<td align="left">NA</td>
+<td align="left">no</td>
 </tr>
 <tr class="even">
 <td align="left">threaded</td>
-<td align="left">threads within current Python</td>
+<td align="left">threads within current Python session</td>
 <td align="left">no</td>
 <td align="left">no</td>
 </tr>
@@ -61,17 +63,12 @@ dask.config.set(scheduler=&#39;processes&#39;, num_workers = 4)  # spread work a
 </tr>
 </tbody>
 </table>
-<p>Note that because of Python's Global Interpreter Lock (GIL), many computations done in pure Python code cannot be parallelized using the 'threaded' scheduler; however computations on numeric data in numpy arrays, pandas dataframes and other C/C++/Cython-based code will parallelize.</p>
+<p>Note that because of Python's Global Interpreter Lock (GIL), many computations done in pure Python code won't be parallelized using the 'threaded' scheduler; however computations on numeric data in numpy arrays, Pandas dataframes and other C/C++/Cython-based code will parallelize.</p>
 <p>For the next section (Section 3), we'll just assume use of the 'processes' schduler and will provide more details on the other schedulers in the following section (Section 4).</p>
 <h1 id="implementing-operations-in-parallel-by-hand">3. Implementing operations in parallel &quot;by hand&quot;</h1>
 <p>Dask has a large variety of patterns for how you might parallelize a computation.</p>
-<p>[PUT calc_mean in a module and import it?]</p>
 <p>We'll simply parallelize computation of the mean of a large number of random numbers across multiple replicates:</p>
-<pre><code>def calc_mean(i, n):
-    import numpy as np
-    np.random.seed(i)
-    data = np.random.normal(size = n)
-    return([np.mean(data), np.std(data)])</code></pre>
+<pre><code>from calc_mean import *</code></pre>
 <p>(Note the code here is not safe in terms of parallel random number generation - see section later in this document.)</p>
 <h1 id="using-a-future-via-delayed">3.1. Using a 'future' via <code>delayed</code></h1>
 <p>The basic pattern for setting up a parallel loop is:</p>
@@ -101,13 +98,7 @@ results = dask.compute(*futures)</code></pre>
 <h1 id="parallel-maps">3.2. Parallel maps</h1>
 <p>We can do parallel map operations (i.e., a map in the map-reduce or functional programming sense, akin to <code>lapply</code> in R).</p>
 <p>For this we need to use the distributed scheduler, which we'll discuss more later. But note that the distributed scheduler can work on one or more nodes.</p>
-<pre><code># We need a version of calc_mean() that takes a single input.
-def calc_mean_vargs(inputs):
-    import numpy as np
-    data = np.random.normal(size = inputs[1])
-    return([np.mean(data), np.std(data)])
-
-# ignore this setup for now; we&#39;ll see it again later
+<pre><code># ignore this setup for now; we&#39;ll see it again later
 from dask.distributed import Client, LocalCluster
 cluster = LocalCluster(n_workers = 4)
 c = Client(cluster)

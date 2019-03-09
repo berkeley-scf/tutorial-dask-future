@@ -27,7 +27,7 @@ The future package allows one to write one's computational code without hard-cod
 
 More concisely, the key ideas are:
 
-  - Separate what to parallelize from how the parallelization is actually carried out.where it is parallelized
+  - Separate what to parallelize from how and where the parallelization is actually carried out.
   - Different users can run the same code on different computational resources (without touching the actual code that does the computation).
   
 
