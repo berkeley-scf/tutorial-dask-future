@@ -80,9 +80,9 @@ dask.config.set(scheduler=&#39;processes&#39;, num_workers = 4)  </code></pre>
 <div id="implementing-operations-in-parallel-by-hand" class="slide section level1">
 <h1>3. Implementing operations in parallel &quot;by hand&quot;</h1>
 <p>Dask has a large variety of patterns for how you might parallelize a computation.</p>
-<p>We'll simply parallelize computation of the mean of a large number of random numbers across multiple replicates:</p>
+<p>We'll simply parallelize computation of the mean of a large number of random numbers across multiple replicates as can be seen in <code>calc_mean.py</code>.</p>
 <pre><code>from calc_mean import *</code></pre>
-<p>(Note the code here is not safe in terms of parallel random number generation - see section later in this document.)</p>
+<p>(Note the code in calc_mean.py is not safe in terms of parallel random number generation - see Section 8 later in this document.)</p>
 </div>
 <div id="using-a-future-via-delayed" class="slide section level1">
 <h1>3.1. Using a 'future' via <code>delayed</code></h1>
@@ -108,8 +108,9 @@ p = 10
 futures = [dask.delayed(calc_mean)(i, n) for i in range(p)]
 futures
 results = dask.compute(*futures)</code></pre>
-<p>You could set the scheduler in the <code>compute</code> call, but it is best practice to separate what is parallelized from where the parallelization is done. The latter can be specified at the start of your code.</p>
+<p>You could set the scheduler in the <code>compute</code> call:</p>
 <pre><code>results = dask.compute(*future, scheduler = &#39;processes&#39;)</code></pre>
+<p>but it is best practice to separate what is parallelized from where the parallelization is done, specifying the scheduler at the start of your code.</p>
 </div>
 <div id="parallel-maps" class="slide section level1">
 <h1>3.2. Parallel maps</h1>
@@ -143,7 +144,7 @@ z = dask.delayed(add)(x, y)
 z.compute()
 
 z.visualize(filename = &#39;task_graph.svg&#39;)</code></pre>
-<p><code>visualize</code> uses the <code>graphviz</code> package to illustrate the task graph (similar to a directed acyclic graph in a statistical model and to how tensorflow organizes its computations).</p>
+<p><code>visualize()</code> uses the <code>graphviz</code> package to illustrate the task graph (similar to a directed acyclic graph in a statistical model and to how Tensorflow organizes its computations).</p>
 <p>One can also tell Dask to always delay evaluation of a given function:</p>
 <pre><code>@dask.delayed
 def inc(x):
@@ -235,7 +236,7 @@ rs[0:5]</code></pre>
 </div>
 <div id="dataframes-pandas" class="slide section level1">
 <h1>4.2. Dataframes (pandas)</h1>
-<p>Dask dataframes are Pandas-like dataframes where each dataframe is split by row into smaller Pandas dataframes.</p>
+<p>Dask dataframes are Pandas-like dataframes where each dataframe is split into groups of rows, stored as smaller Pandas dataframes.</p>
 <p>One can do a lot of the kinds of computations that you would do on a Pandas dataframe on a Dask dataframe, but many operations are not possible. See <a href="http://docs.dask.org/en/latest/dataframe-api.html">here</a>.</p>
 <p>By default dataframes are handled by the threads scheduler.</p>
 <p>Here's an example of reading from a dataset of flight delays (about 11 GB data). You can get the data <a href="https://www.stat.berkeley.edu/share/paciorek/1987-2008.csvs.tgz">here</a>.</p>
@@ -244,9 +245,10 @@ dask.config.set(scheduler=&#39;threads&#39;, num_workers = 4)
 import dask.dataframe as ddf
 air = ddf.read_csv(&#39;/scratch/users/paciorek/243/AirlineData/csvs/*.csv.bz2&#39;,
       compression = &#39;bz2&#39;,
-      encoding = &#39;latin1&#39;,   # there is/are (unexpectedly) latin1 value(s) in the year 2001 file TailNum field
+      encoding = &#39;latin1&#39;,   # (unexpected) latin1 value(s) 2001 file TailNum field
       dtype = {&#39;Distance&#39;: &#39;float64&#39;, &#39;CRSElapsedTime&#39;: &#39;float64&#39;,
-      &#39;TailNum&#39;: &#39;object&#39;, &#39;CancellationCode&#39;: &#39;object&#39;})  # so Pandas doesn&#39;t complain about column type heterogeneity
+      &#39;TailNum&#39;: &#39;object&#39;, &#39;CancellationCode&#39;: &#39;object&#39;})
+# specify dtypes so Pandas doesn&#39;t complain about column type heterogeneity
       
 air.DepDelay.max().compute()   # this takes a while
 sub = air[(air.UniqueCarrier == &#39;UA&#39;) &amp; (air.Origin == &#39;SFO&#39;)]
@@ -265,6 +267,7 @@ CLE     4.000000
 <h1>4.3. Bags</h1>
 <p>Bags are like lists but there is no particular ordering, so it doesn't make sense to ask for the i'th element.</p>
 <p>You can think of operations on Dask bags as being like parallel map operations on lists in Python or R.</p>
+<p>By default bags are handled via the multiprocessing scheduler.</p>
 <p>Let's see some basic operations on a large dataset of Wikipedia log files. You can get a subset of the Wikipedia data <a href="https://www.stat.berkeley.edu/share/paciorek/wikistats_example.tar.gz">here</a>.</p>
 <pre><code>import dask.multiprocessing
 dask.config.set(scheduler=&#39;processes&#39;, num_workers = 4)  # multiprocessing is the default
@@ -310,7 +313,7 @@ time.time() - t0    # 20 sec.</code></pre>
 </div>
 <div id="multi-process-parallelization-via-dask-multiprocessing" class="slide section level1">
 <h1>5.2. Multi-process parallelization via Dask Multiprocessing</h1>
-<p>We can more effectively parallelize by using multiple Python processes.</p>
+<p>We can often more effectively parallelize by using multiple Python processes.</p>
 <pre><code>import dask.multiprocessing
 dask.config.set(scheduler=&#39;processes&#39;, num_workers = 4)  
 n = 100000000
@@ -324,7 +327,7 @@ time.time() - t0  # 5 sec.</code></pre>
 </div>
 <div id="multi-process-parallelization-via-dask-distributed-local" class="slide section level1">
 <h1>5.3. Multi-process parallelization via Dask Distributed (local)</h1>
-<p>According to the Dask documentation, using Distributed on a local machine has advantages over multiprocessing, including the diagnostic dashboard and better handling of when copies need to be made. As we saw previously using Distributed also allows us to use the handy <code>map()</code> operation.</p>
+<p>According to the Dask documentation, using Distributed on a local machine has advantages over multiprocessing, including the diagnostic dashboard (see Section 7) and better handling of when copies need to be made. As we saw previously using Distributed also allows us to use the handy <code>map()</code> operation.</p>
 <pre><code>from dask.distributed import Client, LocalCluster
 cluster = LocalCluster(n_workers = 4)
 c = Client(cluster)
@@ -359,11 +362,11 @@ c.close()</code></pre>
 <h1>5.5. Distributed processing using multiple machines within a SLURM scheduler job</h1>
 <p>To run within a SLURM job we can use <code>dask-ssh</code> or a combination of <code>dask-scheduler</code> and <code>dask-worker</code>..</p>
 <p>Provided that we have used --ntasks or --nodes and --ntasks-per-node to set the number of CPUs desired (and not --cpus-per-task), we can use <code>srun</code> to enumerate where the workers should run.</p>
-<p>First we'll start the scheduler and the workers. (On Savio use up-to-date version of dask binaries in .local-- dask-scheduler and dask-worker.)</p>
+<p>First we'll start the scheduler and the workers. (On Savio make sure to use up-to-date version of dask binaries (dask-scheduler and dask-worker) in user-installed recent version of Dask.)</p>
 <pre><code>export SCHED=$(hostname)
 dask-scheduler&amp;
 sleep 10
-srun dask-worker tcp://${SCHED}:8786 &amp;   # ${SCHED}.berkeley.edu
+srun dask-worker tcp://${SCHED}:8786 &amp;   # might need ${SCHED}.berkeley.edu
 sleep 20</code></pre>
 <p>Then in Python, connect to the cluster via the scheduler.</p>
 <pre><code>import os
@@ -412,7 +415,7 @@ dask-ssh --scheduler ${SCHED} --hostfile .hosts</code></pre>
 </div>
 <div id="nested-parallelization-and-pipelines" class="slide section level1">
 <h1>6.1. Nested parallelization and pipelines</h1>
-<p>We can set up nested parallelization and just have Dask's delayed functionality figure out how to do the parallelization.</p>
+<p>We can set up nested parallelization (or an arbitrary set of computations) and just have Dask's delayed functionality figure out how to do the parallelization, provided there is a single call to the compute() method.</p>
 <pre><code>import dask.multiprocessing
 dask.config.set(scheduler=&#39;processes&#39;, num_workers = 4)  
 
@@ -448,7 +451,7 @@ time.time() - t0</code></pre>
 <p>One implication is that if you can include all computations on a large dataset within a single computational graph (i.e., a call to <code>compute</code>) that may be much more efficient than making separate calls.</p>
 <p>Here's an example with Dask bag on the Wikipedia data, where we make sure to do all our computations as part of one graph:</p>
 <pre><code>import dask.multiprocessing
-dask.config.set(scheduler=&#39;processes&#39;, num_workers = 4)  # multiprocessing is the default
+dask.config.set(scheduler=&#39;processes&#39;, num_workers = 4)  
 import dask.bag as db
 wiki = db.read_text(&#39;/scratch/users/paciorek/wikistats/dated_2017/part-0000*gz&#39;)
 
@@ -520,7 +523,7 @@ time.time() - t0    # 2.5 sec. </code></pre>
 <p>That took a few seconds if we delay the data but takes ~40 seconds if we don't. Note that Dask does warn us if it detects a situation like this where we haven't delayed the data.</p>
 </div>
 <div id="parallel-io" class="slide section level1">
-<h1>6.4. Parallel I/O</h1>
+<h1>6.5. Parallel I/O</h1>
 <p>For this to make sense we want to be on a system where we can read multiple files without having the bottleneck of accessing a single disk. For example the Savio filesystem is set up for fast parallel I/O.</p>
 <p>(Note that I'm using the 'processes' scheduler here because I ran into issues with the workers starting when using a Distributed (local) cluster.)</p>
 <pre><code>import dask.multiprocessing
@@ -531,7 +534,8 @@ dask.config.set(scheduler = &#39;processes&#39;, num_workers = 24)
 ## dataset back to master process to avoid copying cost
 def readfun(yr):
     import pandas as pd
-    out = pd.read_csv(&#39;/global/scratch/paciorek/airline/&#39; + str(yr) + &#39;.csv.bz2&#39;, header = 0, encoding = &#39;latin1&#39;)
+    out = pd.read_csv(&#39;/global/scratch/paciorek/airline/&#39; + str(yr) + &#39;.csv.bz2&#39;,
+                      header = 0, encoding = &#39;latin1&#39;)
     return(len(out))
 
 results = []
@@ -554,7 +558,7 @@ for yr in range(1988, 1990):
 time.time() - t0  ## 40 sec. just for the first two</code></pre>
 </div>
 <div id="adaptive-scaling" class="slide section level1">
-<h1>6.5. Adaptive scaling</h1>
+<h1>6.6. Adaptive scaling</h1>
 <p>With a resource manager like Kubernetes, Dask can scale the number of workers up and down to adapt to the computational needs of a workflow.</p>
 </div>
 <div id="monitoring-jobs" class="slide section level1">
