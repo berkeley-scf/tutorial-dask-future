@@ -27,6 +27,7 @@
 <li>Different users can run the same code on different computational resources (without touching the actual code that does the computation).</li>
 <li>Dask provides distributed data structures that can be treated as a single data structures when runnig operations on them (like Spark and pbdR).</li>
 </ul>
+<p>The idea of a 'future' or 'delayed' operation is to tag operations such that they run lazily. Multiple operations can then be pipelined together and Dask can figure out how best to compute them in parallel on the computational resources available to a given user (which may be different than the resources available to a different user).</p>
 <p>Let's import dask to get started.</p>
 <pre><code>import dask</code></pre>
 </div>
@@ -41,36 +42,36 @@ dask.config.set(scheduler=&#39;processes&#39;, num_workers = 4)  </code></pre>
 <table>
 <thead>
 <tr class="header">
-<th align="left">Type</th>
-<th align="left">Description</th>
-<th align="left">Multi-node</th>
-<th align="left">Copies of objects made?</th>
+<th>Type</th>
+<th>Description</th>
+<th>Multi-node</th>
+<th>Copies of objects made?</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">synchronous</td>
-<td align="left">not in parallel</td>
-<td align="left">no</td>
-<td align="left">no</td>
+<td>synchronous</td>
+<td>not in parallel</td>
+<td>no</td>
+<td>no</td>
 </tr>
 <tr class="even">
-<td align="left">threaded</td>
-<td align="left">threads within current Python session</td>
-<td align="left">no</td>
-<td align="left">no</td>
+<td>threaded</td>
+<td>threads within current Python session</td>
+<td>no</td>
+<td>no</td>
 </tr>
 <tr class="odd">
-<td align="left">processes</td>
-<td align="left">background Python sessions</td>
-<td align="left">no</td>
-<td align="left">yes</td>
+<td>processes</td>
+<td>background Python sessions</td>
+<td>no</td>
+<td>yes</td>
 </tr>
 <tr class="even">
-<td align="left">distributed</td>
-<td align="left">Python sessions across multiple nodes</td>
-<td align="left">yes or no</td>
-<td align="left">yes</td>
+<td>distributed</td>
+<td>Python sessions across multiple nodes</td>
+<td>yes or no</td>
+<td>yes</td>
 </tr>
 </tbody>
 </table>
@@ -127,7 +128,7 @@ inputs = [(i, n) for i in range(p)]
 future = c.map(calc_mean_vargs, inputs)
 results = c.gather(future)
 results</code></pre>
-<p>The map operation appears to cache results. If you rerun the above with the same inputs, you get the same result back essentially instantaneously.</p>
+<p>The map operation appears to cache results. If you rerun the above with the same inputs, you get the same result back essentially instantaneously. HOWEVER, that means that if there is randomness in the results of your function for a given input, Dask will just continue to return the original output.</p>
 </div>
 <div id="delayed-evaluation-and-task-graphs" class="slide section level1">
 <h1>3.3. Delayed evaluation and task graphs</h1>
@@ -342,9 +343,9 @@ time.time() - t0   # 7 sec.</code></pre>
 <p>We need to set up a scheduler on one machine (possibly the machine we are on) and workers on whatever machines we want to do the computation on.</p>
 <p>One option is to use the <code>dask-ssh</code> command to start up the scheduler and workers. (Note that for this to work we need to have password-less SSH working to connect to the various machines.)</p>
 <pre><code>export SCHED=$(hostname)
-dask-ssh --scheduler ${SCHED} radagast radagast arwen arwen &amp;
+dask-ssh --scheduler ${SCHED} radagast.berkeley.edu radagast.berkeley.edu arwen.berkeley.edu arwen.berkeley.edu &amp;
 ## or:
-## echo -e &quot;radagast radagast arwen arwen&quot; &gt; .hosts
+## echo -e &quot;radagast.berkeley.edu radagast.berkeley.edu arwen.berkeley.edu arwen.berkeley.edu&quot; &gt; .hosts
 ## dask-ssh --scheduler ${SCHED} --hostfile .hosts</code></pre>
 <p>Then in Python, connect to the cluster via the scheduler.</p>
 <pre><code>from dask.distributed import Client
@@ -559,7 +560,7 @@ time.time() - t0  ## 40 sec. just for the first two</code></pre>
 </div>
 <div id="adaptive-scaling" class="slide section level1">
 <h1>6.6. Adaptive scaling</h1>
-<p>With a resource manager like Kubernetes, Dask can scale the number of workers up and down to adapt to the computational needs of a workflow.</p>
+<p>With a resource manager like Kubernetes, Dask can scale the number of workers up and down to adapt to the computational needs of a workflow. Similarly, if submitting jobs to SLURM via Dask, it will scale up and down automatically - see Section 9.</p>
 </div>
 <div id="monitoring-jobs" class="slide section level1">
 <h1>7. Monitoring jobs</h1>
@@ -638,6 +639,34 @@ c = Client(cluster)
 
 cluster.close()</code></pre>
 <p>On a cluster like Savio where you may need to provide an account (-A flag), you pass that via the <code>project</code> argument to <code>SLURMCluster</code>.</p>
+</div>
+<div id="adaptive-scaling-1" class="slide section level1">
+<h1>9.1. Adaptive scaling</h1>
+<p>If you use <code>cluster.adapt()</code> in place of <code>cluster.scale()</code>, Dask will start and stop SLURM jobs to start and stop workers as needed. Note that on a shared cluster, you will almost certainly want to set a maximum number of workers to run at once so you don't accidentally submit 100s or 1000s of jobs.</p>
+<p>I'm still figuring out how this works. It seems to work well when having each SLURM job control one worker on one core - in that case Dask starts a set of workers and uses those workers to iterate through the tasks. However when I try to use 16 workers per SLURM job, Dask submits a series of single 16-core jobs rather than using two 16-core jobs that stay active while working through the tasks.</p>
+<pre><code>import dask_jobqueue
+## Each job will include 16 Dask workers and a total of 16 cores (1 per worker)
+## This should now start up to 32 Dask workers, but only one set of 16 workers seems to start
+## and SLURM jobs start and stop in quick succession.
+## cluster = dask_jobqueue.SLURMCluster(processes=16, cores=16, memory=&#39;24 GB&#39;)  
+
+## In contrast, this seems to work well.
+cluster = dask_jobqueue.SLURMCluster(cores = 1, memory = &#39;24 GB&#39;)
+
+cluster.adapt(minimum=0, maximum=32)
+
+from dask.distributed import Client
+c = Client(cluster)
+
+## carry out your parallel computations
+p=200
+n=10000000
+inputs = [(i, n) for i in range(p)]
+# execute the function across the array of input values
+future = c.map(calc_mean_vargs, inputs)
+results = c.gather(future)
+
+cluster.close()</code></pre>
 </div>
 </body>
 </html>

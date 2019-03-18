@@ -126,7 +126,7 @@ results = c.gather(future)
 results
 ```
 
-The map operation appears to cache results. If you rerun the above with the same inputs, you get the same result back essentially instantaneously.
+The map operation appears to cache results. If you rerun the above with the same inputs, you get the same result back essentially instantaneously. HOWEVER, that means that if there is randomness in the results of your function for a given input, Dask will just continue to return the original output.
 
 
 # 3.3. Delayed evaluation and task graphs
@@ -424,9 +424,9 @@ to the various machines.)
 
 ```
 export SCHED=$(hostname)
-dask-ssh --scheduler ${SCHED} radagast radagast arwen arwen &
+dask-ssh --scheduler ${SCHED} radagast.berkeley.edu radagast.berkeley.edu arwen.berkeley.edu arwen.berkeley.edu &
 ## or:
-## echo -e "radagast radagast arwen arwen" > .hosts
+## echo -e "radagast.berkeley.edu radagast.berkeley.edu arwen.berkeley.edu arwen.berkeley.edu" > .hosts
 ## dask-ssh --scheduler ${SCHED} --hostfile .hosts
 ```
 
@@ -724,7 +724,7 @@ time.time() - t0  ## 40 sec. just for the first two
 
 # 6.6. Adaptive scaling
 
-With a resource manager like Kubernetes, Dask can scale the number of workers up and down to adapt to the computational needs of a workflow.
+With a resource manager like Kubernetes, Dask can scale the number of workers up and down to adapt to the computational needs of a workflow. Similarly, if submitting jobs to SLURM via Dask, it will scale up and down automatically - see Section 9.
 
 # 7. Monitoring jobs
 
@@ -836,3 +836,34 @@ cluster.close()
 On a cluster like Savio where you may need to provide an account (-A flag), you pass
 that via the `project` argument to `SLURMCluster`.
 
+# 9.1. Adaptive scaling
+
+If you use `cluster.adapt()` in place of `cluster.scale()`, Dask will start and stop SLURM jobs to start and stop workers as needed.  Note that on a shared cluster, you will almost certainly want to set a maximum number of workers to run at once so you don't accidentally submit 100s or 1000s of jobs.
+
+I'm still figuring out how this works. It seems to work well when having each SLURM job control one worker on one core - in that case Dask starts a set of workers and uses those workers to iterate through the tasks. However when I try to use 16 workers per SLURM job, Dask submits a series of single 16-core jobs rather than using two 16-core jobs that stay active while working through the tasks.
+
+```
+import dask_jobqueue
+## Each job will include 16 Dask workers and a total of 16 cores (1 per worker)
+## This should now start up to 32 Dask workers, but only one set of 16 workers seems to start
+## and SLURM jobs start and stop in quick succession.
+## cluster = dask_jobqueue.SLURMCluster(processes=16, cores=16, memory='24 GB')  
+
+## In contrast, this seems to work well.
+cluster = dask_jobqueue.SLURMCluster(cores = 1, memory = '24 GB')
+
+cluster.adapt(minimum=0, maximum=32)
+
+from dask.distributed import Client
+c = Client(cluster)
+
+## carry out your parallel computations
+p=200
+n=10000000
+inputs = [(i, n) for i in range(p)]
+# execute the function across the array of input values
+future = c.map(calc_mean_vargs, inputs)
+results = c.gather(future)
+
+cluster.close()
+```

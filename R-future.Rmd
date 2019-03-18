@@ -226,14 +226,14 @@ If we know the names of the machines and can access them via password-less SSH, 
 Here we want to use four cores on one machine.
 
 ```{r, cluster, eval = FALSE}
-workers <- rep('arwen',4)
+workers <- rep('arwen.berkeley.edu',4)
 plan(cluster, workers = workers)
 ```
 
 Here we want to use two cores on one machine and two on another.
 
 ```{r, cluster2}
-workers <- c(rep('arwen', 2), rep('beren', 2))
+workers <- c(rep('arwen.berkeley.edu', 2), rep('beren.berkeley.edu', 2))
 plan(cluster, workers = workers)
 # Check we are getting workers in the right places:
 future_sapply(seq_along(workers), function(i) Sys.getenv('HOST'))
@@ -394,7 +394,7 @@ plan(list(tweak(cluster, workers = nodes), tweak(multiprocess, workers = 2)))
 To run each parameter across as many workers as are available on each of multiple machines:
 
 ```{r, nested-plan2, eval = FALSE}
-nodes <- c('arwen', 'beren', 'radagast', 'gandalf')
+nodes <- c('arwen.berkeley.edu', 'beren.berkeley.edu', 'radagast.berkeley.edu', 'gandalf.berkeley.edu')
 plan(list(tweak(cluster, workers = nodes), multiprocess))
 ```
 
