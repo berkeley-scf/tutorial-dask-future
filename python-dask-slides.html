@@ -482,7 +482,7 @@ obama[0:5]</code></pre>
 <p>In general you want to delay the input objects. There are a couple reasons why:</p>
 <ul>
 <li>Dask hashes the object to create a name, and if you pass the same object as an argument multiple times, it will repeat that hashing.</li>
-<li>When using the distributed scheduler, delaying the inputs will prevent sending the data separately for every task (rather it should send the data separately for each worker). worker, even if the tasks all use the same objects.</li>
+<li>When using the distributed scheduler, delaying the inputs will prevent sending the data separately for every task (rather it should send the data separately for each worker).</li>
 </ul>
 <p>In this example, most of the &quot;computational&quot; time is actually spent transferring the data rather than computing the mean.</p>
 <pre><code>dask.config.set(scheduler = &#39;processes&#39;, num_workers = 4)  

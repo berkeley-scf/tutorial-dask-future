@@ -625,7 +625,6 @@ In general you want to delay the input objects. There are a couple reasons why:
 
   - Dask hashes the object to create a name, and if you pass the same object as an argument multiple times, it will repeat that hashing.
   - When using the distributed scheduler, delaying the inputs will prevent sending the data separately for every task (rather it should send the data separately for each worker).
-worker, even if the tasks all use the same objects.
 
 In this example, most of the "computational" time is actually spent transferring the data
 rather than computing the mean.
