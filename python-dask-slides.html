@@ -337,6 +337,19 @@ futures = [dask.delayed(calc_mean)(i, n) for i in range(p)]
 t0 = time.time()
 results = dask.compute(*futures)
 time.time() - t0   # 7 sec.</code></pre>
+<p>IMPORTANT: The above code will work when run in an interactive Python session. However, if you want to run it within a Python script (i.e., in a background/batch job), you'll need to set up the cluster and run the code within an <code>if __name__ == '__main__'</code> block:</p>
+<pre><code>from dask.distributed import Client, LocalCluster
+
+if __name__ == &#39;__main__&#39;:
+    from calc_mean import *
+
+    cluster = LocalCluster(n_workers = 4)
+    c = Client(cluster)
+
+    futures = [dask.delayed(calc_mean)(i, n) for i in range(p)]
+    t0 = time.time()
+    results = dask.compute(*futures)
+    time.time() - t0   # 7 sec.</code></pre>
 </div>
 <div id="distributed-processing-across-multiple-machines-via-an-ad-hoc-cluster" class="slide section level1">
 <h1>5.4. Distributed processing across multiple machines via an ad hoc cluster</h1>
@@ -639,6 +652,8 @@ c = Client(cluster)
 
 cluster.close()</code></pre>
 <p>On a cluster like Savio where you may need to provide an account (-A flag), you pass that via the <code>project</code> argument to <code>SLURMCluster</code>.</p>
+<p>If you'd like to see the SLURM job script that Dask constructs and submits, you can run:</p>
+<pre><code>cluster.job_script()</code></pre>
 </div>
 <div id="adaptive-scaling-1" class="slide section level1">
 <h1>9.1. Adaptive scaling</h1>

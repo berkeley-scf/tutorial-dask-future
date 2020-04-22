@@ -300,6 +300,19 @@ futures = [dask.delayed(calc_mean)(i, n) for i in range(p)]
 t0 = time.time()
 results = dask.compute(*futures)
 time.time() - t0   # 7 sec.</code></pre>
+<p>IMPORTANT: The above code will work when run in an interactive Python session. However, if you want to run it within a Python script (i.e., in a background/batch job), you'll need to set up the cluster and run the code within an <code>if __name__ == '__main__'</code> block:</p>
+<pre><code>from dask.distributed import Client, LocalCluster
+
+if __name__ == &#39;__main__&#39;:
+    from calc_mean import *
+
+    cluster = LocalCluster(n_workers = 4)
+    c = Client(cluster)
+
+    futures = [dask.delayed(calc_mean)(i, n) for i in range(p)]
+    t0 = time.time()
+    results = dask.compute(*futures)
+    time.time() - t0   # 7 sec.</code></pre>
 <h1 id="distributed-processing-across-multiple-machines-via-an-ad-hoc-cluster">5.4. Distributed processing across multiple machines via an ad hoc cluster</h1>
 <p>We need to set up a scheduler on one machine (possibly the machine we are on) and workers on whatever machines we want to do the computation on.</p>
 <p>One option is to use the <code>dask-ssh</code> command to start up the scheduler and workers. (Note that for this to work we need to have password-less SSH working to connect to the various machines.)</p>
@@ -578,6 +591,8 @@ c = Client(cluster)
 
 cluster.close()</code></pre>
 <p>On a cluster like Savio where you may need to provide an account (-A flag), you pass that via the <code>project</code> argument to <code>SLURMCluster</code>.</p>
+<p>If you'd like to see the SLURM job script that Dask constructs and submits, you can run:</p>
+<pre><code>cluster.job_script()</code></pre>
 <h1 id="adaptive-scaling-1">9.1. Adaptive scaling</h1>
 <p>If you use <code>cluster.adapt()</code> in place of <code>cluster.scale()</code>, Dask will start and stop SLURM jobs to start and stop workers as needed. Note that on a shared cluster, you will almost certainly want to set a maximum number of workers to run at once so you don't accidentally submit 100s or 1000s of jobs.</p>
 <p>I'm still figuring out how this works. It seems to work well when having each SLURM job control one worker on one core - in that case Dask starts a set of workers and uses those workers to iterate through the tasks. However when I try to use 16 workers per SLURM job, Dask submits a series of single 16-core jobs rather than using two 16-core jobs that stay active while working through the tasks.</p>
