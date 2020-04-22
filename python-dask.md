@@ -835,6 +835,12 @@ cluster.close()
 On a cluster like Savio where you may need to provide an account (-A flag), you pass
 that via the `project` argument to `SLURMCluster`.
 
+If you'd like to see the SLURM job script that Dask constructs and submits, you can run:
+
+```
+cluster.job_script()
+```
+
 # 9.1. Adaptive scaling
 
 If you use `cluster.adapt()` in place of `cluster.scale()`, Dask will start and stop SLURM jobs to start and stop workers as needed.  Note that on a shared cluster, you will almost certainly want to set a maximum number of workers to run at once so you don't accidentally submit 100s or 1000s of jobs.
