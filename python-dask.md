@@ -412,6 +412,25 @@ results = dask.compute(*futures)
 time.time() - t0   # 7 sec.
 ```
 
+IMPORTANT: The above code will work when run in an interactive Python
+session. However, if you want to run it within a Python script (i.e., in a background/batch job),
+you'll need to set up the cluster and run the code within an `if __name__ == '__main__'` block:
+
+```
+from dask.distributed import Client, LocalCluster
+
+if __name__ == '__main__':
+	from calc_mean import *
+
+	cluster = LocalCluster(n_workers = 4)
+	c = Client(cluster)
+
+	futures = [dask.delayed(calc_mean)(i, n) for i in range(p)]
+	t0 = time.time()
+	results = dask.compute(*futures)
+	time.time() - t0   # 7 sec.
+```
+
 # 5.4. Distributed processing across multiple machines via an ad hoc cluster
 
 We need to set up a scheduler on one machine (possibly the machine we are on)
