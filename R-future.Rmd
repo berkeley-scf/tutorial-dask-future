@@ -39,9 +39,9 @@ One uses `plan()` to control how parallelization is done, including what machine
 For example,
 
 ```{r, plan}
-plan(multiprocess)  ## spreads work across multiple cores
+plan(multisession)  ## spreads work across multiple cores
 # also, can control number of workers
-plan(multiprocess, workers = 4)
+plan(multisession, workers = 4)
 ```
 
 This table gives an overview of the different plans. 
@@ -49,14 +49,15 @@ This table gives an overview of the different plans.
 
 |Type          |Description                                                |Multi-node|Copies of objects made?   |
 | ------------ | --------------------------------------------------------- | -------- | ------------------------ |
-|multiprocess  |either multicore (non-Windows) or multisession (Windows)   |no        |see below                 |
 |multisession  |background R sessions                                      |no        |yes                       |
-|multicore     |forked R processes                                         |no        |not if object not modified|
+|multicore     |forked R processes (not available in Windows nor RStudio   |no        |not if object not modified|
 |remote        |R process on another machine                               |yes       |yes                       |
 |cluster       |R sessions on other machine(s)                             |yes       |yes                       |
 
 
-For the next section (Section 3), we'll just assume use of multiprocess and will provide more details on the other plans in the following section (Section 4).
+For the next section (Section 3), we'll just assume use of multisession and will provide more details on the other plans in the following section (Section 4).
+
+The deprecated `multiprocess` plan used either `multisession` on Windows and `multicore` on MacOS/Linux.
 
 # 3. Implementing operations in parallel
 
@@ -68,18 +69,20 @@ You can parallelize lapply and related functions easily. This is a nice replacem
 
 ```{r, future_lapply}
 library(future.apply)
-plan(multiprocess)  # or some other plan
-output <- future_lapply(1:20, function(i) mean(rnorm(1e7)), future.seed = 1)
+plan(multisession)  # or some other plan
+output <- future_lapply(1:20, function(i) mean(rnorm(1e7)), future.seed = TRUE)
 # or sapply:
-# output <- future_sapply(1:20, function(i) mean(rnorm(1e7)), future.seed = 1)
+# output <- future_sapply(1:20, function(i) mean(rnorm(1e7)), future.seed = TRUE)
 ```
+
+Alternatively, you can use `furrr:future_map` to run a parallel map operation explicitly (i.e., taking a functional programming perspective).
 
 # 3.2. foreach
 
 You can also continue to use `foreach` if you like that approach. (Note the code here is not safe in terms of parallel randon number generation - see section later in this document.)
 
 ```{r, foreach}
-plan(multiprocess)  # or some other plan
+plan(multisession)  # or some other plan
 
 library(doFuture)
 registerDoFuture()
@@ -100,7 +103,7 @@ While future_lapply and foreach are fine, the future package introduces a new st
 
 
 ```{r, future}
-plan(multiprocess, workers = 4)   # or some other plan
+plan(multisession, workers = 4)   # or some other plan
 n <- 20
 out <- list(); length(out) <- n
 for(i in seq_len(n)) {
@@ -128,7 +131,7 @@ This approach creates implicit futures, and one does not need to use `value` to 
 ```{r, future-listenv}
 library(listenv)
 
-plan(multiprocess, workers = 4)
+plan(multisession, workers = 4)
 n <- 20
 out <- listenv()
 for(i in seq_len(n)) {
@@ -159,6 +162,8 @@ system.time(
        c(mean(tmp), sd(tmp))
        })
 )
+# check if the calculation is done in a non-blocking way:
+system.time(resolved(out))
 # getting the value is blocking
 system.time(value(out))
 
@@ -169,6 +174,8 @@ system.time(
        tmp <- rnorm(2e7)
        c(mean(tmp), sd(tmp))
        })
+# check if the calculation is done in a non-blocking way:
+system.time(resolved(futureOf(out)))
 # getting the value is blocking
 system.time(out)
 ```
@@ -178,7 +185,7 @@ system.time(out)
 In contrast, in a for loop, creation of additional futures is blocked if all workers are busy evaluating other futures. So in this case, evaluation of the first four futures blocks, but once the last two futures start to be evaluated, control returns to the user while those futures are evaluated in the background.
 
 ```{r, blocking-for}
-plan(multiprocess, workers = 2)
+plan(multisession, workers = 2)
 n <- 6
 out <- listenv()
 system.time(rnorm(2e7))
@@ -209,14 +216,16 @@ plan(sequential)
 ## future_lapply, foreach with doFuture, etc. all will still work
 ```
 
+Note that like the parallel plans, the `sequential` plan evaluates all code in an isolated ('local') environment, so your R working environment is not affected. 
+
 Actually even better for debugging is the `transparent` plan, which provides additional useful output.
 
-# 4.2. Multicore processing on one machine
+# 4.2. Multiple core processing on one machine
 
-We've already seen that we can use the `multiprocess` plan to parallelize across the cores of one machine.
+We've already seen that we can use the `multisession` plan to parallelize across the cores of one machine.
 
-```{r, multiprocess, eval = FALSE}
-plan(multiprocess, workers = 2)
+```{r, multisession, eval = FALSE}
+plan(multisession, workers = 2)
 ```
 
 # 4.3. Distributed processing across multiple machines via an ad hoc cluster
@@ -297,16 +306,19 @@ g
 
 # 6. Avoiding copies when doing multi-process parallelization on a single node
 
+The future package automatically identifies the objects needed by your future-based code and makes copies of those objects for use in the worker processes. 
+
 If you're working with large objects, making a copy of the objects for each
 of the worker processes can be a significant time cost and can greatly increase
 your memory use.
 
-On non-Windows machines, the multicore plan (which is what is used by the
-multiprocess plan on such machines) forks the main R process. This creates
+On non-Windows machines, the multicore plan (not available on Windows or in RStudio) forks the main R process. This creates
 R worker processes with the same state as the original R process.
-Interestingly, this means that global variables in the forked worker processes are just references to the objects in memory in the original R process. So the additional processes do not use additional memory for those objects (despite what is shown in *top*) and there is no time involved in making copies. However, if you modify objects in the worker processes then copies are made. 
+Interestingly, this means that global variables in the forked worker processes are just references to the objects in memory in the original R process. So the additional processes do not use additional memory for those objects (despite what is shown in *top*) and there is no time involved in making copies. However, if you modify objects in the worker processes then copies are made.
 
-Unfortunately, the *top* program on a Linux machine or a Mac will make it look like additional memory is being used. On a Linux machine the command `free -h` shows the usable remaining memory under the 'Available' column of the 'Mem' row, e.g., here we see 6.5 GB available and 8.2 GB used. (Note that the 'free' column omits memory that is actually available but is temporarily in use for caching.)
+So, the take-home message is that using `multicore` on non-Windows machines can have a big advantage when working with large data objects.
+
+Unfortunately, the *top* program on Linux or MacOS will make it look like additional memory is being used. On a Linux machine the command `free -h` shows the usable remaining memory under the 'Available' column of the 'Mem' row, e.g., here we see 6.5 GB available and 8.2 GB used. (Note that the 'free' column omits memory that is actually available but is temporarily in use for caching.)
 
 ```
 paciorek@smeagol:~/staff/workshops/r-future> free -h
@@ -325,7 +337,7 @@ watch -n 0.1 free -h
 # allow total size of global variables to be large enough...
 options(future.globals.maxSize = 1e9)
 x <- rnorm(5e7)
-plan(multiprocess, workers = 3)  # forks (where supported, not Windows); no copying!
+plan(multicore, workers = 3)  # forks; no copying!
 system.time(tmp <- future_sapply(1:100, function(i) mean(x)))
 
 options(future.globals.maxSize = 1e9)
@@ -349,7 +361,7 @@ modify the defaults for a type of future.
 (Note the code here is not safe in terms of parallel random number generation - see section later in this document.)
 
 ```{r, nested}
-plan(list(tweak(multiprocess, workers = 4), sequential))
+plan(list(tweak(multisession, workers = 4), sequential))
 
 params <- cbind(c(0,0,1,1), c(1,2,1,2))
 p <- nrow(params)  # 4 in this case
@@ -385,29 +397,31 @@ To use eight cores on the current machine, two cores per outer iteration:
 
 ```{r, nested-plan, eval = FALSE}
 ## One option:
-plan(list(tweak(multisession, workers = 4), tweak(multiprocess, workers = 2)))
+plan(list(tweak(multisession, workers = 4), tweak(multisession, workers = 2)))
 ## Another option
 nodes <- rep('localhost', 4)
-plan(list(tweak(cluster, workers = nodes), tweak(multiprocess, workers = 2)))
+plan(list(tweak(cluster, workers = nodes), tweak(multisession, workers = 2)))
 ```
 
 To run each parameter across as many workers as are available on each of multiple machines:
 
 ```{r, nested-plan2, eval = FALSE}
 nodes <- c('arwen.berkeley.edu', 'beren.berkeley.edu', 'radagast.berkeley.edu', 'gandalf.berkeley.edu')
-plan(list(tweak(cluster, workers = nodes), multiprocess))
+plan(list(tweak(cluster, workers = nodes), multisession))
 ```
+
+Note that you can't use a multicore future at multiple levels as future prevents nested multicore parallelization:
 
 If there are many inner iterations and few outer iterations, we might simply do the
 outer iterations sequentially:
 
 ```{r, nested-plan3, eval = FALSE}
-plan(list(sequential, multiprocess))
+plan(list(sequential, multisession))
 ```
 
-Note that you can't use a multicore future at multiple levels (or equivalently multiprocess on a machine where it does multicore) as future prevents nested multicore parallelization:
+See the [future vignette on topologies](https://cran.r-project.org/web/packages/future/vignettes/future-3-topologies.html) for more configuration examples.
 
-Once you've set your code to allow parallelization at multiple levels, you can change the plan without ever touching the core code again.
+The really nice thing about this is that once you've set your code to allow parallelization at multiple levels, you can change the plan without ever touching the core code again.
 
 # 7.2. Hybrid parallelization: multiple processes plus threaded linear algebra
 
@@ -418,9 +432,7 @@ If you have access to threaded BLAS (e.g., MKL or openBLAS), as long as you set 
 
 In the code above, I was cavalier about the seeds for the random number generation in the different parallel computations.
 
-The future package integrates well with the L'Ecuyer parallel RNG approach, although the documentation is not great. There is a good discussion about seeds for `future_lapply` and `future_sapply` in the help for those functions.
-
-Here's what I have been able to learn.
+The future package [integrates well with the L'Ecuyer parallel RNG approach](https://www.jottr.org/2020/09/22/push-for-statical-sound-rng/#random-number-generation-in-the-future-framework). There is a good discussion about seeds for `future_lapply` and `future_sapply` in the help for those functions.
 
 # 8.1. future_lapply
 
@@ -434,13 +446,14 @@ future_sapply(1:n, function(i) rnorm(1), future.seed = 1)
 
 Basically future_lapply pregenerates a seed for each iteration using `parallel:::nextRNGStream`, which uses the L'Ecuyer algorithm. See [more details here](https://github.com/HenrikBengtsson/future/issues/126).
 
+Note that I use `future.seed = 1` above (rather than `future.seed = TRUE` as previously) in this case as a demonstration of how to get results that are the same every time the code is run. Of course you can use a number other than 1. 
 
 # 8.2. using future()
 
 You can (and should when using RNG) set the seed in `future()`. You'll need to set it to a L'Ecuyer-CMRG seed, which is a vector of six integers. Here's how you can do it, advancing the seed for each iteration using nextRNGStream().
 
 ```{r, rng-future}
-plan(multiprocess)   # or some other plan
+plan(multisession)   # or some other plan
 
 RNGkind("L'Ecuyer-CMRG")
 set.seed(1)
@@ -466,7 +479,7 @@ library(listenv)
 RNGkind("L'Ecuyer-CMRG")
 set.seed(1)
 nextSeed <- .Random.seed
-plan(multiprocess)   # or some other plan
+plan(multisession)   # or some other plan
 n <- 10
 out <- listenv()
 for(i in seq_len(n)) {
@@ -525,7 +538,7 @@ plan(list(tweak(batchtools_slurm, workers = 1,
                                  partition = "high",
                                  walltime = "00:05:00"),
                        template = "batchtools.slurm.tmpl"),
-          tweak(multiprocess, workers = numWorkers)))
+          tweak(multisession, workers = numWorkers)))
 
 myfuture <- future({ future_sapply(1:100, function(i) mean(rnorm(1e7)),
                                    future.seed = 1) })
