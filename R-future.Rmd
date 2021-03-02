@@ -47,12 +47,12 @@ plan(multisession, workers = 4)
 This table gives an overview of the different plans. 
 
 
-|Type          |Description                                                |Multi-node|Copies of objects made?   |
-| ------------ | --------------------------------------------------------- | -------- | ------------------------ |
-|multisession  |background R sessions                                      |no        |yes                       |
-|multicore     |forked R processes (not available in Windows nor RStudio   |no        |not if object not modified|
-|remote        |R process on another machine                               |yes       |yes                       |
-|cluster       |R sessions on other machine(s)                             |yes       |yes                       |
+|Type          |Description                                                 |Multi-node|Copies of objects made?   |
+| ------------ | ---------------------------------------------------------- | -------- | ------------------------ |
+|multisession  |background R sessions                                       |no        |yes                       |
+|multicore     |forked R processes (not available in Windows nor RStudio)   |no        |not if object not modified|
+|remote        |R process on another machine                                |yes       |yes                       |
+|cluster       |R sessions on other machine(s)                              |yes       |yes                       |
 
 
 For the next section (Section 3), we'll just assume use of multisession and will provide more details on the other plans in the following section (Section 4).
@@ -79,7 +79,7 @@ Alternatively, you can use `furrr:future_map` to run a parallel map operation ex
 
 # 3.2. foreach
 
-You can also continue to use `foreach` if you like that approach. (Note the code here is not safe in terms of parallel randon number generation - see section later in this document.)
+You can also continue to use `foreach` if you like that approach.
 
 ```{r, foreach}
 plan(multisession)  # or some other plan
@@ -89,17 +89,15 @@ registerDoFuture()
 
 out <- foreach(i = 1:20) %dopar% {
     print(i)
-    mean(rnorm(1e7))
+    mean(1:i)
 }
 ```
-
-Note that unlike with `doParallel`, the delay in printing the iteration values may indicate that tasks are preallocated and dispatched to the workers at once. I haven't investigated this.
 
 # 3.3. Using futures for parallelization
 
 While future_lapply and foreach are fine, the future package introduces a new style of parallelizing code using an explicit "future". Here we include the code for individual iterations inside `future()` to mark the unit of computation. The future package will then distribute the individual iterations to run in parallel, based on the plan.
 
-(Note the code here is not safe in terms of parallel randon number generation - see section later in this document.)
+(Here the code is safe in terms of parallel randon number generation because of the `seed` argument - see section later in this document.)
 
 
 ```{r, future}
@@ -111,11 +109,11 @@ for(i in seq_len(n)) {
        ## simply insert code here as you would with foreach; for example:
        tmp <- rnorm(1e7)
        c(mean(tmp), sd(tmp))
-     })
+     }, seed = TRUE)
 }
-class(out[[1]])
+class(out[[5]])
 ## Each return values (e.g., 'out[[1]]') is a wrapper, so use value() to access:
-value(out[[1]])
+value(out[[5]])
 ```
 
 # 3.4. Using implicit futures (with listenvs)
@@ -126,7 +124,7 @@ So we create a `listenv`, which is basically an environment that can be treated 
 
 This approach creates implicit futures, and one does not need to use `value` to get the result.
 
-(Note the code here is not safe in terms of parallel randon number generation - see section later in this document.)
+(Note that, as warned, the code here is not safe in terms of parallel randon number generation - see section later in this document.)
 
 ```{r, future-listenv}
 library(listenv)
@@ -154,30 +152,18 @@ A 'blocking call' prevents the user from continuing to evaluate more expressions
 Here we see that control returns to the user right away but asking for the value of the expression is a blocking call.
 
 ```{r, blocking}
-# future() is non-blocking
+# future() is non-blocking (as is %<-%)
 system.time(
      out <- future( {
        ## some code here as in foreach
        tmp <- rnorm(2e7)
        c(mean(tmp), sd(tmp))
-       })
+       }, seed = TRUE)
 )
 # check if the calculation is done in a non-blocking way:
 system.time(resolved(out))
 # getting the value is blocking
 system.time(value(out))
-
-# %<-% is non-blocking
-system.time(
-     out %<-% {
-       ## some code here as in foreach
-       tmp <- rnorm(2e7)
-       c(mean(tmp), sd(tmp))
-       })
-# check if the calculation is done in a non-blocking way:
-system.time(resolved(futureOf(out)))
-# getting the value is blocking
-system.time(out)
 ```
 
 ### Blocking in the context of a loop over futures
@@ -187,22 +173,24 @@ In contrast, in a for loop, creation of additional futures is blocked if all wor
 ```{r, blocking-for}
 plan(multisession, workers = 2)
 n <- 6
-out <- listenv()
-system.time(rnorm(2e7))
-## blocks until all futures are dispatched, so this should
-## take twice the time it takes for rnorm(2e7) to occur
+out <- list(); length(out) <- n
+
+## blocked until all six futures dispatched, so blocked until first four finish
 system.time(
 for(i in seq_len(n)) {
-     out[[i]] %<-% {
+     out[[i]] <- future( {
        tmp <- rnorm(2e7)
        c(mean(tmp), sd(tmp))
-     }})
-## not blocked as result already available
-system.time(out[[2]])
-## not blocked as result already available
-system.time(out[[4]])
+     }, seed = TRUE)
+})
+## not blocked as result already available once first four finished
+system.time(value(out[[2]]))
+## not blocked as result already available once first four finished
+system.time(value(out[[4]]))
 ## blocked as result still being evaluated
-system.time(out[[6]])
+system.time(value(out[[6]]))
+
+
 ```
 
 # 4. A tour of different backends
@@ -230,7 +218,7 @@ plan(multisession, workers = 2)
 
 # 4.3. Distributed processing across multiple machines via an ad hoc cluster
 
-If we know the names of the machines and can access them via password-less SSH, then we can simply provide the names of the machines to create a cluster and use the 'cluster' plan.
+If we know the names of the machines and can access them via password-less SSH (e.g., [using ssh keys](https://statistics.berkeley.edu/computing/ssh-keys), then we can simply provide the names of the machines to create a cluster and use the 'cluster' plan.
 
 Here we want to use four cores on one machine.
 
@@ -251,21 +239,18 @@ future_sapply(seq_along(workers), function(i) Sys.getenv('HOST'))
 
 # 4.4. Distributed processing across multiple machines within a SLURM scheduler job 
 
-If you are using SLURM and in your sbatch or srun command you use `--ntasks`, then the following will allow you to use as many R workers as the value of `ntasks`. One caveat is that one still needs to be able to access the various machines via password-less SSH, which is we are just now making possible on the SCF cluster (and already works on Savio).
-
-(Ignore the "srun: error" that may occur - that's a non-consequential bug in SLURM.)
+If you are using SLURM and in your sbatch or srun command you use `--ntasks`, then the following will allow you to use as many R workers as the value of `ntasks`. One caveat is that one still needs to be able to access the various machines via password-less SSH.
 
 ```{r, srun, eval = FALSE}
 workers <- system('srun hostname', intern = TRUE)
-cl <- parallel::makeCluster(workers)
-plan(cluster, workers = cl)
+plan(cluster, workers = workers)
 # and verify we're actually connected to the workers:
-future_sapply(seq_along(workers), function(i) system('hostname', intern = TRUE))
+future_sapply(seq_along(workers), function(i) Sys.info()[['nodename']])
 ```
 
 That works because `srun hostname` will print out the node IDs associated with each task within a SLURM job.
 
-Note that for this to work on Savio with multiple nodes, you will probably need to load the R module via your .bashrc so that all the nodes have R and dependent modules available.
+Note that for this to work on the Berkeley Savio campus cluster with multiple nodes, you will probably need to load the R module via your .bashrc so that all the nodes have R and dependent modules available.
 
 One can also directly pass the vector of worker names to the `workers` argument of `plan()`, which should invoke `future::makeClusterPSOCK`, but I was having trouble with that hanging on Savio.
 
@@ -428,36 +413,37 @@ The really nice thing about this is that once you've set your code to allow para
 If you have access to threaded BLAS (e.g., MKL or openBLAS), as long as you set OMP_NUM_THREADS greater than 1, then any linear algebra should be parallelized within each of the iterations in a loop or apply statement.
 
 
-# 8. RNG
+# 8. Reliable random number generation (RNG)
 
 In the code above, I was cavalier about the seeds for the random number generation in the different parallel computations.
 
 The future package [integrates well with the L'Ecuyer parallel RNG approach](https://www.jottr.org/2020/09/22/push-for-statical-sound-rng/#random-number-generation-in-the-future-framework). There is a good discussion about seeds for `future_lapply` and `future_sapply` in the help for those functions.
 
-# 8.1. future_lapply
+# 8.1. The seed for future_lapply
 
 Here we can set a single seed. Behind the scenes the L'Ecuyer-CMRG RNG is used so that the random numbers generated for each iteration are independent. Note there is some overhead here when the number of iterations is large.
 
 ```{r, rng-apply}
 library(future.apply)
 n <- 4
-future_sapply(1:n, function(i) rnorm(1), future.seed = 1)
+set.seed(1)
+future_sapply(1:n, function(i) rnorm(1), future.seed = TRUE)
+set.seed(1)
+future_sapply(1:n, function(i) rnorm(1), future.seed = TRUE)
 ```
 
 Basically future_lapply pregenerates a seed for each iteration using `parallel:::nextRNGStream`, which uses the L'Ecuyer algorithm. See [more details here](https://github.com/HenrikBengtsson/future/issues/126).
 
-Note that I use `future.seed = 1` above (rather than `future.seed = TRUE` as previously) in this case as a demonstration of how to get results that are the same every time the code is run. Of course you can use a number other than 1. 
+I could also have set `future.seed = 1` instead of setting the seed using `set.seed`.
 
-# 8.2. using future()
+# 8.2. The seed when using futures directly
 
-You can (and should when using RNG) set the seed in `future()`. You'll need to set it to a L'Ecuyer-CMRG seed, which is a vector of six integers. Here's how you can do it, advancing the seed for each iteration using nextRNGStream().
+You can (and should when using RNG) set the seed in `future()`. 
 
 ```{r, rng-future}
-plan(multisession)   # or some other plan
+plan(multisession,workers=4)   # or some other plan
 
-RNGkind("L'Ecuyer-CMRG")
 set.seed(1)
-nextSeed <- .Random.seed
 n <- 10
 out <- list(); length(out) <- n
 for(i in seq_len(n)) {
@@ -465,13 +451,12 @@ for(i in seq_len(n)) {
        ## some code here as in foreach
        tmp <- rnorm(1e7)
        c(mean(tmp), sd(tmp))
-     }, seed = nextSeed)
-     nextSeed <- parallel::nextRNGStream(nextSeed)
+     }, seed = TRUE)
 }
-valsExplicit <- sapply(out, value)
+sapply(out, value)
 ```
 
-or with implicit futures:
+With implicit futures, you'll need to manually set the seed to a L'Ecuyer-CMRG seed, which is a vector of six integers. Here's how you can do it, advancing the seed for each iteration using nextRNGStream().
 
 
 ```{r, rng-future-implicit}
@@ -479,7 +464,6 @@ library(listenv)
 RNGkind("L'Ecuyer-CMRG")
 set.seed(1)
 nextSeed <- .Random.seed
-plan(multisession)   # or some other plan
 n <- 10
 out <- listenv()
 for(i in seq_len(n)) {
@@ -490,13 +474,11 @@ for(i in seq_len(n)) {
      } %seed% nextSeed
      nextSeed <- parallel::nextRNGStream(nextSeed)
 }
-as.list(out)
+do.call(cbind, as.list(out))
 
-valsImplicit <- do.call(cbind, as.list(out))
-identical(valsImplicit, valsExplicit)
 ```
 
-# 8.3. Using foreach
+# 8.3. The seed with foreach
 
 See the example code in `help(doFuture)` for template code on how to use the `%doRNG%` operator with foreach to ensure correct RNG with foreach.
 
