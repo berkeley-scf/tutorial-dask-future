@@ -333,7 +333,8 @@ import dask.array as da
 import numpy as np
 import time
 t0 = time.time()
-x = np.random.normal(0, 1, size=(40000,40000))
+rng = np.random.default_rng()
+x = rng.normal(0, 1, size=(40000,40000))
 time.time() - t0   # 110 sec.
 # for some reason the from_array and da.mean calculations are not done lazily here
 t0 = time.time()
@@ -586,7 +587,8 @@ dask.config.set(scheduler = 'processes', num_workers = 4)
 @dask.delayed
 def calc_mean_vargs2(inputs, nobs):
     import numpy as np
-    data = np.random.normal(inputs[0], inputs[1], nobs)
+    rng = np.random.default_rng()
+    data = rng.normal(inputs[0], inputs[1], nobs)
     return([np.mean(data), np.std(data)])
 
 params = zip([0,0,1,1],[1,2,1,2])
@@ -600,7 +602,7 @@ for param in params:
     out.append(out_single_param)
 
 t0 = time.time()
-output = dask.compute(*out)  # 15 sec. on 4 cores
+output = dask.compute(out)  # 15 sec. on 4 cores
 time.time() - t0
 ```
 
@@ -651,17 +653,17 @@ def find(line, regex = "Obama", language = "en"):
     else:
         return(True)
 
-total_cnt = wiki.count()
-obama = wiki.filter(find)
-obama_cnt = obama.count()
-(obama, obama_cnt, total_cnt) = db.compute(obama, obama_cnt, total_cnt)
+total_cnt_future = wiki.count()
+obama_future = wiki.filter(find)
+obama_cnt_future = obama.count()
+(obama, obama_cnt, total_cnt) = db.compute(obama_future, obama_cnt_future, total_cnt_future)
 cnt
 obama[0:5]
 ```
 
 If you time doing the computations above, you'll see that doing it all together is much faster than the time of each of the three operations done separately.
 
-Note that when reading from disk, disk caching by the operating system (saving files that are used repeatedly in memory) can also greatly speed up I/O (and can very easily confuse you in terms of timing your code...).
+Note that when reading from disk, disk caching by the operating system (saving files that are used repeatedly in memory) can also greatly speed up I/O. (Note this can very easily confuse you in terms of timing your code..., e.g., simply copying the data to your machine can put them in the cache, so subsequent reading into Python can take advantage of that.)
 
 # 6.4. Copies are usually made 
 
@@ -679,7 +681,8 @@ rather than computing the mean.
 dask.config.set(scheduler = 'processes', num_workers = 4)  
 
 import numpy as np
-x = np.random.normal(size = 40000000) 
+rng = np.random.default_rng()
+x = rng.normal(size = 40000000)
 x = dask.delayed(x)   # here we delay the data
 
 def calc(x, i):
@@ -707,7 +710,8 @@ cluster = LocalCluster(n_workers = 4)
 c = Client(cluster)
 
 import numpy as np
-x = np.random.normal(size = 40000000) 
+rng = np.random.default_rng()
+x = rng.normal(size = 40000000)
 x = dask.delayed(x)  # here we delay the data
 
 def calc(x, i):
@@ -723,17 +727,20 @@ That took a few seconds if we delay the data but takes ~40 seconds if we don't.
 Note that Dask does warn us if it detects a situation like this where we
 haven't delayed the data.
 
+Note that in either case, we incur the memory usage of the original 'x' plus copies of 'x' on the workers.
 
 # 6.5. Parallel I/O
 
-For this to make sense we want to be on a system where we can read multiple files
-without having the bottleneck of accessing a single disk. For example the
+For this to make the most sense we want to be on a system where we can read multiple files
+without having the bottleneck of accessing a single spinning hard disk. For example the
 Savio filesystem is set up for fast parallel I/O.
+
+On systems with a single spinning hard disk or a single SSD, you might experiment
+to see how effectively things scale as you read (or write) multiple files in parallel.
 
 (Note that I'm using the 'processes' scheduler here because I ran into issues
 with the workers starting when using a Distributed (local) cluster.)
 
-Here I'll contrast doing I/O in parallel where each worker returns a small summary of what it read, with reading in two data files and returning the entire data to the main Python process.
 
 ```
 import dask.multiprocessing
@@ -745,7 +752,10 @@ dask.config.set(scheduler = 'processes', num_workers = 24)
 def readfun(yr):
     import pandas as pd
     out = pd.read_csv('/global/scratch/paciorek/airline/' + str(yr) + '.csv.bz2',
-                      header = 0, encoding = 'latin1')
+                      header = 0, encoding = 'latin1',
+                      dtype = {'Distance': 'float64', 'CRSElapsedTime': 'float64',
+                      'TailNum': 'object', 'CancellationCode': 'object'})
+                      # specify dtypes so Pandas doesn't complain about column type heterogeneity
     return(len(out))   # just return length
 
 results = []
@@ -756,18 +766,16 @@ for yr in range(1988, 2009):
 import time
 t0 = time.time()
 output = dask.compute(results)  # parallel I/O
-time.time() - t0   ## 75 seconds for 21 files
+time.time() - t0   ## 120 seconds for 21 files
 
-
-results2 = []
+## Contrast with the time to read a single file:
 t0 = time.time()
-for yr in range(1988, 1990):
-    results2.append(readfun(yr))
-
-### ??? why no compute()?
-
-time.time() - t0  ## 40 sec. just for the first two
+readfun(1988)
+time.time() - t0   ## 28 seconds for one file
 ```
+
+I'm not sure why that didn't scale perfectly (i.e., that 21 files on 24 workers would take only 28 seconds),
+but we do see that it was quite a bit faster than sequentially reading the data would be.
 
 # 6.6. Adaptive scaling
 
@@ -775,17 +783,20 @@ With a resource manager like Kubernetes, Dask can scale the number of workers up
 
 # 7. Monitoring jobs
 
-By default Dask wants to use port 8787 for a web interface showing status.
-This port is occupied on my machine, so I'll select a different port.
+Dask distributed provides a web interface showing the status of your work.
+(Unfortunately I've been having some problems viewing the interface on SCF machines, but hopefully this will work for you.)
+
+By default Dask uses port 8787 for the web interface.
 
 ```
 from dask.distributed import Client, LocalCluster
-cluster = LocalCluster(diagnostics_port = 8786, n_workers = 4)
+cluster = LocalCluster(n_workers = 4)
 c = Client(cluster)
 
-## open a browser to localhost:8786, then watch the progress
+## open a browser to localhost:8787, then watch the progress
 ## as the computation proceeds
 
+n = 100000000
 p = 40
 
 futures = [dask.delayed(calc_mean)(i, n) for i in range(p)]
@@ -794,59 +805,88 @@ results = dask.compute(futures)
 time.time() - t0
 ```
 
+If your Python session is not running on your local machine, you can set up port forwarding to view the web interface in the browser on your local machine, e.g.,
+
+```
+ssh -L 8787:localhost:8787 name_of_remote_machine
+```
+
+Then go to `localhost:8787` in your local browser.
+
 # 8. Reliable random number generation (RNG)
 
 In the code above, I was cavalier about the seeds for the random number generation in the different parallel computations.
 
-The general problem is that we want the random numbers generated on each worker to not overlap with the random numbers generated on other workers. But random number generation involves numbers from a periodic sequence. Simply setting different seeds on different workers does not guarantee non-overlapping random numbers (though in most cases they probably would not overlap). 
+The general problem is that we want the random numbers generated on each worker to not overlap with the random numbers generated on other workers. But random number generation involves numbers from a periodic sequence. Simply setting different seeds on different workers does not guarantee non-overlapping blocks of random numbers (though in most cases they probably would not overlap). 
 
-Using the basic numpy RNG, one can simply set different seeds for each task, but as mentioned above that doesn't guarantee non-overlapping random numbers. If you'd like more guarantee, one option is the [`RandomGen` package](https://bashtage.github.io/randomgen/parallel.html#independent-streams), which you can you as replacement for numpy's RNG. It allows you to "jump" the generator ahead by a large number of values, as well as to use several generators that allow for independent streams (similar to the L'Ecuyer functionality in R). 
+Using the basic numpy RNG, one can simply set different seeds for each task, but as mentioned above that doesn't guarantee non-overlapping random numbers.
 
-Here's some template code for using `RandomGen` and jumping ahead by 2^128 numbers in the Mersenne-Twister
+In recent versions of numpy there has been attention paid to this problem and there are now [multiple approaches to getting high-quality random number generation for parallel code](https://numpy.org/doc/stable/reference/random/parallel.html).
 
-```
-n = 5
-import randomgen as rg
-seed = 1
-rng = rg.MT19937(seed)
-rng.jump(1)
-random = rng.generator
-random.normal(0, 1, n)
-```
-
-So here's how you can use that in a parallelized context:
+One approach is to generate one random seed per task such that the blocks of random numbers avoid overlapping with high probability, as implemented in numpy's SeedSequence approach.
 
 ```
-def calc_mean(i, n, rng):
-    import numpy as np
-    rng.jump(i)  ## jump in steps of 2^128, one jump per task
-    random = rng.generator
-    data = random.normal(size = n)
-    return([np.mean(data), np.std(data)])
-
 import dask.multiprocessing
 dask.config.set(scheduler = 'processes', num_workers = 4)  
 
 results = []
 n = 10000000
 p = 10
-import randomgen as rg
+
 seed = 1
-rng = rg.MT19937(seed)  ## set an overall seed and pass the MT object to the workers
+ss = np.random.SeedSequence(seed)
+child_seeds = ss.spawn(p)
+
+def calc_mean(i, n, seed):
+    import numpy as np
+    rng = numpy.random.default_rng(seed)
+    data = rng.normal(size = n)
+    return([np.mean(data), np.std(data)])
+
+for i in range(p):
+    results.append(dask.delayed(calc_mean)(i, n, child_seeds[i]))  # add lazy task
+
+output = dask.compute(results)  
+```
+
+A second approach is to advance the state of the random number generator as if a large number of random numbers had been drawn. 
+
+```
+import dask.multiprocessing
+dask.config.set(scheduler = 'processes', num_workers = 4)  
+
+results = []
+n = 10000000
+p = 10
+
+seed = 1
+rng = np.random.PCG64(seed)
+
+def calc_mean(i, n, rng):
+    import numpy as np
+    gen = np.random.Generator(rng.jumped(i))  ## jump in large steps, one jump per task
+    data = gen.normal(size = n)
+    return([np.mean(data), np.std(data)])
+
 
 for i in range(p):
     results.append(dask.delayed(calc_mean)(i, n, rng))  # add lazy task
 
-output = dask.compute(*results)  # compute all in parallel
+output = dask.compute(results)  # compute all in parallel
 ```
 
-Apparently you may be able to address this issue in dask.array using the RandomState class
-but I'm having trouble finding documentation on this.
+Note that above, I've done everything at the level of the computational tasks. One could presumably
+do this at the level of the workers, but one would need to figure out how to maintain the state of the generator from one task to the next for any given worker.
+
+Finally, dask array seems to still use the old (deprecated) numpy `RandomState` functionality. You can set the seed as below, but it's not clear to me what it does in terms of random number generation on the different workers.
+
 
 ```
 import dask.array as da
-state = da.random.RandomState(1234)
-help(state)  # chunks arg is not well documented
+seed = 1234
+state = da.random.RandomState(seed)
+x = state.normal(0, 1, size=(10,10), chunks=(5, 5))
+help(state)  # documentation doesn't shed much light...
 ```
 
 # 9. Submitting SLURM jobs from Dask
