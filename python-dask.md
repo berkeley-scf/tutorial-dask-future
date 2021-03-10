@@ -633,35 +633,36 @@ One implication is that if you can include all computations
 on a large dataset within a single computational graph (i.e., a call to `compute`)
 that may be much more efficient than making separate calls.
 
-Here's an example with Dask bag on the Wikipedia data, where we make sure to
+Here's an example with Dask dataframe on the airline delay data, where we make sure to
 do all our computations as part of one graph:
 
 ```
-import dask.multiprocessing
-dask.config.set(scheduler='processes', num_workers = 4)  
-import dask.bag as db
-wiki = db.read_text('/scratch/users/paciorek/wikistats/dated_2017/part-0000*gz')
+import dask
+dask.config.set(scheduler='processes', num_workers = 6)  
+import dask.dataframe as ddf
+air = ddf.read_csv('/scratch/users/paciorek/243/AirlineData/csvs/*.csv.bz2',
+      compression = 'bz2',
+      encoding = 'latin1',   # (unexpected) latin1 value(s) 2001 file TailNum field
+      dtype = {'Distance': 'float64', 'CRSElapsedTime': 'float64',
+      'TailNum': 'object', 'CancellationCode': 'object'})
+# specify dtypes so Pandas doesn't complain about column type heterogeneity
 
-import re
-def find(line, regex = "Obama", language = "en"):
-    vals = line.split(' ')
-    if len(vals) < 6:
-        return(False)
-    tmp = re.search(regex, vals[3])
-    if tmp is None or (language != None and vals[2] != language):
-        return(False)
-    else:
-        return(True)
-
-total_cnt_future = wiki.count()
-obama_future = wiki.filter(find)
-obama_cnt_future = obama.count()
-(obama, obama_cnt, total_cnt) = db.compute(obama_future, obama_cnt_future, total_cnt_future)
-cnt
-obama[0:5]
+import time
+t0 = time.time()
+air.DepDelay.min().compute()   # about 200 seconds.
+t1 = time.time()-t0
+t0 = time.time()
+air.DepDelay.max().compute()   # about 200 seconds.
+t2 = time.time()-t0
+t0 = time.time()
+(mn, mx) = dask.compute(air.DepDelay.max(), air.DepDelay.min())  # about 200 seconds
+t3 = time.time()-t0
+print(t1)
+print(t2)
+print(t3)
 ```
 
-If you time doing the computations above, you'll see that doing it all together is much faster than the time of each of the three operations done separately.
+However, I also tried the above where I added `air.count()` to the `dask.compute` call and something went wrong - the computation time increased a lot and there was a lot of memory use. I'm not sure what is going on.
 
 Note that when reading from disk, disk caching by the operating system (saving files that are used repeatedly in memory) can also greatly speed up I/O. (Note this can very easily confuse you in terms of timing your code..., e.g., simply copying the data to your machine can put them in the cache, so subsequent reading into Python can take advantage of that.)
 
@@ -738,9 +739,7 @@ Savio filesystem is set up for fast parallel I/O.
 On systems with a single spinning hard disk or a single SSD, you might experiment
 to see how effectively things scale as you read (or write) multiple files in parallel.
 
-(Note that I'm using the 'processes' scheduler here because I ran into issues
-with the workers starting when using a Distributed (local) cluster.)
-
+Here we'll demo on Savio to take advantage of the fast, parallel I/O.
 
 ```
 import dask.multiprocessing
@@ -774,7 +773,7 @@ readfun(1988)
 time.time() - t0   ## 28 seconds for one file
 ```
 
-I'm not sure why that didn't scale perfectly (i.e., that 21 files on 24 workers would take only 28 seconds),
+I'm not sure why that didn't scale perfectly (i.e., that 21 files on 21 or more workers would take only 28 seconds),
 but we do see that it was quite a bit faster than sequentially reading the data would be.
 
 # 6.6. Adaptive scaling
@@ -908,11 +907,11 @@ The `queue` argument is the SLURM partition you want to submit to.
 ```
 import dask_jobqueue
 ## Each job will include 16 Dask workers and a total of 16 cores (1 per worker)
-cluster = dask_jobqueue.SLURMCluster(processes=16, cores=16, memory='24 GB',
+cluster = dask_jobqueue.SLURMCluster(processes=16, cores=16, memory = '24GB',
                                      queue='low', walltime = '3:00:00')
 
-## This will now start 32 Dask workers, which in this case
-## requires two SLURM jobs of 16 workers each.
+## The following will now start 32 Dask workers in job(s) on the 'low' partition.
+## In this case, that requires two SLURM jobs of 16 workers each.
 cluster.scale(32)  
 from dask.distributed import Client
 c = Client(cluster)
@@ -921,6 +920,8 @@ c = Client(cluster)
 
 cluster.close()
 ```
+
+Dask is requiring the specification of 'memory' though this is not always required by the underlying cluster.
 
 On a cluster like Savio where you may need to provide an account (-A flag), you pass
 that via the `project` argument to `SLURMCluster`.
@@ -942,10 +943,12 @@ import dask_jobqueue
 ## Each job will include 16 Dask workers and a total of 16 cores (1 per worker)
 ## This should now start up to 32 Dask workers, but only one set of 16 workers seems to start
 ## and SLURM jobs start and stop in quick succession.
-## cluster = dask_jobqueue.SLURMCluster(processes=16, cores=16, memory='24 GB')  
+## cluster = dask_jobqueue.SLURMCluster(processes=16, cores=16, memory='24 GB',
+## queue='low', walltime = '3:00:00')  
 
 ## In contrast, this seems to work well.
-cluster = dask_jobqueue.SLURMCluster(cores = 1, memory = '24 GB')
+cluster = dask_jobqueue.SLURMCluster(cores = 1, memory = '24 GB',
+                                     queue='low', walltime = '3:00:00')
 
 cluster.adapt(minimum=0, maximum=32)
 

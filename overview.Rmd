@@ -11,7 +11,7 @@ You should be able to replicate much of what is covered here provided you have R
 
 This tutorial assumes you have a working knowledge of either R or Python, but not necessarily knowledge of parallelization in R or Python.
 
-Materials for this tutorial, including the markdown files and associated code files that were used to create this document are available on Github at [https://github.com/berkeley-scf/tutorial-dask-future].  You can download the files by doing a git clone from a terminal window on a UNIX-like machine, as follows:
+Materials for this tutorial, including the Markdown files and associated code files that were used to create this document are available on GitHub at [https://github.com/berkeley-scf/tutorial-dask-future].  You can download the files by doing a git clone from a terminal window on a UNIX-like machine, as follows:
 ```{r, clone, eval=FALSE}
 git clone https://github.com/berkeley-scf/tutorial-dask-future
 ```
@@ -35,9 +35,9 @@ think of each node as a separate computer connected by a fast network.
 units available on a single node.
   - *nodes*: We'll use this term to mean the different computers,
 each with their own distinct memory, that make up a cluster or supercomputer.
-  - *processes*: computational tasks executing on a machine; multiple
-processes may be executing at once. A given program may start up multiple
-processes at once. Ideally we have no more processes than cores on
+  - *processes*: instances of a program executing on a machine; multiple
+processes may be executing at once. A given executable (e.g., Python or R) may start up multiple
+processes at once. Ideally we have no more user processes than cores on
 a node.
   - *threads*: multiple paths of execution within a single process;
 the OS sees the threads as a single process, but one can think of
@@ -49,6 +49,9 @@ the parent, but with different process IDs and their own memory.
   - *sockets*: some of R's parallel functionality involves creating
 new R processes (e.g., starting processes via *Rscript*) and
 communicating with them via a communication technology called sockets.
+  - *tasks*: This term gets used in various ways (including in place of 'processes'), but we'll use it to
+refer to the individual computational items you want to complete - e.g.,
+one task per cross-validation fold or one task per simulation replicate/iteration.
 
 ## 2.2) Shared memory
 
@@ -94,6 +97,47 @@ Spark and Hadoop are systems for implementing computations in a distributed
 memory environment, using the MapReduce approach.
 
 Note that Dask provides a lot of the same functionality as Spark, allowing one to create distributed datasets where pieces of the dataset live on different machines but can be treated as a single dataset from the perspective of the user.
+
+## 2.5) Package comparison
+
+See this outline for an overview comparison of future (R), Dask (Python) and Ray (Python)
+
+ - Use cases
+    - future
+       - parallelizing tasks
+    - Dask
+       - parallelizing tasks
+       - distributed datasets
+    - Ray
+       - parallelizing tasks
+       - building distributed applications (interacting tasks)
+ - Task allocation
+    - future
+       - static by default
+       - dynamic optional
+    - Dask
+       - dynamic
+    - Ray
+       - dynamic (I think)
+ - Shared memory
+    - future
+       - shared across workers only if using forked processes (`multicore` plan on Linux/MacOS)
+          - if data modified, copies need to be made
+       - data shared across static tasks assigned to a worker
+    - Dask
+       - shared across workers only if using `threads` scheduler
+       - data shared across computations on a worker if data are delayed
+    - Ray
+       - shared across workers on a node via the object store
+ - Copies made
+    - future
+       - generally copy one per worker, but one per task with dynamic allocation
+    - Dask
+       - generally one copy per worker if done correctly (data should be delayed)
+    - Ray
+       - one copy per node if done correctly (use `ray.put` to use object store)
+
+
 
 ## 3) Python's Dask package
 

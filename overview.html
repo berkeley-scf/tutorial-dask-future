@@ -213,7 +213,7 @@ hr {
 
 <p>This tutorial assumes you have a working knowledge of either R or Python, but not necessarily knowledge of parallelization in R or Python.</p>
 
-<p>Materials for this tutorial, including the markdown files and associated code files that were used to create this document are available on Github at [<a href="https://github.com/berkeley-scf/tutorial-dask-future">https://github.com/berkeley-scf/tutorial-dask-future</a>].  You can download the files by doing a git clone from a terminal window on a UNIX-like machine, as follows:</p>
+<p>Materials for this tutorial, including the Markdown files and associated code files that were used to create this document are available on GitHub at [<a href="https://github.com/berkeley-scf/tutorial-dask-future">https://github.com/berkeley-scf/tutorial-dask-future</a>].  You can download the files by doing a git clone from a terminal window on a UNIX-like machine, as follows:</p>
 
 <pre><code class="r">git clone https://github.com/berkeley-scf/tutorial-dask-future
 </code></pre>
@@ -237,9 +237,9 @@ think of each node as a separate computer connected by a fast network. </p>
 units available on a single node.</li>
 <li><em>nodes</em>: We&#39;ll use this term to mean the different computers,
 each with their own distinct memory, that make up a cluster or supercomputer.</li>
-<li><em>processes</em>: computational tasks executing on a machine; multiple
-processes may be executing at once. A given program may start up multiple
-processes at once. Ideally we have no more processes than cores on
+<li><em>processes</em>: instances of a program executing on a machine; multiple
+processes may be executing at once. A given executable (e.g., Python or R) may start up multiple
+processes at once. Ideally we have no more user processes than cores on
 a node.</li>
 <li><em>threads</em>: multiple paths of execution within a single process;
 the OS sees the threads as a single process, but one can think of
@@ -251,6 +251,9 @@ the parent, but with different process IDs and their own memory.</li>
 <li><em>sockets</em>: some of R&#39;s parallel functionality involves creating
 new R processes (e.g., starting processes via <em>Rscript</em>) and
 communicating with them via a communication technology called sockets.</li>
+<li><em>tasks</em>: This term gets used in various ways (including in place of &#39;processes&#39;), but we&#39;ll use it to
+refer to the individual computational items you want to complete - e.g.,
+one task per cross-validation fold or one task per simulation replicate/iteration.</li>
 </ul>
 
 <h2>2.2) Shared memory</h2>
@@ -297,6 +300,98 @@ capability for general computation. </p>
 memory environment, using the MapReduce approach.</p>
 
 <p>Note that Dask provides a lot of the same functionality as Spark, allowing one to create distributed datasets where pieces of the dataset live on different machines but can be treated as a single dataset from the perspective of the user.</p>
+
+<h2>2.5) Package comparison</h2>
+
+<p>See this outline for an overview comparison of future &reg;, Dask (Python) and Ray (Python)</p>
+
+<ul>
+<li>Use cases
+
+<ul>
+<li>future
+
+<ul>
+<li>parallelizing tasks</li>
+</ul></li>
+<li>Dask
+
+<ul>
+<li>parallelizing tasks</li>
+<li>distributed datasets</li>
+</ul></li>
+<li>Ray
+
+<ul>
+<li>parallelizing tasks</li>
+<li>building distributed applications (interacting tasks)</li>
+</ul></li>
+</ul></li>
+<li>Task allocation
+
+<ul>
+<li>future
+
+<ul>
+<li>static by default</li>
+<li>dynamic optional</li>
+</ul></li>
+<li>Dask
+
+<ul>
+<li>dynamic</li>
+</ul></li>
+<li>Ray
+
+<ul>
+<li>dynamic (I think)</li>
+</ul></li>
+</ul></li>
+<li>Shared memory
+
+<ul>
+<li>future
+
+<ul>
+<li>shared across workers only if using forked processes (<code>multicore</code> plan on Linux/MacOS)
+
+<ul>
+<li>if data modified, copies need to be made</li>
+</ul></li>
+<li>data shared across static tasks assigned to a worker</li>
+</ul></li>
+<li>Dask
+
+<ul>
+<li>shared across workers only if using <code>threads</code> scheduler</li>
+<li>data shared across computations on a worker if data are delayed</li>
+</ul></li>
+<li>Ray
+
+<ul>
+<li>shared across workers on a node via the object store</li>
+</ul></li>
+</ul></li>
+<li>Copies made
+
+<ul>
+<li>future
+
+<ul>
+<li>generally copy one per worker, but one per task with dynamic allocation</li>
+</ul></li>
+<li>Dask
+
+<ul>
+<li>generally one copy per worker if done correctly (data should be delayed)</li>
+</ul></li>
+<li>Ray
+
+<ul>
+<li>one copy per node if done correctly (use <code>ray.put</code> to use object store)</li>
+</ul></li>
+</ul></li>
+</ul>
 
 <h2>3) Python&#39;s Dask package</h2>
 
