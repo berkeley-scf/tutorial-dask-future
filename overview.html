@@ -207,7 +207,7 @@ hr {
 
 <h1>1) This Tutorial</h1>
 
-<p>This tutorial covers the use of R&#39;s future and Python&#39;s Dask packages, relatively recent tools for parallelizing computions on a single machine or across multiple machines.</p>
+<p>This tutorial covers the use of R&#39;s future and Python&#39;s Dask packages, well-established tools for parallelizing computions on a single machine or across multiple machines. There is also a bit of material on Python&#39;s Ray package, which was developed more recently.</p>
 
 <p>You should be able to replicate much of what is covered here provided you have Rand Python on your computer, but some of the parallelization approaches may not work on Windows.</p>
 
@@ -264,6 +264,8 @@ between different machines. But in some programming contexts one needs
 to be careful that activity on different cores doesn&#39;t mistakenly
 overwrite places in memory that are used by other cores.</p>
 
+<p>However, except for certain special situations, the different worker processes on a given machine do not share objects in memory. So most often, one has multiple copies of the same objects, one per worker process. </p>
+
 <h3>Threading</h3>
 
 <p>Threads are multiple paths of execution within a single process. If you are monitoring CPU
@@ -274,11 +276,16 @@ rather than as multiple processes.</p>
 
 <p>Note that this is a different notion than a processor that is hyperthreaded. With hyperthreading a single core appears as two cores to the operating system.</p>
 
+<p>Threads generally do share objects in memory, thereby allowing us to have a single copy of objects instead of one per thread. </p>
+
 <h2>2.3) Distributed memory</h2>
 
 <p>Parallel programming for distributed memory parallelism requires passing
-messages between the different nodes. The standard protocol for doing
-this is MPI, of which there are various versions, including <em>openMPI</em>.</p>
+messages between the different nodes. </p>
+
+<p>The standard protocol for passing messages is MPI, of which there are various versions, including <em>openMPI</em>.</p>
+
+<p>Tools such as Dask, Ray and future all manage the work of moving information between nodes for you (and don&#39;t generally use MPI). </p>
 
 <h2>2.4) Other type of parallel processing</h2>
 
@@ -303,7 +310,7 @@ memory environment, using the MapReduce approach.</p>
 
 <h2>2.5) Package comparison</h2>
 
-<p>See this outline for an overview comparison of future &reg;, Dask (Python) and Ray (Python)</p>
+<p>See this outline for an overview comparison of future ( R ), Dask (Python) and Ray (Python)</p>
 
 <ul>
 <li>Use cases
@@ -313,18 +320,21 @@ memory environment, using the MapReduce approach.</p>
 
 <ul>
 <li>parallelizing tasks</li>
+<li>one or more machines (nodes)</li>
 </ul></li>
 <li>Dask
 
 <ul>
 <li>parallelizing tasks</li>
 <li>distributed datasets</li>
+<li>one or more machines (nodes)</li>
 </ul></li>
 <li>Ray
 
 <ul>
 <li>parallelizing tasks</li>
 <li>building distributed applications (interacting tasks)</li>
+<li>one or more machines (nodes)</li>
 </ul></li>
 </ul></li>
 <li>Task allocation
@@ -364,12 +374,12 @@ memory environment, using the MapReduce approach.</p>
 
 <ul>
 <li>shared across workers only if using <code>threads</code> scheduler</li>
-<li>data shared across computations on a worker if data are delayed</li>
+<li>data shared across tasks on a worker if data are delayed</li>
 </ul></li>
 <li>Ray
 
 <ul>
-<li>shared across workers on a node via the object store</li>
+<li>shared across all workers on a node via the object store (nice!)</li>
 </ul></li>
 </ul></li>
 <li>Copies made

@@ -1,4 +1,4 @@
-Parallel Processing using the R future package
+Parallel Processing using R's future package
 =================================================================
 
 Chris Paciorek, Department of Statistics, UC Berkeley
@@ -49,10 +49,10 @@ This table gives an overview of the different plans.
 
 |Type          |Description                                                 |Multi-node|Copies of objects made?   |
 | ------------ | ---------------------------------------------------------- | -------- | ------------------------ |
-|multisession  |background R sessions                                       |no        |yes                       |
+|multisession  |background R processes                                      |no        |yes                       |
 |multicore     |forked R processes (not available in Windows nor RStudio)   |no        |not if object not modified|
 |remote        |R process on another machine                                |yes       |yes                       |
-|cluster       |R sessions on other machine(s)                              |yes       |yes                       |
+|cluster       |R processes on other machine(s)                             |yes       |yes                       |
 
 
 For the next section (Section 3), we'll just assume use of `multisession` and will provide more details on the other plans in the following section (Section 4).
@@ -136,7 +136,7 @@ n <- 20
 out <- listenv()
 for(i in seq_len(n)) {
      out[[i]] %<-% {
-       # some code here as you would with foreach
+       # some code here as you would with foreach; for example:
        tmp <- rnorm(1e7)
        c(mean(tmp), sd(tmp))
      }
@@ -264,7 +264,7 @@ Here's an example where I create a plot remotely and view it locally.
 plan(remote, workers = 'gandalf.berkeley.edu')
 ## requires password-less SSH
 
-## future is evaluated remotely
+## future (ggplot call) is evaluated remotely
 library(ggplot2)
 mydf <- data.frame(y = rnorm(10), x = rnorm(10))
 g %<-% { ggplot(mydf, aes(x=x, y=y)) + geom_point() }
@@ -272,6 +272,7 @@ g %<-% { ggplot(mydf, aes(x=x, y=y)) + geom_point() }
 ## plot locally
 g
 
+## future (ggplot call) is evaluated remotely
 g %<-% R.devices::capturePlot({
    filled.contour(volcano, color.palette = terrain.colors)
    title(main = "volcano data: filled contour map")
@@ -352,7 +353,7 @@ For example, suppose you are running a simulation study with four scenarios and
 each scenario involving `n` simulations. In that case you have two
 loops over which you could choose to parallelize.
 
-Here's some syntax to setup up parallelization over the scenarios (outer loop) only. Note that
+Here's some syntax to set up parallelization over the scenarios (outer loop) only. Note that
 when the plan involves multiple levels we need to use `tweak` if we want to
 modify the defaults for a type of future.
 
@@ -391,7 +392,7 @@ control returns to the user.
 
 Let's see a few different plans one could use for the nested loops.
 
-To use eight cores on the current machine, two cores per outer iteration:
+To use eight cores on the current machine, two cores for each of the four outer iteration:
 
 ```{r, nested-plan, eval = FALSE}
 ## One option:

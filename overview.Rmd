@@ -5,7 +5,7 @@ Chris Paciorek, Department of Statistics, UC Berkeley
 
 # 1) This Tutorial
 
-This tutorial covers the use of R's future and Python's Dask packages, relatively recent tools for parallelizing computions on a single machine or across multiple machines.
+This tutorial covers the use of R's future and Python's Dask packages, well-established tools for parallelizing computions on a single machine or across multiple machines. There is also a bit of material on Python's Ray package, which was developed more recently.
 
 You should be able to replicate much of what is covered here provided you have Rand Python on your computer, but some of the parallelization approaches may not work on Windows.
 
@@ -61,6 +61,8 @@ between different machines. But in some programming contexts one needs
 to be careful that activity on different cores doesn't mistakenly
 overwrite places in memory that are used by other cores.
 
+However, except for certain special situations, the different worker processes on a given machine do not share objects in memory. So most often, one has multiple copies of the same objects, one per worker process. 
+
 ### Threading
 
 Threads are multiple paths of execution within a single process. If you are monitoring CPU
@@ -71,11 +73,16 @@ rather than as multiple processes.
 
 Note that this is a different notion than a processor that is hyperthreaded. With hyperthreading a single core appears as two cores to the operating system.
 
+Threads generally do share objects in memory, thereby allowing us to have a single copy of objects instead of one per thread. 
+
 ## 2.3) Distributed memory
 
 Parallel programming for distributed memory parallelism requires passing
-messages between the different nodes. The standard protocol for doing
-this is MPI, of which there are various versions, including *openMPI*.
+messages between the different nodes. 
+
+The standard protocol for passing messages is MPI, of which there are various versions, including *openMPI*.
+
+Tools such as Dask, Ray and future all manage the work of moving information between nodes for you (and don't generally use MPI). 
 
 ## 2.4) Other type of parallel processing
 
@@ -100,17 +107,20 @@ Note that Dask provides a lot of the same functionality as Spark, allowing one t
 
 ## 2.5) Package comparison
 
-See this outline for an overview comparison of future (R), Dask (Python) and Ray (Python)
+See this outline for an overview comparison of future ( R ), Dask (Python) and Ray (Python)
 
  - Use cases
     - future
        - parallelizing tasks
+       - one or more machines (nodes)
     - Dask
        - parallelizing tasks
        - distributed datasets
+       - one or more machines (nodes)
     - Ray
        - parallelizing tasks
        - building distributed applications (interacting tasks)
+       - one or more machines (nodes)
  - Task allocation
     - future
        - static by default
@@ -126,9 +136,9 @@ See this outline for an overview comparison of future (R), Dask (Python) and Ray
        - data shared across static tasks assigned to a worker
     - Dask
        - shared across workers only if using `threads` scheduler
-       - data shared across computations on a worker if data are delayed
+       - data shared across tasks on a worker if data are delayed
     - Ray
-       - shared across workers on a node via the object store
+       - shared across all workers on a node via the object store (nice!)
  - Copies made
     - future
        - generally copy one per worker, but one per task with dynamic allocation
