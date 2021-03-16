@@ -71,7 +71,9 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <h1>2. Ray on one machine</h1>
 <p>On one machine, we can initialize Ray from within Python.</p>
 <pre><code>import ray
-ray.init()</code></pre>
+ray.init()
+## alternatively, to specify a specific number of cores:
+ray.init(num_cpus = 4)</code></pre>
 <p>To run a computation in parallel, we decorate the function of interest with the <code>remote</code> tag:</p>
 <pre><code>@ray.remote
 def f(x):
@@ -83,6 +85,7 @@ print(ray.get(futures)) # [0, 1, 4, 9]</code></pre>
 <div id="ray-on-multiple-machines-nodes" class="slide section level1">
 <h1>3. Ray on multiple machines (nodes)</h1>
 <p>Here we'll follow the <a href="https://docs.ray.io/en/master/cluster/slurm.html">Ray instructions to start up Ray processes across multiple nodes within a Slurm job</a>.</p>
+<p>Make sure to request multiple cores per node via --cpus-per-task (on Savio you'd generally set this equal to the number of cores per node).</p>
 <p>We need to start the main Ray process (the Ray 'head node') on the head (first) node of Slurm allocation. Then we need to start one worker process for the remaining nodes (do not start a worker on the head node).</p>
 <pre><code># Getting the node names
 nodes=$(scontrol show hostnames &quot;$SLURM_JOB_NODELIST&quot;)
@@ -99,7 +102,7 @@ echo &quot;IP Head: $ip_head&quot;
 echo &quot;Starting HEAD at $head_node&quot;
 srun --nodes=1 --ntasks=1 -w &quot;$head_node&quot; \
     ray start --head --node-ip-address=&quot;$head_node_ip&quot; --port=$port \
-    --num-cpus &quot;${SLURM_CPUS_ON_NODE}&quot; --block &amp;
+    --num-cpus &quot;${SLURM_CPUS_PER_TASK}&quot; --block &amp;
 
 # optional, though may be useful in certain versions of Ray &lt; 1.0.
 sleep 10
@@ -112,33 +115,55 @@ for ((i = 1; i &lt;= worker_num; i++)); do
     echo &quot;Starting WORKER $i at $node_i&quot;
     srun --nodes=1 --ntasks=1 -w &quot;$node_i&quot; \
         ray start --address &quot;$ip_head&quot; \
-        --num-cpus &quot;${SLURM_CPUS_ON_NODE}&quot; --block &amp;
+        --num-cpus &quot;${SLURM_CPUS_PER_TASK}&quot; --block &amp;
     sleep 5
 done</code></pre>
 <p>Then in Python, we need to connect to the Ray head node process:</p>
-<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="im">import</span> os
-ray.init(address <span class="op">=</span> os.getenv(<span class="st">&#39;head_node_ip&#39;</span>))</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="im">import</span> ray, os
+ray.init(address <span class="op">=</span> os.getenv(<span class="st">&#39;ip_head&#39;</span>))</code></pre></div>
+<p>You should see something like this:</p>
+<pre><code>2021-03-16 14:39:48,520 INFO worker.py:654 -- Connecting to existing Ray cluster at address: 128.32.135.190:6379
+{&#39;node_ip_address&#39;: &#39;128.32.135.190&#39;, &#39;raylet_ip_address&#39;: &#39;128.32.135.190&#39;, &#39;redis_address&#39;: &#39;128.32.135.190:6379&#39;, &#39;object_store_address&#39;: &#39;/tmp/ray/session_2021-03-16_14-39-26_045290_3521776/sockets/plasma_store&#39;, &#39;raylet_socket_name&#39;: &#39;/tmp/ray/session_2021-03-16_14-39-26_045290_3521776/sockets/raylet&#39;, &#39;webui_url&#39;: &#39;localhost:8265&#39;, &#39;session_dir&#39;: &#39;/tmp/ray/session_2021-03-16_14-39-26_045290_3521776&#39;, &#39;metrics_export_port&#39;: 63983, &#39;node_id&#39;: &#39;2a3f113e2093d8a8abe3e0ddc9730f8cf6b4478372afe489208b2dcf&#39;}</code></pre>
 </div>
 <div id="using-the-ray-object-store" class="slide section level1">
 <h1>4. Using the Ray object store</h1>
 <p>The object store allows one to avoid making copies of data for each worker process on a node. All workers on a node can share the same data (this also avoids extra copying of data to the workers). And on top of this the object store allows one to use data in the form of numpy arrays directly using the memory allocated for the array in the object store, without any copying into a data structuer specific to the worker process.</p>
 <p>Let's try this out.</p>
-<pre><code>@ray.remote
+<pre><code>ray.init(num_cpus = 4)   # four worker processes on the local machine
+
+@ray.remote
 def calc(i, data):
     import numpy as np  
     return([np.mean(data), np.std(data)])
 
 import numpy as np
 rng = np.random.default_rng()
-## an 800 MB object
-y = rng.normal(0, 1, size=(100000000))
+## &#39;y&#39; is an 800 MB object
+n = 100000000
+y = rng.normal(0, 1, size=(n))
 
 
 y_ref = ray.put(y) # put the data in the object store
 
+p = 50
+
 ## One can pass the reference to the object in the object store as an argument
-futures = [mycalc.remote(i, y_ref) for i in range(p)]</code></pre>
+futures = [calc.remote(i, y_ref) for i in range(p)]
+ray.get(futures)</code></pre>
 <p>We'll watch memory use via <code>free -h</code> while running the test above.</p>
+<p>Unfortunately when I test this on a single machine, memory use seems to be equivalent to four copies of the 'y' object, so something seems to be wrong. And trying it on a multi-node Ray cluster doesn't seem to clarify what is going on.</p>
+<p>One can also run <code>ray memory</code> from the command line (not from within Python) to examine memory use in the object store. (In the case above, it simply reports the 800 MB usage.)</p>
+<p>One can also create the object via a remote call and then use it.</p>
+<pre><code>@ray.remote
+def create(n):
+    import numpy as np
+    rng = np.random.default_rng()
+    y = rng.normal(0, 1, size=(100000000))
+    return(y)
+    
+y_ref = create.remote(n)
+futures = [calc.remote(i, y_ref) for i in range(p)]
+ray.get(futures)</code></pre>
 </div>
 </body>
 </html>

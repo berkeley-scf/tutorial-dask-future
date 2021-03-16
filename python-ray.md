@@ -23,6 +23,8 @@ On one machine, we can initialize Ray from within Python.
 ```
 import ray
 ray.init()
+## alternatively, to specify a specific number of cores:
+ray.init(num_cpus = 4)
 ```
 
 To run a computation in parallel, we decorate the function of interest with the `remote` tag:
@@ -39,6 +41,8 @@ print(ray.get(futures)) # [0, 1, 4, 9]
 # 3. Ray on multiple machines (nodes)
 
 Here we'll follow the [Ray instructions to start up Ray processes across multiple nodes within a Slurm job](https://docs.ray.io/en/master/cluster/slurm.html).
+
+Make sure to request multiple cores per node via --cpus-per-task (on Savio you'd generally set this equal to the number of cores per node).
 
 We need to start the main Ray process (the Ray 'head node') on the head (first) node of Slurm allocation. Then we need to start one worker process for the remaining nodes (do not start a worker on the head node).
 
@@ -59,7 +63,7 @@ echo "IP Head: $ip_head"
 echo "Starting HEAD at $head_node"
 srun --nodes=1 --ntasks=1 -w "$head_node" \
     ray start --head --node-ip-address="$head_node_ip" --port=$port \
-    --num-cpus "${SLURM_CPUS_ON_NODE}" --block &
+    --num-cpus "${SLURM_CPUS_PER_TASK}" --block &
 
 # optional, though may be useful in certain versions of Ray < 1.0.
 sleep 10
@@ -72,7 +76,7 @@ for ((i = 1; i <= worker_num; i++)); do
     echo "Starting WORKER $i at $node_i"
     srun --nodes=1 --ntasks=1 -w "$node_i" \
         ray start --address "$ip_head" \
-        --num-cpus "${SLURM_CPUS_ON_NODE}" --block &
+        --num-cpus "${SLURM_CPUS_PER_TASK}" --block &
     sleep 5
 done
 ```
@@ -80,9 +84,17 @@ done
 Then in Python, we need to connect to the Ray head node process:
 
 ```python
-import os
-ray.init(address = os.getenv('head_node_ip'))
+import ray, os
+ray.init(address = os.getenv('ip_head'))
 ```
+
+You should see something like this:
+
+```
+2021-03-16 14:39:48,520	INFO worker.py:654 -- Connecting to existing Ray cluster at address: 128.32.135.190:6379
+{'node_ip_address': '128.32.135.190', 'raylet_ip_address': '128.32.135.190', 'redis_address': '128.32.135.190:6379', 'object_store_address': '/tmp/ray/session_2021-03-16_14-39-26_045290_3521776/sockets/plasma_store', 'raylet_socket_name': '/tmp/ray/session_2021-03-16_14-39-26_045290_3521776/sockets/raylet', 'webui_url': 'localhost:8265', 'session_dir': '/tmp/ray/session_2021-03-16_14-39-26_045290_3521776', 'metrics_export_port': 63983, 'node_id': '2a3f113e2093d8a8abe3e0ddc9730f8cf6b4478372afe489208b2dcf'}
+```
+
 
 # 4. Using the Ray object store
 
@@ -91,6 +103,8 @@ The object store allows one to avoid making copies of data for each worker proce
 Let's try this out.
 
 ```
+ray.init(num_cpus = 4)   # four worker processes on the local machine
+
 @ray.remote
 def calc(i, data):
     import numpy as np  
@@ -98,15 +112,37 @@ def calc(i, data):
 
 import numpy as np
 rng = np.random.default_rng()
-## an 800 MB object
-y = rng.normal(0, 1, size=(100000000))
+## 'y' is an 800 MB object
+n = 100000000
+y = rng.normal(0, 1, size=(n))
 
 
 y_ref = ray.put(y) # put the data in the object store
 
+p = 50
+
 ## One can pass the reference to the object in the object store as an argument
-futures = [mycalc.remote(i, y_ref) for i in range(p)]
+futures = [calc.remote(i, y_ref) for i in range(p)]
+ray.get(futures)
 ```
 
 We'll watch memory use via `free -h` while running the test above.
 
+Unfortunately when I test this on a single machine, memory use seems to be equivalent to four copies of the 'y' object, so something seems to be wrong. And trying it on a multi-node Ray cluster doesn't seem to clarify what is going on.
+
+One can also run `ray memory` from the command line (not from within Python) to examine memory use in the object store. (In the case above, it simply reports the 800 MB usage.)
+
+One can also create the object via a remote call and then use it.
+
+```
+@ray.remote
+def create(n):
+    import numpy as np
+    rng = np.random.default_rng()
+    y = rng.normal(0, 1, size=(100000000))
+    return(y)
+    
+y_ref = create.remote(n)
+futures = [calc.remote(i, y_ref) for i in range(p)]
+ray.get(futures)
+```
