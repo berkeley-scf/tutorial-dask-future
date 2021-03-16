@@ -65,10 +65,8 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <p>See the <code>Makefile</code> for how to generate the html files in this tutorial.</p>
 <p>This tutorial by Christopher Paciorek is licensed under a Creative Commons Attribution 3.0 Unported License.</p>
 </div>
-<div id="types-of-parallel-processing" class="slide section level1">
-<h1>2) Types of parallel processing</h1>
-<p>There are two basic flavors of parallel processing (leaving aside GPUs): distributed memory and shared memory. With shared memory, multiple processors (which I'll call cores) share the same memory. With distributed memory, you have multiple nodes, each with their own memory. You can think of each node as a separate computer connected by a fast network.</p>
-<h2 id="some-useful-terminology">2.1) Some useful terminology:</h2>
+<div id="some-useful-terminology" class="slide section level1">
+<h1>2) Some useful terminology:</h1>
 <ul>
 <li><em>cores</em>: We'll use this term to mean the different processing units available on a single node.</li>
 <li><em>nodes</em>: We'll use this term to mean the different computers, each with their own distinct memory, that make up a cluster or supercomputer.</li>
@@ -78,18 +76,22 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li><em>sockets</em>: some of R's parallel functionality involves creating new R processes (e.g., starting processes via <em>Rscript</em>) and communicating with them via a communication technology called sockets.</li>
 <li><em>tasks</em>: This term gets used in various ways (including in place of 'processes'), but we'll use it to refer to the individual computational items you want to complete - e.g., one task per cross-validation fold or one task per simulation replicate/iteration.</li>
 </ul>
-<h2 id="shared-memory">2.2) Shared memory</h2>
+</div>
+<div id="types-of-parallel-processing" class="slide section level1">
+<h1>3) Types of parallel processing</h1>
+<p>There are two basic flavors of parallel processing (leaving aside GPUs): distributed memory and shared memory. With shared memory, multiple processors (which I'll call cores) share the same memory. With distributed memory, you have multiple nodes, each with their own memory. You can think of each node as a separate computer connected by a fast network.</p>
+<h2 id="shared-memory">3.1) Shared memory</h2>
 <p>For shared memory parallelism, each core is accessing the same memory so there is no need to pass information (in the form of messages) between different machines. But in some programming contexts one needs to be careful that activity on different cores doesn't mistakenly overwrite places in memory that are used by other cores.</p>
 <p>However, except for certain special situations, the different worker processes on a given machine do not share objects in memory. So most often, one has multiple copies of the same objects, one per worker process.</p>
 <h3 id="threading">Threading</h3>
 <p>Threads are multiple paths of execution within a single process. If you are monitoring CPU usage (such as with <em>top</em> in Linux or Mac) and watching a job that is executing threaded code, you'll see the process using more than 100% of CPU. When this occurs, the process is using multiple cores, although it appears as a single process rather than as multiple processes.</p>
 <p>Note that this is a different notion than a processor that is hyperthreaded. With hyperthreading a single core appears as two cores to the operating system.</p>
 <p>Threads generally do share objects in memory, thereby allowing us to have a single copy of objects instead of one per thread.</p>
-<h2 id="distributed-memory">2.3) Distributed memory</h2>
+<h2 id="distributed-memory">3.2) Distributed memory</h2>
 <p>Parallel programming for distributed memory parallelism requires passing messages between the different nodes.</p>
 <p>The standard protocol for passing messages is MPI, of which there are various versions, including <em>openMPI</em>.</p>
 <p>Tools such as Dask, Ray and future all manage the work of moving information between nodes for you (and don't generally use MPI).</p>
-<h2 id="other-type-of-parallel-processing">2.4) Other type of parallel processing</h2>
+<h2 id="other-type-of-parallel-processing">3.3) Other type of parallel processing</h2>
 <p>We won't cover either of these in this material.</p>
 <h3 id="gpus">GPUs</h3>
 <p>GPUs (Graphics Processing Units) are processing units originally designed for rendering graphics on a computer quickly. This is done by having a large number of simple processing units for massively parallel calculation. The idea of general purpose GPU (GPGPU) computing is to exploit this capability for general computation.</p>
@@ -97,7 +99,9 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <h3 id="spark-and-hadoop">Spark and Hadoop</h3>
 <p>Spark and Hadoop are systems for implementing computations in a distributed memory environment, using the MapReduce approach.</p>
 <p>Note that Dask provides a lot of the same functionality as Spark, allowing one to create distributed datasets where pieces of the dataset live on different machines but can be treated as a single dataset from the perspective of the user.</p>
-<h2 id="package-comparison">2.5) Package comparison</h2>
+</div>
+<div id="package-comparison" class="slide section level1">
+<h1>4) Package comparison</h1>
 <p>See this outline for an overview comparison of future ( R ), Dask (Python) and Ray (Python)</p>
 <ul>
 <li>Use cases
@@ -148,9 +152,13 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li>one copy per node if done correctly (use <code>ray.put</code> to use object store)</li>
 </ul></li>
 </ul>
-<h2 id="pythons-dask-package">3) Python's Dask package</h2>
+</div>
+<div id="pythons-dask-package" class="slide section level1">
+<h1>5) Python's Dask package</h1>
 <p>Please see the <a href="python-dask.html">Python dask materials</a>.</p>
-<h2 id="r-future-package">4) R future package</h2>
+</div>
+<div id="r-future-package" class="slide section level1">
+<h1>6) R future package</h1>
 <p>Please see <a href="R-future.html">R future materials</a>.</p>
 </div>
 </body>

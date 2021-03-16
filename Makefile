@@ -1,5 +1,5 @@
-overview.html: overview.Rmd
-	Rscript -e "library(knitr); knit2html('overview.Rmd')"
+overview.html: overview.md
+	pandoc -s -o overview.html overview.md
 	pandoc -s --webtex -t slidy -o overview-slides.html overview.md
 
 R-future.html: R-future.Rmd
@@ -7,7 +7,7 @@ R-future.html: R-future.Rmd
 	pandoc -s --webtex -t slidy -o R-future-slides.html R-future.md
 
 python-dask.html: python-dask.md
-	pandoc -s -o python-dask.html python-dask.m
+	pandoc -s -o python-dask.html python-dask.md
 	pandoc -s --webtex -t slidy -o python-dask-slides.html python-dask.md
 
 python-ray.html: python-ray.md
