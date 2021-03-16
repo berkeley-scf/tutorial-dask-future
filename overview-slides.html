@@ -106,50 +106,74 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <ul>
 <li>Use cases
 <ul>
-<li>future</li>
+<li>future
+<ul>
 <li>parallelizing tasks</li>
 <li>one or more machines (nodes)</li>
-<li>Dask</li>
+</ul></li>
+<li>Dask
+<ul>
 <li>parallelizing tasks</li>
 <li>distributed datasets</li>
 <li>one or more machines (nodes)</li>
-<li>Ray</li>
+</ul></li>
+<li>Ray
+<ul>
 <li>parallelizing tasks</li>
 <li>building distributed applications (interacting tasks)</li>
 <li>one or more machines (nodes)</li>
 </ul></li>
+</ul></li>
 <li>Task allocation
 <ul>
-<li>future</li>
+<li>future
+<ul>
 <li>static by default</li>
 <li>dynamic optional</li>
-<li>Dask</li>
+</ul></li>
+<li>Dask
+<ul>
 <li>dynamic</li>
-<li>Ray</li>
+</ul></li>
+<li>Ray
+<ul>
 <li>dynamic (I think)</li>
+</ul></li>
 </ul></li>
 <li>Shared memory
 <ul>
-<li>future</li>
+<li>future
+<ul>
 <li>shared across workers only if using forked processes (<code>multicore</code> plan on Linux/MacOS)
 <ul>
 <li>if data modified, copies need to be made</li>
 </ul></li>
 <li>data shared across static tasks assigned to a worker</li>
-<li>Dask</li>
+</ul></li>
+<li>Dask
+<ul>
 <li>shared across workers only if using <code>threads</code> scheduler</li>
 <li>data shared across tasks on a worker if data are delayed</li>
-<li>Ray</li>
+</ul></li>
+<li>Ray
+<ul>
 <li>shared across all workers on a node via the object store (nice!)</li>
+</ul></li>
 </ul></li>
 <li>Copies made
 <ul>
-<li>future</li>
+<li>future
+<ul>
 <li>generally copy one per worker, but one per task with dynamic allocation</li>
-<li>Dask</li>
+</ul></li>
+<li>Dask
+<ul>
 <li>generally one copy per worker if done correctly (data should be delayed)</li>
-<li>Ray</li>
+</ul></li>
+<li>Ray
+<ul>
 <li>one copy per node if done correctly (use <code>ray.put</code> to use object store)</li>
+</ul></li>
 </ul></li>
 </ul>
 </div>
