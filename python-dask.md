@@ -380,21 +380,34 @@ as that would involve copying between machines.
 dask.config.set(scheduler='threads', num_workers = 4)  
 n = 100000000
 p = 4
+
 futures = [dask.delayed(calc_mean)(i, n) for i in range(p)]
 
 t0 = time.time()
 results = dask.compute(futures)
-time.time() - t0    # 20 sec.
+time.time() - t0    # 3.4 sec.
+
+def calc_mean_old(i, n):
+    import numpy as np
+    data = np.random.normal(size = n)
+    return([np.mean(data), np.std(data)])
+
+futures = [dask.delayed(calc_mean_old)(i, n) for i in range(p)]
+
+t0 = time.time()
+results = dask.compute(futures)
+time.time() - t0    # 21 sec.
 ```
 
-In this case the parallelization is not very effective, as computation for a single iteration is about 5 seconds.
+The computation here effectively parallelizes. However, if instead of using the `default_rng` Generator consturctor, one uses the old numpy syntax of `np.random.normal(size = n)`, one would see it takes four times as long, so is not parallelizing.
 
-The problem is occurring because of Python's Global Interpreter Lock (GIL): any computations done in pure Python code cannot be parallelized using the 'threaded' scheduler. However, computations on numeric data in numpy arrays, pandas dataframes and other C/C++/Cython-based code will parallelize.
+The problem is presumably occurring because of Python's Global Interpreter Lock (GIL): any computations done in pure Python code can not be parallelized using the 'threaded' scheduler. However, computations on numeric data in numpy arrays, pandas dataframes and other C/C++/Cython-based code would parallelize.
 
+Exactly why one form of numpy code encounters the GIL and the other is not clear to me.
 
 # 5.2. Multi-process parallelization via Dask Multiprocessing
 
-We can often more effectively parallelize by using multiple Python processes. 
+We can effectively parallelize regardless of the GIL by using multiple Python processes. 
 
 ```
 import dask.multiprocessing
@@ -406,7 +419,7 @@ futures = [dask.delayed(calc_mean)(i, n) for i in range(p)]
 
 t0 = time.time()
 results = dask.compute(futures)
-time.time() - t0  # 5 sec.
+time.time() - t0  # 4.0 sec.
 ```
 
 # 5.3. Multi-process parallelization via Dask Distributed (local)
@@ -424,7 +437,7 @@ c = Client(cluster)
 futures = [dask.delayed(calc_mean)(i, n) for i in range(p)]
 t0 = time.time()
 results = dask.compute(futures)
-time.time() - t0   # 7 sec.
+time.time() - t0   # 3.4 sec.
 ```
 
 IMPORTANT: The above code will work when run in an interactive Python
@@ -504,13 +517,14 @@ Provided that we have used --ntasks or --nodes and --ntasks-per-node to set the
 number of CPUs desired (and not --cpus-per-task), we can use `srun` to
 enumerate where the workers should run.
 
-First we'll start the scheduler and the workers. (On Savio make sure to use up-to-date version of dask binaries (dask-scheduler and dask-worker) in user-installed recent version of Dask.)
+First we'll start the scheduler and the workers.
 
 ```
-export SCHED=$(hostname)
+export SCHED=$(hostname):8786
 dask-scheduler&
 sleep 10
-srun dask-worker tcp://${SCHED}:8786 &   # might need ${SCHED}.berkeley.edu
+# On Savio, I've gotten issues with the local directory being in my home directory, so use /tmp
+srun dask-worker tcp://${SCHED} --local-directory /tmp &   # might need machinename.berkeley.edu:8786
 sleep 20
 ```
 
@@ -519,7 +533,7 @@ Then in Python, connect to the cluster via the scheduler.
 ```
 import os, time, dask
 from dask.distributed import Client
-c = Client(address = os.getenv('SCHED') + ':8786')
+c = Client(address = os.getenv('SCHED'))
 c.upload_file('calc_mean.py')  # make module accessible to workers
 n = 100000000
 p = 24
@@ -537,7 +551,7 @@ to the SCF not being set up for fast parallel I/O.
 ```
 import os
 from dask.distributed import Client
-c = Client(address = os.getenv('SCHED') + ':8786')
+c = Client(address = os.getenv('SCHED'))
 import dask.bag as db
 wiki = db.read_text('/global/scratch/paciorek/wikistats_full/dated/part*')
 import time
@@ -602,7 +616,7 @@ for param in params:
     out.append(out_single_param)
 
 t0 = time.time()
-output = dask.compute(out)  # 15 sec. on 4 cores
+output = dask.compute(out)  # 7 sec. on 4 cores
 time.time() - t0
 ```
 
@@ -721,10 +735,10 @@ def calc(x, i):
 out = [dask.delayed(calc)(x, i) for i in range(20)]
 t0 = time.time()
 output = dask.compute(out)
-time.time() - t0    # 2.5 sec. 
+time.time() - t0    # 3.6 sec. 
 ```
 
-That took a few seconds if we delay the data but takes ~40 seconds if we don't.
+That took a few seconds if we delay the data but takes ~20 seconds if we don't.
 Note that Dask does warn us if it detects a situation like this where we
 haven't delayed the data.
 

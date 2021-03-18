@@ -278,15 +278,28 @@ rs[0:5]</code></pre>
 <pre><code>dask.config.set(scheduler=&#39;threads&#39;, num_workers = 4)  
 n = 100000000
 p = 4
+
 futures = [dask.delayed(calc_mean)(i, n) for i in range(p)]
 
 t0 = time.time()
 results = dask.compute(futures)
-time.time() - t0    # 20 sec.</code></pre>
-<p>In this case the parallelization is not very effective, as computation for a single iteration is about 5 seconds.</p>
-<p>The problem is occurring because of Python's Global Interpreter Lock (GIL): any computations done in pure Python code cannot be parallelized using the 'threaded' scheduler. However, computations on numeric data in numpy arrays, pandas dataframes and other C/C++/Cython-based code will parallelize.</p>
+time.time() - t0    # 3.4 sec.
+
+def calc_mean_old(i, n):
+    import numpy as np
+    data = np.random.normal(size = n)
+    return([np.mean(data), np.std(data)])
+
+futures = [dask.delayed(calc_mean_old)(i, n) for i in range(p)]
+
+t0 = time.time()
+results = dask.compute(futures)
+time.time() - t0    # 21 sec.</code></pre>
+<p>The computation here effectively parallelizes. However, if instead of using the <code>default_rng</code> Generator consturctor, one uses the old numpy syntax of <code>np.random.normal(size = n)</code>, one would see it takes four times as long, so is not parallelizing.</p>
+<p>The problem is presumably occurring because of Python's Global Interpreter Lock (GIL): any computations done in pure Python code can not be parallelized using the 'threaded' scheduler. However, computations on numeric data in numpy arrays, pandas dataframes and other C/C++/Cython-based code would parallelize.</p>
+<p>Exactly why one form of numpy code encounters the GIL and the other is not clear to me.</p>
 <h1 id="multi-process-parallelization-via-dask-multiprocessing">5.2. Multi-process parallelization via Dask Multiprocessing</h1>
-<p>We can often more effectively parallelize by using multiple Python processes.</p>
+<p>We can effectively parallelize regardless of the GIL by using multiple Python processes.</p>
 <pre><code>import dask.multiprocessing
 dask.config.set(scheduler=&#39;processes&#39;, num_workers = 4)  
 n = 100000000
@@ -296,7 +309,7 @@ futures = [dask.delayed(calc_mean)(i, n) for i in range(p)]
 
 t0 = time.time()
 results = dask.compute(futures)
-time.time() - t0  # 5 sec.</code></pre>
+time.time() - t0  # 4.0 sec.</code></pre>
 <h1 id="multi-process-parallelization-via-dask-distributed-local">5.3. Multi-process parallelization via Dask Distributed (local)</h1>
 <p>According to the Dask documentation, using <code>Distributed</code> on a local machine has advantages over multiprocessing, including the diagnostic dashboard (see Section 7) and better handling of when copies need to be made. As we saw previously, using Distributed also allows us to use the handy <code>map()</code> operation.</p>
 <pre><code>from dask.distributed import Client, LocalCluster
@@ -306,7 +319,7 @@ c = Client(cluster)
 futures = [dask.delayed(calc_mean)(i, n) for i in range(p)]
 t0 = time.time()
 results = dask.compute(futures)
-time.time() - t0   # 7 sec.</code></pre>
+time.time() - t0   # 3.4 sec.</code></pre>
 <p>IMPORTANT: The above code will work when run in an interactive Python session. However, if you want to run it within a Python script (i.e., in a background/batch job), you'll need to set up the cluster and run the code within an <code>if __name__ == '__main__'</code> block:</p>
 <pre><code>from dask.distributed import Client, LocalCluster
 
@@ -354,16 +367,17 @@ c.shutdown()</code></pre>
 <h1 id="distributed-processing-using-multiple-machines-within-a-slurm-scheduler-job">5.5. Distributed processing using multiple machines within a SLURM scheduler job</h1>
 <p>To run within a SLURM job we can use <code>dask-ssh</code> or a combination of <code>dask-scheduler</code> and <code>dask-worker</code>..</p>
 <p>Provided that we have used --ntasks or --nodes and --ntasks-per-node to set the number of CPUs desired (and not --cpus-per-task), we can use <code>srun</code> to enumerate where the workers should run.</p>
-<p>First we'll start the scheduler and the workers. (On Savio make sure to use up-to-date version of dask binaries (dask-scheduler and dask-worker) in user-installed recent version of Dask.)</p>
-<pre><code>export SCHED=$(hostname)
+<p>First we'll start the scheduler and the workers.</p>
+<pre><code>export SCHED=$(hostname):8786
 dask-scheduler&amp;
 sleep 10
-srun dask-worker tcp://${SCHED}:8786 &amp;   # might need ${SCHED}.berkeley.edu
+# On Savio, I&#39;ve gotten issues with the local directory being in my home directory, so use /tmp
+srun dask-worker tcp://${SCHED} --local-directory /tmp &amp;   # might need machinename.berkeley.edu:8786
 sleep 20</code></pre>
 <p>Then in Python, connect to the cluster via the scheduler.</p>
 <pre><code>import os, time, dask
 from dask.distributed import Client
-c = Client(address = os.getenv(&#39;SCHED&#39;) + &#39;:8786&#39;)
+c = Client(address = os.getenv(&#39;SCHED&#39;))
 c.upload_file(&#39;calc_mean.py&#39;)  # make module accessible to workers
 n = 100000000
 p = 24
@@ -375,7 +389,7 @@ time.time() - t0</code></pre>
 <p>Let's process the 500 GB of Wikipedia log data on Savio. (Note that when I tried this on the SCF I had some errors that might be related to the SCF not being set up for fast parallel I/O.</p>
 <pre><code>import os
 from dask.distributed import Client
-c = Client(address = os.getenv(&#39;SCHED&#39;) + &#39;:8786&#39;)
+c = Client(address = os.getenv(&#39;SCHED&#39;))
 import dask.bag as db
 wiki = db.read_text(&#39;/global/scratch/paciorek/wikistats_full/dated/part*&#39;)
 import time
@@ -426,7 +440,7 @@ for param in params:
     out.append(out_single_param)
 
 t0 = time.time()
-output = dask.compute(out)  # 15 sec. on 4 cores
+output = dask.compute(out)  # 7 sec. on 4 cores
 time.time() - t0</code></pre>
 <h1 id="load-balancing-and-static-vs.-dynamic-task-allocation">6.2. Load-balancing and static vs. dynamic task allocation</h1>
 <p>When using <code>delayed</code>, Dask starts up each delayed evaluation separately (i.e., dynamic allocation). This is good for load-balancing, but each task induces some overhead (a few hundred microseconds).</p>
@@ -506,13 +520,13 @@ def calc(x, i):
 out = [dask.delayed(calc)(x, i) for i in range(20)]
 t0 = time.time()
 output = dask.compute(out)
-time.time() - t0    # 2.5 sec. </code></pre>
-<p>That took a few seconds if we delay the data but takes ~40 seconds if we don't. Note that Dask does warn us if it detects a situation like this where we haven't delayed the data.</p>
+time.time() - t0    # 3.6 sec. </code></pre>
+<p>That took a few seconds if we delay the data but takes ~20 seconds if we don't. Note that Dask does warn us if it detects a situation like this where we haven't delayed the data.</p>
 <p>Note that in either case, we incur the memory usage of the original 'x' plus copies of 'x' on the workers.</p>
 <h1 id="parallel-io">6.5. Parallel I/O</h1>
 <p>For this to make the most sense we want to be on a system where we can read multiple files without having the bottleneck of accessing a single spinning hard disk. For example the Savio filesystem is set up for fast parallel I/O.</p>
 <p>On systems with a single spinning hard disk or a single SSD, you might experiment to see how effectively things scale as you read (or write) multiple files in parallel.</p>
-<p>(Note that I'm using the 'processes' scheduler here because I ran into issues with the workers starting when using a Distributed (local) cluster.)</p>
+<p>Here we'll demo on Savio to take advantage of the fast, parallel I/O.</p>
 <pre><code>import dask.multiprocessing
 dask.config.set(scheduler = &#39;processes&#39;, num_workers = 24) 
 
@@ -542,7 +556,7 @@ time.time() - t0   ## 120 seconds for 21 files
 t0 = time.time()
 readfun(1988)
 time.time() - t0   ## 28 seconds for one file</code></pre>
-<p>I'm not sure why that didn't scale perfectly (i.e., that 21 files on 24 workers would take only 28 seconds), but we do see that it was quite a bit faster than sequentially reading the data would be.</p>
+<p>I'm not sure why that didn't scale perfectly (i.e., that 21 files on 21 or more workers would take only 28 seconds), but we do see that it was quite a bit faster than sequentially reading the data would be.</p>
 <h1 id="adaptive-scaling">6.6. Adaptive scaling</h1>
 <p>With a resource manager like Kubernetes, Dask can scale the number of workers up and down to adapt to the computational needs of a workflow. Similarly, if submitting jobs to SLURM via Dask, it will scale up and down automatically - see Section 9.</p>
 <h1 id="monitoring-jobs">7. Monitoring jobs</h1>
