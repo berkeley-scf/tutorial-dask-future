@@ -381,6 +381,7 @@ dask.config.set(scheduler='threads', num_workers = 4)
 n = 100000000
 p = 4
 
+## Using current numpy random number generator
 futures = [dask.delayed(calc_mean)(i, n) for i in range(p)]
 
 t0 = time.time()
@@ -392,6 +393,7 @@ def calc_mean_old(i, n):
     data = np.random.normal(size = n)
     return([np.mean(data), np.std(data)])
 
+## Using deprecated numpy random number generator
 futures = [dask.delayed(calc_mean_old)(i, n) for i in range(p)]
 
 t0 = time.time()
@@ -522,10 +524,10 @@ First we'll start the scheduler and the workers.
 ```
 export SCHED=$(hostname):8786
 dask-scheduler&
-sleep 10
+sleep 50   
 # On Savio, I've gotten issues with the local directory being in my home directory, so use /tmp
 srun dask-worker tcp://${SCHED} --local-directory /tmp &   # might need machinename.berkeley.edu:8786
-sleep 20
+sleep 100   # might need even more time to make sure workers start up fully
 ```
 
 Then in Python, connect to the cluster via the scheduler.
@@ -546,7 +548,7 @@ time.time() - t0
 
 Let's process the 500 GB of Wikipedia log data on Savio. (Note that
 when I tried this on the SCF I had some errors that might be related
-to the SCF not being set up for fast parallel I/O.
+to the SCF not being set up for fast parallel I/O.)
 
 ```
 import os
