@@ -18,7 +18,7 @@ Materials for this tutorial, including the Markdown files and associated code fi
 git clone https://github.com/berkeley-scf/tutorial-dask-future
 ```
 
-This tutorial by Christopher Paciorek is licensed under a Creative Commons Attribution 3.0 Unported License.
+This tutorial by Christopher Paciorek of the UC Berkeley Statistical Computing Facility is licensed under a Creative Commons Attribution 3.0 Unported License.
 
 ## 2. Some useful terminology
 
