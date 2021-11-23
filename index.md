@@ -12,7 +12,7 @@ You should be able to replicate much of what is covered here provided you have R
 
 This tutorial assumes you have a working knowledge of either R or Python, but not necessarily knowledge of parallelization in R or Python.
 
-Materials for this tutorial, including the Markdown files and associated code files that were used to create these documents are available on GitHub at [https://github.com/berkeley-scf/tutorial-dask-future].  You can download the files by doing a git clone from a terminal window on a UNIX-like machine, as follows:
+Materials for this tutorial, including the Markdown files and associated code files that were used to create these documents are available on [GitHub](https://github.com/berkeley-scf/tutorial-dask-future) in the `gh-pages` branch.  You can download the files by doing a git clone from a terminal window on a UNIX-like machine, as follows:
 
 ```bash
 git clone https://github.com/berkeley-scf/tutorial-dask-future
