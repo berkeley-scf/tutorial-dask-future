@@ -1,19 +1,6 @@
-overview.html: overview.md
-	pandoc -s -o overview.html overview.md
-	pandoc -s --webtex -t slidy -o overview-slides.html overview.md
-
-R-future.html: R-future.Rmd
-	Rscript -e "library(knitr); knit2html('R-future.Rmd')"
-	pandoc -s --webtex -t slidy -o R-future-slides.html R-future.md
-
-python-dask.html: python-dask.md
-	pandoc -s -o python-dask.html python-dask.md
-	pandoc -s --webtex -t slidy -o python-dask-slides.html python-dask.md
-
-python-ray.html: python-ray.md
-	pandoc -s -o python-ray.html python-ray.md
-	pandoc -s --webtex -t slidy -o python-ray-slides.html python-ray.md
-
+R-future.md: R-future.Rmd
+	Rscript -e "rmarkdown::render('R-future.Rmd', rmarkdown::md_document(preserve_yaml = TRUE, variant = 'markdown_github', pandoc_args = '--atx-headers'))"  ## atx headers ensures headers are all like #, ##, etc. Shouldn't be necessary as of pandoc >= 2.11.2
+## markdown_github ensures that the 'r' tag is put on chunks, so code coloring/highlighting will be done when html is produced.
 
 clean:
-	rm -f {overview,R-future}.md {overview,R-future,python-dask,python-ray}{,-slides}.html
+	rm -f R-future.md 
