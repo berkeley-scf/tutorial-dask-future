@@ -4,25 +4,23 @@ layout: default
 author: Christopher Paciorek
 ---
 
-## 1) This Tutorial
+## 1. This Tutorial
 
-This tutorial covers the use of R's future and Python's Dask packages, well-established tools for parallelizing computions on a single machine or across multiple machines. There is also a bit of material on Python's Ray package, which was developed more recently.
+This tutorial covers the use of R's future and Python's Dask packages, well-established tools for parallelizing computions on a single machine or across multiple machines. There is also a bit of material on Python's Ray package, which was developed more recently (but has been around for a while).
 
 You should be able to replicate much of what is covered here provided you have Rand Python on your computer, but some of the parallelization approaches may not work on Windows.
 
 This tutorial assumes you have a working knowledge of either R or Python, but not necessarily knowledge of parallelization in R or Python.
 
-Materials for this tutorial, including the Markdown files and associated code files that were used to create this document are available on GitHub at [https://github.com/berkeley-scf/tutorial-dask-future].  You can download the files by doing a git clone from a terminal window on a UNIX-like machine, as follows:
+Materials for this tutorial, including the Markdown files and associated code files that were used to create these documents are available on GitHub at [https://github.com/berkeley-scf/tutorial-dask-future].  You can download the files by doing a git clone from a terminal window on a UNIX-like machine, as follows:
 
 ```bash
 git clone https://github.com/berkeley-scf/tutorial-dask-future
 ```
 
-See the `Makefile` for how to generate the html files in this tutorial.
-
 This tutorial by Christopher Paciorek is licensed under a Creative Commons Attribution 3.0 Unported License.
 
-## 2) Some useful terminology:
+## 2. Some useful terminology
 
   - *cores*: We'll use this term to mean the different processing
 units available on a single node.
@@ -46,7 +44,7 @@ communicating with them via a communication technology called sockets.
 refer to the individual computational items you want to complete - e.g.,
 one task per cross-validation fold or one task per simulation replicate/iteration.
 
-## 3) Types of parallel processing
+## 3. Types of parallel processing
 
 There are two basic flavors of parallel processing (leaving aside
 GPUs): distributed memory and shared memory. With shared memory, multiple
@@ -55,7 +53,7 @@ memory, you have multiple nodes, each with their own memory. You can
 think of each node as a separate computer connected by a fast network. 
 
 
-### 3.1) Shared memory
+### 3.1. Shared memory
 
 For shared memory parallelism, each core is accessing the same memory
 so there is no need to pass information (in the form of messages)
@@ -77,7 +75,7 @@ Note that this is a different notion than a processor that is hyperthreaded. Wit
 
 Threads generally do share objects in memory, thereby allowing us to have a single copy of objects instead of one per thread. 
 
-### 3.2) Distributed memory
+### 3.2. Distributed memory
 
 Parallel programming for distributed memory parallelism requires passing
 messages between the different nodes. 
@@ -86,7 +84,7 @@ The standard protocol for passing messages is MPI, of which there are various ve
 
 Tools such as Dask, Ray and future all manage the work of moving information between nodes for you (and don't generally use MPI). 
 
-### 3.3) Other type of parallel processing
+### 3.3. Other type of parallel processing
 
 We won't cover either of these in this material.
 
@@ -107,7 +105,7 @@ memory environment, using the MapReduce approach.
 
 Note that Dask provides a lot of the same functionality as Spark, allowing one to create distributed datasets where pieces of the dataset live on different machines but can be treated as a single dataset from the perspective of the user.
 
-## 4) Package comparison
+## 4. Package comparison
 
 See this outline for an overview comparison of future ( R ), Dask (Python) and Ray (Python)
 
@@ -150,14 +148,14 @@ See this outline for an overview comparison of future ( R ), Dask (Python) and R
         - one copy per node if done correctly (use `ray.put` to use object store)
 
 
-## 5) Python's Dask package
+## 5. Python's Dask package
 
-Please see the [Python dask materials](python-dask)..
+Please see the [Python dask materials](python-dask).
 
-## 6) R future package
+## 6. R future package
 
 Please see [R future materials](R-future).
 
-## 7) Python's Ray package
+## 7. Python's Ray package
 
 For a very brief introduction to Ray, please see the [Python Ray materials](python-ray).

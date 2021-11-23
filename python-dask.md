@@ -63,7 +63,7 @@ from calc_mean import *
 (Note the code in calc_mean.py is not safe in terms of parallel random number generation - see Section 8 later in this document.)
 
 
-## 3.1. Using a 'future' via 'delayed'
+### 3.1. Using a 'future' via 'delayed'
 
 The basic pattern for setting up a parallel loop is:
 
@@ -104,7 +104,7 @@ results = dask.compute(futures, scheduler = 'processes')
 
 However, it is best practice to separate what is parallelized from where the parallelization is done, specifying the scheduler at the start of your code.
 
-## 3.2. Parallel maps
+### 3.2. Parallel maps
 
 We can do parallel map operations (i.e., a *map* in the map-reduce or functional programming sense, akin to `lapply` in R).
 
@@ -130,7 +130,7 @@ results
 The map operation appears to cache results. If you rerun the above with the same inputs, you get the same result back essentially instantaneously (even if one removes the setting of the seed from `calc_mean_vargs`). HOWEVER, that means that if there is randomness in the results of your function for a given input, Dask will just continue to return the original output.
 
 
-## 3.3. Delayed evaluation and task graphs
+### 3.3. Delayed evaluation and task graphs
 
 You can use `delayed` in more complicated situations than the simple iterations shown above.
 
@@ -169,7 +169,7 @@ z.compute()
 ```
 
 
-## 3.4. The Futures interface
+### 3.4. The Futures interface
 
 You can also control evaluation of tasks using the [Futures interface for managing tasks](https://docs.dask.org/en/latest/futures.html). Unlike use of `delayed`, the evaluation occurs immediately instead of via lazy evaluation.
 
@@ -183,7 +183,7 @@ Dask provides the ability to work on data structures that are split (sharded/chu
 Because computations are done in external compiled code (e.g., via numpy) it's effective to use the threaded scheduler when operating on one node to avoid having to copy and move the data. 
 
 
-## 4.1. Dataframes (pandas)
+### 4.1. Dataframes (pandas)
 
 Dask dataframes are Pandas-like dataframes where each dataframe is split into groups of rows, stored as  smaller Pandas dataframes.
 
@@ -224,7 +224,7 @@ CLE     4.000000
 ...
 ```
 
-## 4.2. Bags
+### 4.2. Bags
 
 Bags are like lists but there is no particular ordering, so it doesn't make sense to ask for the i'th element.
 
@@ -274,7 +274,7 @@ two separate calls to `compute()`. More in Section 6.
 
 Also you would not want to do `data = wiki.compute()` as that would pull the entire dataset into your main Python session as a single (very large) list.
 
-## 4.3. Arrays (numpy)
+### 4.3. Arrays (numpy)
 
 Dask arrays are numpy-like arrays where each array is split up by both rows and columns into smaller numpy arrays.
 
@@ -373,7 +373,7 @@ as that would involve copying between machines.
 
 ## 5. Using different schedulers
 
-## 5.1. Using threads (no copying)
+### 5.1. Using threads (no copying)
 
 ```python
 dask.config.set(scheduler='threads', num_workers = 4)  
@@ -406,7 +406,7 @@ The problem is presumably occurring because of Python's Global Interpreter Lock 
 
 Exactly why one form of numpy code encounters the GIL and the other is not clear to me.
 
-## 5.2. Multi-process parallelization via Dask Multiprocessing
+### 5.2. Multi-process parallelization via Dask Multiprocessing
 
 We can effectively parallelize regardless of the GIL by using multiple Python processes. 
 
@@ -441,7 +441,7 @@ if __name__ == '__main__':
     time.time() - t0  # 4.0 sec.
 ```
 
-## 5.3. Multi-process parallelization via Dask Distributed (local)
+### 5.3. Multi-process parallelization via Dask Distributed (local)
 
 According to the Dask documentation, using `Distributed` on a local machine
 has advantages over multiprocessing, including the diagnostic dashboard
@@ -478,7 +478,7 @@ if __name__ == '__main__':
 	time.time() - t0   # 7 sec.
 ```
 
-## 5.4. Distributed processing across multiple machines via an ad hoc cluster
+### 5.4. Distributed processing across multiple machines via an ad hoc cluster
 
 We need to set up a scheduler on one machine (possibly the machine we are on)
 and workers on whatever machines we want to do the computation on.
@@ -527,7 +527,7 @@ c = Client(cluster)
 c.shutdown()
 ```
 
-## 5.5. Distributed processing using multiple machines within a SLURM scheduler job
+### 5.5. Distributed processing using multiple machines within a SLURM scheduler job
 
 To run within a SLURM job we can use `dask-ssh` or a combination of `dask-scheduler`
 and `dask-worker`.. 
@@ -609,7 +609,7 @@ dask-ssh --scheduler ${SCHED} --hostfile .hosts
 
 ## 6. Effective parallelization and common issues
 
-## 6.1. Nested parallelization and pipelines
+### 6.1. Nested parallelization and pipelines
 
 We can set up nested parallelization (or an arbitrary set of computations) and just have Dask's delayed functionality figure out how to do the parallelization, provided there is a single call to the compute() method.
 
@@ -640,7 +640,7 @@ time.time() - t0
 ```
 
 
-## 6.2. Load-balancing and static vs. dynamic task allocation
+### 6.2. Load-balancing and static vs. dynamic task allocation
 
 When using `delayed`, Dask starts up each delayed evaluation separately (i.e., dynamic allocation).
 This is good for load-balancing, but each task induces
@@ -652,7 +652,7 @@ be broken up into batches.
 So if you have many quick tasks, you probably
 want to break them up into batches manually, to reduce the impact of the overhead.
 
-## 6.3. Avoid repeated calculations by embedding tasks within one call to compute
+### 6.3. Avoid repeated calculations by embedding tasks within one call to compute
 
 As far as I can tell, Dask avoids keeping all the pieces of a distributed object or
 computation in memory.  However, in many cases this can mean repeating
@@ -699,7 +699,7 @@ However, I also tried the above where I added `air.count()` to the `dask.compute
 
 Note that when reading from disk, disk caching by the operating system (saving files that are used repeatedly in memory) can also greatly speed up I/O. (Note this can very easily confuse you in terms of timing your code..., e.g., simply copying the data to your machine can put them in the cache, so subsequent reading into Python can take advantage of that.)
 
-## 6.4. Copies are usually made 
+### 6.4. Copies are usually made 
 
 Except for the 'threads' scheduler, copies will be made of all objects passed to the workers.
 
@@ -763,7 +763,7 @@ haven't delayed the data.
 
 Note that in either case, we incur the memory usage of the original 'x' plus copies of 'x' on the workers.
 
-## 6.5. Parallel I/O
+### 6.5. Parallel I/O
 
 For this to make the most sense we want to be on a system where we can read multiple files
 without having the bottleneck of accessing a single spinning hard disk. For example the
@@ -809,7 +809,7 @@ time.time() - t0   ## 28 seconds for one file
 I'm not sure why that didn't scale perfectly (i.e., that 21 files on 21 or more workers would take only 28 seconds),
 but we do see that it was quite a bit faster than sequentially reading the data would be.
 
-## 6.6. Adaptive scaling
+### 6.6. Adaptive scaling
 
 With a resource manager like Kubernetes, Dask can scale the number of workers up and down to adapt to the computational needs of a workflow. Similarly, if submitting jobs to SLURM via Dask, it will scale up and down automatically - see Section 9.
 
@@ -965,7 +965,7 @@ If you'd like to see the SLURM job script that Dask constructs and submits, you 
 cluster.job_script()
 ```
 
-## 9.1. Adaptive scaling
+### 9.1. Adaptive scaling
 
 If you use `cluster.adapt()` in place of `cluster.scale()`, Dask will start and stop SLURM jobs to start and stop workers as needed.  Note that on a shared cluster, you will almost certainly want to set a maximum number of workers to run at once so you don't accidentally submit 100s or 1000s of jobs.
 
