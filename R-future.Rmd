@@ -128,7 +128,7 @@ So we create a `listenv`, which is basically an environment that can be treated 
 
 This approach creates implicit futures, and one does not need to use `value` to get the result.
 
-(Note that the code here is not safe in terms of parallel randon number generation - see Section 8.)
+(Note that the code here is safe in terms of parallel randon number generation - see Section 8 for more information about the `seed` argument.)
 
 ```{r, future-listenv}
 library(listenv)
@@ -141,7 +141,7 @@ for(i in seq_len(n)) {
        # some code here as you would with foreach; for example:
        tmp <- rnorm(1e7)
        c(mean(tmp), sd(tmp))
-     }
+     }, seed = TRUE
 }
 
 out[[2]]
@@ -359,8 +359,6 @@ Here's some syntax to set up parallelization over the scenarios (outer loop) onl
 when the plan involves multiple levels we need to use `tweak` if we want to
 modify the defaults for a type of future.
 
-(Note the code here is not safe in terms of parallel random number generation - see section later in this document.)
-
 ```{r, nested}
 plan(list(tweak(multisession, workers = 4), sequential))
 
@@ -378,7 +376,7 @@ for(k in seq_len(p)) {                         # outer loop: parameter sweep
           }
         }
         matrix(unlist(out_single_param), ncol = 2, byrow = TRUE)
-     }
+     }, seed = TRUE
 }
 ## non-blocking - note that control returns to the user since we have
 ## four outer iterations and four workers
