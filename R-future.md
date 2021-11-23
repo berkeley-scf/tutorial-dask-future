@@ -139,11 +139,11 @@ out <- foreach(i = 1:5) %dopar% {
 }
 ```
 
-    ## Running in process 1566972 
-    ## Running in process 1566970 
-    ## Running in process 1566969 
-    ## Running in process 1566974 
-    ## Running in process 1566973
+    ## Running in process 1581278 
+    ## Running in process 1581276 
+    ## Running in process 1581274 
+    ## Running in process 1581273 
+    ## Running in process 1581277
 
 ``` r
 out
@@ -198,7 +198,7 @@ class(out[[5]])
 value(out[[5]])
 ```
 
-    ## [1] -0.0003729948  0.9997917018
+    ## [1] -0.0004692989  1.0002227162
 
 ## 3.4. Using implicit futures (with listenvs)
 
@@ -210,8 +210,9 @@ that can be treated like a list.
 This approach creates implicit futures, and one does not need to use
 `value` to get the result.
 
-(Note that the code here is not safe in terms of parallel randon number
-generation - see Section 8.)
+(Note that, as seen in the warnings, the code here is not safe in terms
+of parallel randon number generation - see Section 8 for more
+information.)
 
 ``` r
 library(listenv)
@@ -237,7 +238,7 @@ out[[2]]
     ## numbers are produced via the L'Ecuyer-CMRG method. To disable this check, use
     ## 'seed=NULL', or set option 'future.rng.onMisuse' to "ignore".
 
-    ## [1] -0.0001237229  1.0002410182
+    ## [1] -0.0003565227  0.9998352254
 
 ``` r
 out
@@ -246,141 +247,10 @@ out
     ## A 'listenv' vector with 20 elements (unnamed).
 
 ``` r
+options(warn = -1)  ## suppress RNG warnings 
 out <- as.list(out)
+options(warn = 0)
 ```
-
-    ## Warning: UNRELIABLE VALUE: Future ('<none>') unexpectedly generated random
-    ## numbers without specifying argument 'seed'. There is a risk that those random
-    ## numbers are not statistically sound and the overall results might be invalid.
-    ## To fix this, specify 'seed=TRUE'. This ensures that proper, parallel-safe random
-    ## numbers are produced via the L'Ecuyer-CMRG method. To disable this check, use
-    ## 'seed=NULL', or set option 'future.rng.onMisuse' to "ignore".
-
-    ## Warning: UNRELIABLE VALUE: Future ('<none>') unexpectedly generated random
-    ## numbers without specifying argument 'seed'. There is a risk that those random
-    ## numbers are not statistically sound and the overall results might be invalid.
-    ## To fix this, specify 'seed=TRUE'. This ensures that proper, parallel-safe random
-    ## numbers are produced via the L'Ecuyer-CMRG method. To disable this check, use
-    ## 'seed=NULL', or set option 'future.rng.onMisuse' to "ignore".
-
-    ## Warning: UNRELIABLE VALUE: Future ('<none>') unexpectedly generated random
-    ## numbers without specifying argument 'seed'. There is a risk that those random
-    ## numbers are not statistically sound and the overall results might be invalid.
-    ## To fix this, specify 'seed=TRUE'. This ensures that proper, parallel-safe random
-    ## numbers are produced via the L'Ecuyer-CMRG method. To disable this check, use
-    ## 'seed=NULL', or set option 'future.rng.onMisuse' to "ignore".
-
-    ## Warning: UNRELIABLE VALUE: Future ('<none>') unexpectedly generated random
-    ## numbers without specifying argument 'seed'. There is a risk that those random
-    ## numbers are not statistically sound and the overall results might be invalid.
-    ## To fix this, specify 'seed=TRUE'. This ensures that proper, parallel-safe random
-    ## numbers are produced via the L'Ecuyer-CMRG method. To disable this check, use
-    ## 'seed=NULL', or set option 'future.rng.onMisuse' to "ignore".
-
-    ## Warning: UNRELIABLE VALUE: Future ('<none>') unexpectedly generated random
-    ## numbers without specifying argument 'seed'. There is a risk that those random
-    ## numbers are not statistically sound and the overall results might be invalid.
-    ## To fix this, specify 'seed=TRUE'. This ensures that proper, parallel-safe random
-    ## numbers are produced via the L'Ecuyer-CMRG method. To disable this check, use
-    ## 'seed=NULL', or set option 'future.rng.onMisuse' to "ignore".
-
-    ## Warning: UNRELIABLE VALUE: Future ('<none>') unexpectedly generated random
-    ## numbers without specifying argument 'seed'. There is a risk that those random
-    ## numbers are not statistically sound and the overall results might be invalid.
-    ## To fix this, specify 'seed=TRUE'. This ensures that proper, parallel-safe random
-    ## numbers are produced via the L'Ecuyer-CMRG method. To disable this check, use
-    ## 'seed=NULL', or set option 'future.rng.onMisuse' to "ignore".
-
-    ## Warning: UNRELIABLE VALUE: Future ('<none>') unexpectedly generated random
-    ## numbers without specifying argument 'seed'. There is a risk that those random
-    ## numbers are not statistically sound and the overall results might be invalid.
-    ## To fix this, specify 'seed=TRUE'. This ensures that proper, parallel-safe random
-    ## numbers are produced via the L'Ecuyer-CMRG method. To disable this check, use
-    ## 'seed=NULL', or set option 'future.rng.onMisuse' to "ignore".
-
-    ## Warning: UNRELIABLE VALUE: Future ('<none>') unexpectedly generated random
-    ## numbers without specifying argument 'seed'. There is a risk that those random
-    ## numbers are not statistically sound and the overall results might be invalid.
-    ## To fix this, specify 'seed=TRUE'. This ensures that proper, parallel-safe random
-    ## numbers are produced via the L'Ecuyer-CMRG method. To disable this check, use
-    ## 'seed=NULL', or set option 'future.rng.onMisuse' to "ignore".
-
-    ## Warning: UNRELIABLE VALUE: Future ('<none>') unexpectedly generated random
-    ## numbers without specifying argument 'seed'. There is a risk that those random
-    ## numbers are not statistically sound and the overall results might be invalid.
-    ## To fix this, specify 'seed=TRUE'. This ensures that proper, parallel-safe random
-    ## numbers are produced via the L'Ecuyer-CMRG method. To disable this check, use
-    ## 'seed=NULL', or set option 'future.rng.onMisuse' to "ignore".
-
-    ## Warning: UNRELIABLE VALUE: Future ('<none>') unexpectedly generated random
-    ## numbers without specifying argument 'seed'. There is a risk that those random
-    ## numbers are not statistically sound and the overall results might be invalid.
-    ## To fix this, specify 'seed=TRUE'. This ensures that proper, parallel-safe random
-    ## numbers are produced via the L'Ecuyer-CMRG method. To disable this check, use
-    ## 'seed=NULL', or set option 'future.rng.onMisuse' to "ignore".
-
-    ## Warning: UNRELIABLE VALUE: Future ('<none>') unexpectedly generated random
-    ## numbers without specifying argument 'seed'. There is a risk that those random
-    ## numbers are not statistically sound and the overall results might be invalid.
-    ## To fix this, specify 'seed=TRUE'. This ensures that proper, parallel-safe random
-    ## numbers are produced via the L'Ecuyer-CMRG method. To disable this check, use
-    ## 'seed=NULL', or set option 'future.rng.onMisuse' to "ignore".
-
-    ## Warning: UNRELIABLE VALUE: Future ('<none>') unexpectedly generated random
-    ## numbers without specifying argument 'seed'. There is a risk that those random
-    ## numbers are not statistically sound and the overall results might be invalid.
-    ## To fix this, specify 'seed=TRUE'. This ensures that proper, parallel-safe random
-    ## numbers are produced via the L'Ecuyer-CMRG method. To disable this check, use
-    ## 'seed=NULL', or set option 'future.rng.onMisuse' to "ignore".
-
-    ## Warning: UNRELIABLE VALUE: Future ('<none>') unexpectedly generated random
-    ## numbers without specifying argument 'seed'. There is a risk that those random
-    ## numbers are not statistically sound and the overall results might be invalid.
-    ## To fix this, specify 'seed=TRUE'. This ensures that proper, parallel-safe random
-    ## numbers are produced via the L'Ecuyer-CMRG method. To disable this check, use
-    ## 'seed=NULL', or set option 'future.rng.onMisuse' to "ignore".
-
-    ## Warning: UNRELIABLE VALUE: Future ('<none>') unexpectedly generated random
-    ## numbers without specifying argument 'seed'. There is a risk that those random
-    ## numbers are not statistically sound and the overall results might be invalid.
-    ## To fix this, specify 'seed=TRUE'. This ensures that proper, parallel-safe random
-    ## numbers are produced via the L'Ecuyer-CMRG method. To disable this check, use
-    ## 'seed=NULL', or set option 'future.rng.onMisuse' to "ignore".
-
-    ## Warning: UNRELIABLE VALUE: Future ('<none>') unexpectedly generated random
-    ## numbers without specifying argument 'seed'. There is a risk that those random
-    ## numbers are not statistically sound and the overall results might be invalid.
-    ## To fix this, specify 'seed=TRUE'. This ensures that proper, parallel-safe random
-    ## numbers are produced via the L'Ecuyer-CMRG method. To disable this check, use
-    ## 'seed=NULL', or set option 'future.rng.onMisuse' to "ignore".
-
-    ## Warning: UNRELIABLE VALUE: Future ('<none>') unexpectedly generated random
-    ## numbers without specifying argument 'seed'. There is a risk that those random
-    ## numbers are not statistically sound and the overall results might be invalid.
-    ## To fix this, specify 'seed=TRUE'. This ensures that proper, parallel-safe random
-    ## numbers are produced via the L'Ecuyer-CMRG method. To disable this check, use
-    ## 'seed=NULL', or set option 'future.rng.onMisuse' to "ignore".
-
-    ## Warning: UNRELIABLE VALUE: Future ('<none>') unexpectedly generated random
-    ## numbers without specifying argument 'seed'. There is a risk that those random
-    ## numbers are not statistically sound and the overall results might be invalid.
-    ## To fix this, specify 'seed=TRUE'. This ensures that proper, parallel-safe random
-    ## numbers are produced via the L'Ecuyer-CMRG method. To disable this check, use
-    ## 'seed=NULL', or set option 'future.rng.onMisuse' to "ignore".
-
-    ## Warning: UNRELIABLE VALUE: Future ('<none>') unexpectedly generated random
-    ## numbers without specifying argument 'seed'. There is a risk that those random
-    ## numbers are not statistically sound and the overall results might be invalid.
-    ## To fix this, specify 'seed=TRUE'. This ensures that proper, parallel-safe random
-    ## numbers are produced via the L'Ecuyer-CMRG method. To disable this check, use
-    ## 'seed=NULL', or set option 'future.rng.onMisuse' to "ignore".
-
-    ## Warning: UNRELIABLE VALUE: Future ('<none>') unexpectedly generated random
-    ## numbers without specifying argument 'seed'. There is a risk that those random
-    ## numbers are not statistically sound and the overall results might be invalid.
-    ## To fix this, specify 'seed=TRUE'. This ensures that proper, parallel-safe random
-    ## numbers are produced via the L'Ecuyer-CMRG method. To disable this check, use
-    ## 'seed=NULL', or set option 'future.rng.onMisuse' to "ignore".
 
 ## 3.5. Blocking and non-blocking calls
 
@@ -404,7 +274,7 @@ system.time(
 ```
 
     ##    user  system elapsed 
-    ##   0.006   0.000   0.006
+    ##   0.006   0.000   0.007
 
 ``` r
 ## Check if the calculation is done. This check is a non-blocking call.
@@ -421,7 +291,7 @@ system.time(value(out))
 ```
 
     ##    user  system elapsed 
-    ##   0.001   0.001   1.840
+    ##   0.001   0.000   1.880
 
 ### Blocking in the context of a loop over futures
 
@@ -447,7 +317,7 @@ for(i in seq_len(n)) {
 ```
 
     ##    user  system elapsed 
-    ##   0.083   0.003   4.508
+    ##   0.062   0.012   4.336
 
 ``` r
 ## Not blocked as result already available once first four finished.
@@ -471,7 +341,7 @@ system.time(value(out[[6]]))
 ```
 
     ##    user  system elapsed 
-    ##   0.001   0.000   1.837
+    ##   0.001   0.000   1.953
 
 # 4. A tour of different backends
 
@@ -680,9 +550,6 @@ Here’s some syntax to set up parallelization over the scenarios (outer
 loop) only. Note that when the plan involves multiple levels we need to
 use `tweak` if we want to modify the defaults for a type of future.
 
-(Note the code here is not safe in terms of parallel random number
-generation - see section later in this document.)
-
 ``` r
 plan(list(tweak(multisession, workers = 4), sequential))
 
@@ -691,7 +558,7 @@ p <- nrow(params)  # 4 in this case
 n <- 10
 out <- listenv()
 for(k in seq_len(p)) {                         # outer loop: parameter sweep
-     out[[k]] %<-% {    
+     out[[k]] <- future( {    
         out_single_param <- listenv()
         for(i in seq_len(n)) {                 # inner loop: replications
           out_single_param[[i]] %<-% {
@@ -700,7 +567,7 @@ for(k in seq_len(p)) {                         # outer loop: parameter sweep
           }
         }
         matrix(unlist(out_single_param), ncol = 2, byrow = TRUE)
-     }
+     }, seed = TRUE)
 }
 ## non-blocking - note that control returns to the user since we have
 ## four outer iterations and four workers
@@ -714,87 +581,34 @@ out
 out[[1]]
 ```
 
-    ## Warning: UNRELIABLE VALUE: Future (‘<none>’) unexpectedly generated random
-    ## numbers without specifying argument 'seed'. There is a risk that those random
-    ## numbers are not statistically sound and the overall results might be invalid.
-    ## To fix this, specify 'seed=TRUE'. This ensures that proper, parallel-safe random
-    ## numbers are produced via the L'Ecuyer-CMRG method. To disable this check, use
-    ## 'seed=NULL', or set option 'future.rng.onMisuse' to "ignore".
-
-    ## Warning: UNRELIABLE VALUE: Future (‘<none>’) unexpectedly generated random
-    ## numbers without specifying argument 'seed'. There is a risk that those random
-    ## numbers are not statistically sound and the overall results might be invalid.
-    ## To fix this, specify 'seed=TRUE'. This ensures that proper, parallel-safe random
-    ## numbers are produced via the L'Ecuyer-CMRG method. To disable this check, use
-    ## 'seed=NULL', or set option 'future.rng.onMisuse' to "ignore".
-
-    ## Warning: UNRELIABLE VALUE: Future (‘<none>’) unexpectedly generated random
-    ## numbers without specifying argument 'seed'. There is a risk that those random
-    ## numbers are not statistically sound and the overall results might be invalid.
-    ## To fix this, specify 'seed=TRUE'. This ensures that proper, parallel-safe random
-    ## numbers are produced via the L'Ecuyer-CMRG method. To disable this check, use
-    ## 'seed=NULL', or set option 'future.rng.onMisuse' to "ignore".
-
-    ## Warning: UNRELIABLE VALUE: Future (‘<none>’) unexpectedly generated random
-    ## numbers without specifying argument 'seed'. There is a risk that those random
-    ## numbers are not statistically sound and the overall results might be invalid.
-    ## To fix this, specify 'seed=TRUE'. This ensures that proper, parallel-safe random
-    ## numbers are produced via the L'Ecuyer-CMRG method. To disable this check, use
-    ## 'seed=NULL', or set option 'future.rng.onMisuse' to "ignore".
-
-    ## Warning: UNRELIABLE VALUE: Future (‘<none>’) unexpectedly generated random
-    ## numbers without specifying argument 'seed'. There is a risk that those random
-    ## numbers are not statistically sound and the overall results might be invalid.
-    ## To fix this, specify 'seed=TRUE'. This ensures that proper, parallel-safe random
-    ## numbers are produced via the L'Ecuyer-CMRG method. To disable this check, use
-    ## 'seed=NULL', or set option 'future.rng.onMisuse' to "ignore".
-
-    ## Warning: UNRELIABLE VALUE: Future (‘<none>’) unexpectedly generated random
-    ## numbers without specifying argument 'seed'. There is a risk that those random
-    ## numbers are not statistically sound and the overall results might be invalid.
-    ## To fix this, specify 'seed=TRUE'. This ensures that proper, parallel-safe random
-    ## numbers are produced via the L'Ecuyer-CMRG method. To disable this check, use
-    ## 'seed=NULL', or set option 'future.rng.onMisuse' to "ignore".
-
-    ## Warning: UNRELIABLE VALUE: Future (‘<none>’) unexpectedly generated random
-    ## numbers without specifying argument 'seed'. There is a risk that those random
-    ## numbers are not statistically sound and the overall results might be invalid.
-    ## To fix this, specify 'seed=TRUE'. This ensures that proper, parallel-safe random
-    ## numbers are produced via the L'Ecuyer-CMRG method. To disable this check, use
-    ## 'seed=NULL', or set option 'future.rng.onMisuse' to "ignore".
-
-    ## Warning: UNRELIABLE VALUE: Future (‘<none>’) unexpectedly generated random
-    ## numbers without specifying argument 'seed'. There is a risk that those random
-    ## numbers are not statistically sound and the overall results might be invalid.
-    ## To fix this, specify 'seed=TRUE'. This ensures that proper, parallel-safe random
-    ## numbers are produced via the L'Ecuyer-CMRG method. To disable this check, use
-    ## 'seed=NULL', or set option 'future.rng.onMisuse' to "ignore".
-
-    ## Warning: UNRELIABLE VALUE: Future (‘<none>’) unexpectedly generated random
-    ## numbers without specifying argument 'seed'. There is a risk that those random
-    ## numbers are not statistically sound and the overall results might be invalid.
-    ## To fix this, specify 'seed=TRUE'. This ensures that proper, parallel-safe random
-    ## numbers are produced via the L'Ecuyer-CMRG method. To disable this check, use
-    ## 'seed=NULL', or set option 'future.rng.onMisuse' to "ignore".
-
-    ## Warning: UNRELIABLE VALUE: Future (‘<none>’) unexpectedly generated random
-    ## numbers without specifying argument 'seed'. There is a risk that those random
-    ## numbers are not statistically sound and the overall results might be invalid.
-    ## To fix this, specify 'seed=TRUE'. This ensures that proper, parallel-safe random
-    ## numbers are produced via the L'Ecuyer-CMRG method. To disable this check, use
-    ## 'seed=NULL', or set option 'future.rng.onMisuse' to "ignore".
-
-    ##                [,1]      [,2]
-    ##  [1,] -1.437546e-04 1.0001607
-    ##  [2,]  8.813117e-05 1.0001292
-    ##  [3,] -4.058177e-04 0.9998445
-    ##  [4,] -1.566156e-04 1.0002545
-    ##  [5,]  2.405123e-04 0.9999624
-    ##  [6,] -6.972973e-05 1.0001350
-    ##  [7,]  6.112299e-05 1.0002745
-    ##  [8,] -3.229432e-05 1.0002346
-    ##  [9,]  1.896272e-04 1.0000651
-    ## [10,] -6.263184e-05 1.0000458
+    ## MultisessionFuture:
+    ## Label: '<none>'
+    ## Expression:
+    ## {
+    ##     out_single_param <- listenv()
+    ##     for (i in seq_len(n)) {
+    ##         out_single_param[[i]] %<-% {
+    ##             tmp <- rnorm(2e+07, params[k, 1], params[k, 2])
+    ##             c(mean(tmp), sd(tmp))
+    ##         }
+    ##     }
+    ##     matrix(unlist(out_single_param), ncol = 2, byrow = TRUE)
+    ## }
+    ## Lazy evaluation: FALSE
+    ## Asynchronous evaluation: TRUE
+    ## Local evaluation: TRUE
+    ## Environment: R_GlobalEnv
+    ## Capture standard output: TRUE
+    ## Capture condition classes: 'condition' (excluding 'nothing')
+    ## Globals: 3 objects totaling 392 bytes (numeric 'n' of 56 bytes, matrix 'params' of 280 bytes, integer 'k' of 56 bytes)
+    ## Packages: 3 packages ('listenv', 'stats', 'future')
+    ## L'Ecuyer-CMRG RNG seed: c(10407, 1687649425, -2007636617, -1698342492, -873966712, -1541224390, 1700177422)
+    ## Resolved: FALSE
+    ## Value: <not collected>
+    ## Conditions captured: <none>
+    ## Early signaling: FALSE
+    ## Owner process: f92f296c-f515-9d0a-2ff4-1877d852a923
+    ## Class: 'MultisessionFuture', 'ClusterFuture', 'MultiprocessFuture', 'Future', 'environment'
 
 Note that these are “asynchronous” futures that are evaluated in the
 background while control returns to the user.

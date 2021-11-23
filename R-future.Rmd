@@ -128,7 +128,7 @@ So we create a `listenv`, which is basically an environment that can be treated 
 
 This approach creates implicit futures, and one does not need to use `value` to get the result.
 
-(Note that the code here is safe in terms of parallel randon number generation - see Section 8 for more information about the `seed` argument.)
+(Note that, as seen in the warnings, the code here is not safe in terms of parallel randon number generation - see Section 8 for more information.)
 
 ```{r, future-listenv}
 library(listenv)
@@ -141,12 +141,14 @@ for(i in seq_len(n)) {
        # some code here as you would with foreach; for example:
        tmp <- rnorm(1e7)
        c(mean(tmp), sd(tmp))
-     }, seed = TRUE
+     }
 }
 
 out[[2]]
 out
+options(warn = -1)  ## suppress RNG warnings 
 out <- as.list(out)
+options(warn = 0)
 ```
 
 ## 3.5. Blocking and non-blocking calls
@@ -367,7 +369,7 @@ p <- nrow(params)  # 4 in this case
 n <- 10
 out <- listenv()
 for(k in seq_len(p)) {                         # outer loop: parameter sweep
-     out[[k]] %<-% {    
+     out[[k]] <- future( {    
         out_single_param <- listenv()
         for(i in seq_len(n)) {                 # inner loop: replications
           out_single_param[[i]] %<-% {
@@ -376,7 +378,7 @@ for(k in seq_len(p)) {                         # outer loop: parameter sweep
           }
         }
         matrix(unlist(out_single_param), ncol = 2, byrow = TRUE)
-     }, seed = TRUE
+     }, seed = TRUE)
 }
 ## non-blocking - note that control returns to the user since we have
 ## four outer iterations and four workers
