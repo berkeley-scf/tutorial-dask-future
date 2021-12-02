@@ -2,5 +2,5 @@ remote_theme: pages-themes/minimal@v0.2.0
 plugins:
 - jekyll-remote-theme # add this line to the plugins list if you already have one
 title: Dask and future tutorial
-description: Training materials for parallelization with Dask and Ray in Python and the future package in R
+description: Training materials for parallelization with Dask and Ray in Python and the future package in R. See the top menu for separate pages on each topic.
 show_downloads: false
