@@ -4,3 +4,4 @@ plugins:
 title: Dask and future tutorial
 description: Training materials for parallelization with Dask and Ray in Python and the future package in R. See the top menu for separate pages on each topic.
 show_downloads: false
+logo: assets/img/logo.svg
