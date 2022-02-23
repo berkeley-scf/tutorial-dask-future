@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
-<title>Parallel Processing using the R future package</title>
+<title>Parallel Processing using R&#39;s future package</title>
 
 <script type="text/javascript">
 window.onload = function() {
@@ -201,7 +201,7 @@ hr {
 </head>
 
 <body>
-<h1>Parallel Processing using the R future package</h1>
+<h1>Parallel Processing using R&#39;s future package</h1>
 
 <p>Chris Paciorek, Department of Statistics, UC Berkeley</p>
 
@@ -251,7 +251,7 @@ plan(multisession, workers = 4)
 </thead><tbody>
 <tr>
 <td>multisession</td>
-<td>background R sessions</td>
+<td>background R processes</td>
 <td>no</td>
 <td>yes</td>
 </tr>
@@ -269,7 +269,7 @@ plan(multisession, workers = 4)
 </tr>
 <tr>
 <td>cluster</td>
-<td>R sessions on other machine(s)</td>
+<td>R processes on other machine(s)</td>
 <td>yes</td>
 <td>yes</td>
 </tr>
@@ -311,11 +311,11 @@ out &lt;- foreach(i = 1:5) %dopar% {
 }
 </code></pre>
 
-<pre><code>## Running in process 45234 
-## Running in process 45309 
-## Running in process 45372 
-## Running in process 45439 
-## Running in process 45502
+<pre><code>## Running in process 818000 
+## Running in process 818005 
+## Running in process 818002 
+## Running in process 818004 
+## Running in process 818003
 </code></pre>
 
 <pre><code class="r">out
@@ -365,7 +365,7 @@ class(out[[5]])
 value(out[[5]])
 </code></pre>
 
-<pre><code>## [1] -8.092366e-05  1.000059e+00
+<pre><code>## [1] 0.0003367455 0.9999298834
 </code></pre>
 
 <h1>3.4. Using implicit futures (with listenvs)</h1>
@@ -385,7 +385,7 @@ n &lt;- 20
 out &lt;- listenv()
 for(i in seq_len(n)) {
      out[[i]] %&lt;-% {
-       # some code here as you would with foreach
+       # some code here as you would with foreach; for example:
        tmp &lt;- rnorm(1e7)
        c(mean(tmp), sd(tmp))
      }
@@ -394,7 +394,15 @@ for(i in seq_len(n)) {
 out[[2]]
 </code></pre>
 
-<pre><code>## [1] 0.000273803 1.000176399
+<pre><code>## Warning: UNRELIABLE VALUE: Future (&#39;&lt;none&gt;&#39;) unexpectedly generated random
+## numbers without specifying argument &#39;seed&#39;. There is a risk that those random
+## numbers are not statistically sound and the overall results might be invalid.
+## To fix this, specify &#39;seed=TRUE&#39;. This ensures that proper, parallel-safe random
+## numbers are produced via the L&#39;Ecuyer-CMRG method. To disable this check, use
+## &#39;seed=NULL&#39;, or set option &#39;future.rng.onMisuse&#39; to &quot;ignore&quot;.
+</code></pre>
+
+<pre><code>## [1] 0.0001685641 0.9999480064
 </code></pre>
 
 <pre><code class="r">out
@@ -404,6 +412,158 @@ out[[2]]
 </code></pre>
 
 <pre><code class="r">out &lt;- as.list(out)
+</code></pre>
+
+<pre><code>## Warning: UNRELIABLE VALUE: Future (&#39;&lt;none&gt;&#39;) unexpectedly generated random
+## numbers without specifying argument &#39;seed&#39;. There is a risk that those random
+## numbers are not statistically sound and the overall results might be invalid.
+## To fix this, specify &#39;seed=TRUE&#39;. This ensures that proper, parallel-safe random
+## numbers are produced via the L&#39;Ecuyer-CMRG method. To disable this check, use
+## &#39;seed=NULL&#39;, or set option &#39;future.rng.onMisuse&#39; to &quot;ignore&quot;.
+</code></pre>
+
+<pre><code>## Warning: UNRELIABLE VALUE: Future (&#39;&lt;none&gt;&#39;) unexpectedly generated random
+## numbers without specifying argument &#39;seed&#39;. There is a risk that those random
+## numbers are not statistically sound and the overall results might be invalid.
+## To fix this, specify &#39;seed=TRUE&#39;. This ensures that proper, parallel-safe random
+## numbers are produced via the L&#39;Ecuyer-CMRG method. To disable this check, use
+## &#39;seed=NULL&#39;, or set option &#39;future.rng.onMisuse&#39; to &quot;ignore&quot;.
+</code></pre>
+
+<pre><code>## Warning: UNRELIABLE VALUE: Future (&#39;&lt;none&gt;&#39;) unexpectedly generated random
+## numbers without specifying argument &#39;seed&#39;. There is a risk that those random
+## numbers are not statistically sound and the overall results might be invalid.
+## To fix this, specify &#39;seed=TRUE&#39;. This ensures that proper, parallel-safe random
+## numbers are produced via the L&#39;Ecuyer-CMRG method. To disable this check, use
+## &#39;seed=NULL&#39;, or set option &#39;future.rng.onMisuse&#39; to &quot;ignore&quot;.
+</code></pre>
+
+<pre><code>## Warning: UNRELIABLE VALUE: Future (&#39;&lt;none&gt;&#39;) unexpectedly generated random
+## numbers without specifying argument &#39;seed&#39;. There is a risk that those random
+## numbers are not statistically sound and the overall results might be invalid.
+## To fix this, specify &#39;seed=TRUE&#39;. This ensures that proper, parallel-safe random
+## numbers are produced via the L&#39;Ecuyer-CMRG method. To disable this check, use
+## &#39;seed=NULL&#39;, or set option &#39;future.rng.onMisuse&#39; to &quot;ignore&quot;.
+</code></pre>
+
+<pre><code>## Warning: UNRELIABLE VALUE: Future (&#39;&lt;none&gt;&#39;) unexpectedly generated random
+## numbers without specifying argument &#39;seed&#39;. There is a risk that those random
+## numbers are not statistically sound and the overall results might be invalid.
+## To fix this, specify &#39;seed=TRUE&#39;. This ensures that proper, parallel-safe random
+## numbers are produced via the L&#39;Ecuyer-CMRG method. To disable this check, use
+## &#39;seed=NULL&#39;, or set option &#39;future.rng.onMisuse&#39; to &quot;ignore&quot;.
+</code></pre>
+
+<pre><code>## Warning: UNRELIABLE VALUE: Future (&#39;&lt;none&gt;&#39;) unexpectedly generated random
+## numbers without specifying argument &#39;seed&#39;. There is a risk that those random
+## numbers are not statistically sound and the overall results might be invalid.
+## To fix this, specify &#39;seed=TRUE&#39;. This ensures that proper, parallel-safe random
+## numbers are produced via the L&#39;Ecuyer-CMRG method. To disable this check, use
+## &#39;seed=NULL&#39;, or set option &#39;future.rng.onMisuse&#39; to &quot;ignore&quot;.
+</code></pre>
+
+<pre><code>## Warning: UNRELIABLE VALUE: Future (&#39;&lt;none&gt;&#39;) unexpectedly generated random
+## numbers without specifying argument &#39;seed&#39;. There is a risk that those random
+## numbers are not statistically sound and the overall results might be invalid.
+## To fix this, specify &#39;seed=TRUE&#39;. This ensures that proper, parallel-safe random
+## numbers are produced via the L&#39;Ecuyer-CMRG method. To disable this check, use
+## &#39;seed=NULL&#39;, or set option &#39;future.rng.onMisuse&#39; to &quot;ignore&quot;.
+</code></pre>
+
+<pre><code>## Warning: UNRELIABLE VALUE: Future (&#39;&lt;none&gt;&#39;) unexpectedly generated random
+## numbers without specifying argument &#39;seed&#39;. There is a risk that those random
+## numbers are not statistically sound and the overall results might be invalid.
+## To fix this, specify &#39;seed=TRUE&#39;. This ensures that proper, parallel-safe random
+## numbers are produced via the L&#39;Ecuyer-CMRG method. To disable this check, use
+## &#39;seed=NULL&#39;, or set option &#39;future.rng.onMisuse&#39; to &quot;ignore&quot;.
+</code></pre>
+
+<pre><code>## Warning: UNRELIABLE VALUE: Future (&#39;&lt;none&gt;&#39;) unexpectedly generated random
+## numbers without specifying argument &#39;seed&#39;. There is a risk that those random
+## numbers are not statistically sound and the overall results might be invalid.
+## To fix this, specify &#39;seed=TRUE&#39;. This ensures that proper, parallel-safe random
+## numbers are produced via the L&#39;Ecuyer-CMRG method. To disable this check, use
+## &#39;seed=NULL&#39;, or set option &#39;future.rng.onMisuse&#39; to &quot;ignore&quot;.
+</code></pre>
+
+<pre><code>## Warning: UNRELIABLE VALUE: Future (&#39;&lt;none&gt;&#39;) unexpectedly generated random
+## numbers without specifying argument &#39;seed&#39;. There is a risk that those random
+## numbers are not statistically sound and the overall results might be invalid.
+## To fix this, specify &#39;seed=TRUE&#39;. This ensures that proper, parallel-safe random
+## numbers are produced via the L&#39;Ecuyer-CMRG method. To disable this check, use
+## &#39;seed=NULL&#39;, or set option &#39;future.rng.onMisuse&#39; to &quot;ignore&quot;.
+</code></pre>
+
+<pre><code>## Warning: UNRELIABLE VALUE: Future (&#39;&lt;none&gt;&#39;) unexpectedly generated random
+## numbers without specifying argument &#39;seed&#39;. There is a risk that those random
+## numbers are not statistically sound and the overall results might be invalid.
+## To fix this, specify &#39;seed=TRUE&#39;. This ensures that proper, parallel-safe random
+## numbers are produced via the L&#39;Ecuyer-CMRG method. To disable this check, use
+## &#39;seed=NULL&#39;, or set option &#39;future.rng.onMisuse&#39; to &quot;ignore&quot;.
+</code></pre>
+
+<pre><code>## Warning: UNRELIABLE VALUE: Future (&#39;&lt;none&gt;&#39;) unexpectedly generated random
+## numbers without specifying argument &#39;seed&#39;. There is a risk that those random
+## numbers are not statistically sound and the overall results might be invalid.
+## To fix this, specify &#39;seed=TRUE&#39;. This ensures that proper, parallel-safe random
+## numbers are produced via the L&#39;Ecuyer-CMRG method. To disable this check, use
+## &#39;seed=NULL&#39;, or set option &#39;future.rng.onMisuse&#39; to &quot;ignore&quot;.
+</code></pre>
+
+<pre><code>## Warning: UNRELIABLE VALUE: Future (&#39;&lt;none&gt;&#39;) unexpectedly generated random
+## numbers without specifying argument &#39;seed&#39;. There is a risk that those random
+## numbers are not statistically sound and the overall results might be invalid.
+## To fix this, specify &#39;seed=TRUE&#39;. This ensures that proper, parallel-safe random
+## numbers are produced via the L&#39;Ecuyer-CMRG method. To disable this check, use
+## &#39;seed=NULL&#39;, or set option &#39;future.rng.onMisuse&#39; to &quot;ignore&quot;.
+</code></pre>
+
+<pre><code>## Warning: UNRELIABLE VALUE: Future (&#39;&lt;none&gt;&#39;) unexpectedly generated random
+## numbers without specifying argument &#39;seed&#39;. There is a risk that those random
+## numbers are not statistically sound and the overall results might be invalid.
+## To fix this, specify &#39;seed=TRUE&#39;. This ensures that proper, parallel-safe random
+## numbers are produced via the L&#39;Ecuyer-CMRG method. To disable this check, use
+## &#39;seed=NULL&#39;, or set option &#39;future.rng.onMisuse&#39; to &quot;ignore&quot;.
+</code></pre>
+
+<pre><code>## Warning: UNRELIABLE VALUE: Future (&#39;&lt;none&gt;&#39;) unexpectedly generated random
+## numbers without specifying argument &#39;seed&#39;. There is a risk that those random
+## numbers are not statistically sound and the overall results might be invalid.
+## To fix this, specify &#39;seed=TRUE&#39;. This ensures that proper, parallel-safe random
+## numbers are produced via the L&#39;Ecuyer-CMRG method. To disable this check, use
+## &#39;seed=NULL&#39;, or set option &#39;future.rng.onMisuse&#39; to &quot;ignore&quot;.
+</code></pre>
+
+<pre><code>## Warning: UNRELIABLE VALUE: Future (&#39;&lt;none&gt;&#39;) unexpectedly generated random
+## numbers without specifying argument &#39;seed&#39;. There is a risk that those random
+## numbers are not statistically sound and the overall results might be invalid.
+## To fix this, specify &#39;seed=TRUE&#39;. This ensures that proper, parallel-safe random
+## numbers are produced via the L&#39;Ecuyer-CMRG method. To disable this check, use
+## &#39;seed=NULL&#39;, or set option &#39;future.rng.onMisuse&#39; to &quot;ignore&quot;.
+</code></pre>
+
+<pre><code>## Warning: UNRELIABLE VALUE: Future (&#39;&lt;none&gt;&#39;) unexpectedly generated random
+## numbers without specifying argument &#39;seed&#39;. There is a risk that those random
+## numbers are not statistically sound and the overall results might be invalid.
+## To fix this, specify &#39;seed=TRUE&#39;. This ensures that proper, parallel-safe random
+## numbers are produced via the L&#39;Ecuyer-CMRG method. To disable this check, use
+## &#39;seed=NULL&#39;, or set option &#39;future.rng.onMisuse&#39; to &quot;ignore&quot;.
+</code></pre>
+
+<pre><code>## Warning: UNRELIABLE VALUE: Future (&#39;&lt;none&gt;&#39;) unexpectedly generated random
+## numbers without specifying argument &#39;seed&#39;. There is a risk that those random
+## numbers are not statistically sound and the overall results might be invalid.
+## To fix this, specify &#39;seed=TRUE&#39;. This ensures that proper, parallel-safe random
+## numbers are produced via the L&#39;Ecuyer-CMRG method. To disable this check, use
+## &#39;seed=NULL&#39;, or set option &#39;future.rng.onMisuse&#39; to &quot;ignore&quot;.
+</code></pre>
+
+<pre><code>## Warning: UNRELIABLE VALUE: Future (&#39;&lt;none&gt;&#39;) unexpectedly generated random
+## numbers without specifying argument &#39;seed&#39;. There is a risk that those random
+## numbers are not statistically sound and the overall results might be invalid.
+## To fix this, specify &#39;seed=TRUE&#39;. This ensures that proper, parallel-safe random
+## numbers are produced via the L&#39;Ecuyer-CMRG method. To disable this check, use
+## &#39;seed=NULL&#39;, or set option &#39;future.rng.onMisuse&#39; to &quot;ignore&quot;.
 </code></pre>
 
 <h1>3.5. Blocking and non-blocking calls</h1>
@@ -423,7 +583,7 @@ system.time(
 </code></pre>
 
 <pre><code>##    user  system elapsed 
-##   0.015   0.003   0.019
+##   0.006   0.001   0.006
 </code></pre>
 
 <pre><code class="r">## Check if the calculation is done. This check is a non-blocking call.
@@ -432,7 +592,7 @@ system.time(resolved(out))
 </code></pre>
 
 <pre><code>##    user  system elapsed 
-##   0.001   0.001   0.202
+##   0.001   0.000   0.011
 </code></pre>
 
 <pre><code class="r">## Get the value. This is a blocking call.
@@ -440,7 +600,7 @@ system.time(value(out))
 </code></pre>
 
 <pre><code>##    user  system elapsed 
-##   0.001   0.001   3.612
+##   0.001   0.000   1.924
 </code></pre>
 
 <h3>Blocking in the context of a loop over futures</h3>
@@ -462,7 +622,7 @@ for(i in seq_len(n)) {
 </code></pre>
 
 <pre><code>##    user  system elapsed 
-##   0.175   0.010   8.606
+##   0.084   0.008   4.658
 </code></pre>
 
 <pre><code class="r">## Not blocked as result already available once first four finished.
@@ -470,7 +630,7 @@ system.time(value(out[[2]]))
 </code></pre>
 
 <pre><code>##    user  system elapsed 
-##   0.000   0.000   0.001
+##       0       0       0
 </code></pre>
 
 <pre><code class="r">## Not blocked as result already available once first four finished.
@@ -478,7 +638,7 @@ system.time(value(out[[4]]))
 </code></pre>
 
 <pre><code>##    user  system elapsed 
-##   0.001   0.000   0.000
+##       0       0       0
 </code></pre>
 
 <pre><code class="r">## Blocked as results for 5th and 6th iterations are still being evaluated.
@@ -486,7 +646,7 @@ system.time(value(out[[6]]))
 </code></pre>
 
 <pre><code>##    user  system elapsed 
-##   0.002   0.000   3.646
+##   0.000   0.000   1.996
 </code></pre>
 
 <h1>4. A tour of different backends</h1>
@@ -522,13 +682,13 @@ plan(cluster, workers = workers)
 
 <p>Here we want to use two cores on one machine and two on another.</p>
 
-<pre><code class="r">workers &lt;- c(rep(&#39;arwen.berkeley.edu&#39;, 2), rep(&#39;beren.berkeley.edu&#39;, 2))
+<pre><code class="r">workers &lt;- c(rep(&#39;arwen.berkeley.edu&#39;, 2), rep(&#39;gandalf.berkeley.edu&#39;, 2))
 plan(cluster, workers = workers)
 # Check we are getting workers in the right places:
 future_sapply(seq_along(workers), function(i) Sys.info()[[&#39;nodename&#39;]])
 </code></pre>
 
-<pre><code>## [1] &quot;arwen&quot; &quot;arwen&quot; &quot;beren&quot; &quot;beren&quot;
+<pre><code>## [1] &quot;arwen&quot;   &quot;arwen&quot;   &quot;gandalf&quot; &quot;gandalf&quot;
 </code></pre>
 
 <h1>4.4. Distributed processing across multiple machines within a SLURM scheduler job</h1>
@@ -551,9 +711,15 @@ future_sapply(seq_along(workers), function(i)
 <p>Here&#39;s an example where I create a plot remotely and view it locally. </p>
 
 <pre><code class="r">plan(remote, workers = &#39;gandalf.berkeley.edu&#39;)
-## requires password-less SSH
+</code></pre>
 
-## future is evaluated remotely
+<pre><code>## Warning: Strategy &#39;remote&#39; is deprecated in future (&gt;= 1.24.0). Instead, use
+## &#39;cluster&#39;.
+</code></pre>
+
+<pre><code class="r">## requires password-less SSH
+
+## future (ggplot call) is evaluated remotely
 library(ggplot2)
 mydf &lt;- data.frame(y = rnorm(10), x = rnorm(10))
 g %&lt;-% { ggplot(mydf, aes(x=x, y=y)) + geom_point() }
@@ -562,9 +728,10 @@ g %&lt;-% { ggplot(mydf, aes(x=x, y=y)) + geom_point() }
 g
 </code></pre>
 
-<p><img src="data:image/png;base64,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" alt=""/></p>
+<p><img src="data:image/png;base64,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" alt=""/></p>
 
-<pre><code class="r">g %&lt;-% R.devices::capturePlot({
+<pre><code class="r">## future (ggplot call) is evaluated remotely
+g %&lt;-% R.devices::capturePlot({
    filled.contour(volcano, color.palette = terrain.colors)
    title(main = &quot;volcano data: filled contour map&quot;)
    })         
@@ -652,7 +819,7 @@ system.time(tmp &lt;- future_sapply(1:100, function(i) mean(x)))
 each scenario involving <code>n</code> simulations. In that case you have two
 loops over which you could choose to parallelize.</p>
 
-<p>Here&#39;s some syntax to setup up parallelization over the scenarios (outer loop) only. Note that
+<p>Here&#39;s some syntax to set up parallelization over the scenarios (outer loop) only. Note that
 when the plan involves multiple levels we need to use <code>tweak</code> if we want to
 modify the defaults for a type of future.</p>
 
@@ -688,17 +855,97 @@ out
 out[[1]]
 </code></pre>
 
+<pre><code>## Warning: UNRELIABLE VALUE: Future (‘&lt;none&gt;’) unexpectedly generated random
+## numbers without specifying argument &#39;seed&#39;. There is a risk that those random
+## numbers are not statistically sound and the overall results might be invalid.
+## To fix this, specify &#39;seed=TRUE&#39;. This ensures that proper, parallel-safe random
+## numbers are produced via the L&#39;Ecuyer-CMRG method. To disable this check, use
+## &#39;seed=NULL&#39;, or set option &#39;future.rng.onMisuse&#39; to &quot;ignore&quot;.
+</code></pre>
+
+<pre><code>## Warning: UNRELIABLE VALUE: Future (‘&lt;none&gt;’) unexpectedly generated random
+## numbers without specifying argument &#39;seed&#39;. There is a risk that those random
+## numbers are not statistically sound and the overall results might be invalid.
+## To fix this, specify &#39;seed=TRUE&#39;. This ensures that proper, parallel-safe random
+## numbers are produced via the L&#39;Ecuyer-CMRG method. To disable this check, use
+## &#39;seed=NULL&#39;, or set option &#39;future.rng.onMisuse&#39; to &quot;ignore&quot;.
+</code></pre>
+
+<pre><code>## Warning: UNRELIABLE VALUE: Future (‘&lt;none&gt;’) unexpectedly generated random
+## numbers without specifying argument &#39;seed&#39;. There is a risk that those random
+## numbers are not statistically sound and the overall results might be invalid.
+## To fix this, specify &#39;seed=TRUE&#39;. This ensures that proper, parallel-safe random
+## numbers are produced via the L&#39;Ecuyer-CMRG method. To disable this check, use
+## &#39;seed=NULL&#39;, or set option &#39;future.rng.onMisuse&#39; to &quot;ignore&quot;.
+</code></pre>
+
+<pre><code>## Warning: UNRELIABLE VALUE: Future (‘&lt;none&gt;’) unexpectedly generated random
+## numbers without specifying argument &#39;seed&#39;. There is a risk that those random
+## numbers are not statistically sound and the overall results might be invalid.
+## To fix this, specify &#39;seed=TRUE&#39;. This ensures that proper, parallel-safe random
+## numbers are produced via the L&#39;Ecuyer-CMRG method. To disable this check, use
+## &#39;seed=NULL&#39;, or set option &#39;future.rng.onMisuse&#39; to &quot;ignore&quot;.
+</code></pre>
+
+<pre><code>## Warning: UNRELIABLE VALUE: Future (‘&lt;none&gt;’) unexpectedly generated random
+## numbers without specifying argument &#39;seed&#39;. There is a risk that those random
+## numbers are not statistically sound and the overall results might be invalid.
+## To fix this, specify &#39;seed=TRUE&#39;. This ensures that proper, parallel-safe random
+## numbers are produced via the L&#39;Ecuyer-CMRG method. To disable this check, use
+## &#39;seed=NULL&#39;, or set option &#39;future.rng.onMisuse&#39; to &quot;ignore&quot;.
+</code></pre>
+
+<pre><code>## Warning: UNRELIABLE VALUE: Future (‘&lt;none&gt;’) unexpectedly generated random
+## numbers without specifying argument &#39;seed&#39;. There is a risk that those random
+## numbers are not statistically sound and the overall results might be invalid.
+## To fix this, specify &#39;seed=TRUE&#39;. This ensures that proper, parallel-safe random
+## numbers are produced via the L&#39;Ecuyer-CMRG method. To disable this check, use
+## &#39;seed=NULL&#39;, or set option &#39;future.rng.onMisuse&#39; to &quot;ignore&quot;.
+</code></pre>
+
+<pre><code>## Warning: UNRELIABLE VALUE: Future (‘&lt;none&gt;’) unexpectedly generated random
+## numbers without specifying argument &#39;seed&#39;. There is a risk that those random
+## numbers are not statistically sound and the overall results might be invalid.
+## To fix this, specify &#39;seed=TRUE&#39;. This ensures that proper, parallel-safe random
+## numbers are produced via the L&#39;Ecuyer-CMRG method. To disable this check, use
+## &#39;seed=NULL&#39;, or set option &#39;future.rng.onMisuse&#39; to &quot;ignore&quot;.
+</code></pre>
+
+<pre><code>## Warning: UNRELIABLE VALUE: Future (‘&lt;none&gt;’) unexpectedly generated random
+## numbers without specifying argument &#39;seed&#39;. There is a risk that those random
+## numbers are not statistically sound and the overall results might be invalid.
+## To fix this, specify &#39;seed=TRUE&#39;. This ensures that proper, parallel-safe random
+## numbers are produced via the L&#39;Ecuyer-CMRG method. To disable this check, use
+## &#39;seed=NULL&#39;, or set option &#39;future.rng.onMisuse&#39; to &quot;ignore&quot;.
+</code></pre>
+
+<pre><code>## Warning: UNRELIABLE VALUE: Future (‘&lt;none&gt;’) unexpectedly generated random
+## numbers without specifying argument &#39;seed&#39;. There is a risk that those random
+## numbers are not statistically sound and the overall results might be invalid.
+## To fix this, specify &#39;seed=TRUE&#39;. This ensures that proper, parallel-safe random
+## numbers are produced via the L&#39;Ecuyer-CMRG method. To disable this check, use
+## &#39;seed=NULL&#39;, or set option &#39;future.rng.onMisuse&#39; to &quot;ignore&quot;.
+</code></pre>
+
+<pre><code>## Warning: UNRELIABLE VALUE: Future (‘&lt;none&gt;’) unexpectedly generated random
+## numbers without specifying argument &#39;seed&#39;. There is a risk that those random
+## numbers are not statistically sound and the overall results might be invalid.
+## To fix this, specify &#39;seed=TRUE&#39;. This ensures that proper, parallel-safe random
+## numbers are produced via the L&#39;Ecuyer-CMRG method. To disable this check, use
+## &#39;seed=NULL&#39;, or set option &#39;future.rng.onMisuse&#39; to &quot;ignore&quot;.
+</code></pre>
+
 <pre><code>##                [,1]      [,2]
-##  [1,]  5.567029e-04 0.9999409
-##  [2,]  2.982299e-04 0.9997738
-##  [3,] -3.119670e-04 0.9998688
-##  [4,] -6.664687e-06 1.0003036
-##  [5,]  9.992561e-05 0.9999021
-##  [6,]  1.100567e-04 1.0002350
-##  [7,]  2.126421e-04 0.9999001
-##  [8,]  8.953808e-05 0.9999568
-##  [9,] -2.676273e-04 1.0001465
-## [10,]  4.302232e-05 0.9998592
+##  [1,]  3.691059e-04 1.0001085
+##  [2,]  4.901745e-04 1.0005290
+##  [3,]  1.954235e-04 1.0001190
+##  [4,] -2.728571e-04 0.9995957
+##  [5,] -4.072646e-04 1.0002162
+##  [6,]  1.161733e-04 1.0000791
+##  [7,] -1.566521e-04 1.0001370
+##  [8,]  9.715521e-05 0.9999212
+##  [9,] -4.377313e-04 0.9999330
+## [10,] -6.078683e-05 0.9998347
 </code></pre>
 
 <p>Note that these are &ldquo;asynchronous&rdquo; futures that are evaluated in the background while
@@ -708,7 +955,7 @@ control returns to the user.</p>
 
 <p>Let&#39;s see a few different plans one could use for the nested loops.</p>
 
-<p>To use eight cores on the current machine, two cores per outer iteration:</p>
+<p>To use eight cores on the current machine, two cores for each of the four outer iteration:</p>
 
 <pre><code class="r">## One option:
 plan(list(tweak(multisession, workers = 4), tweak(multisession, workers = 2)))
@@ -719,7 +966,7 @@ plan(list(tweak(cluster, workers = nodes), tweak(multisession, workers = 2)))
 
 <p>To run each parameter across as many workers as are available on each of multiple machines:</p>
 
-<pre><code class="r">nodes &lt;- c(&#39;arwen.berkeley.edu&#39;, &#39;beren.berkeley.edu&#39;, &#39;radagast.berkeley.edu&#39;, &#39;gandalf.berkeley.edu&#39;)
+<pre><code class="r">nodes &lt;- c(&#39;arwen.berkeley.edu&#39;, &#39;shelob.berkeley.edu&#39;, &#39;radagast.berkeley.edu&#39;, &#39;gandalf.berkeley.edu&#39;)
 plan(list(tweak(cluster, workers = nodes), multisession))
 </code></pre>
 
@@ -773,12 +1020,13 @@ future_sapply(1:n, function(i) rnorm(1), future.seed = TRUE)
 
 <h1>8.2. The seed when using futures directly</h1>
 
-<p>You can (and should when using RNG) set the seed in <code>future()</code>. </p>
+<p>You can (and should when using RNG) set the seed in <code>future()</code>.
+As of version 1.24.0 of the future package, the following works fine to safely set different seeds for the different workers.</p>
 
 <pre><code class="r">plan(multisession,workers=4)   # or some other plan
 
 set.seed(1)
-n &lt;- 10
+n &lt;- 5
 out &lt;- list(); length(out) &lt;- n
 for(i in seq_len(n)) {
      out[[i]] &lt;- future( {
@@ -790,39 +1038,31 @@ for(i in seq_len(n)) {
 sapply(out, value)
 </code></pre>
 
-<pre><code>##             [,1]        [,2]        [,3]        [,4]        [,5]        [,6]
-## [1,] 0.000598829 0.000598829 0.000598829 0.000598829 0.000598829 0.000598829
-## [2,] 1.000269980 1.000269980 1.000269980 1.000269980 1.000269980 1.000269980
-##             [,7]        [,8]        [,9]       [,10]
-## [1,] 0.000598829 0.000598829 0.000598829 0.000598829
-## [2,] 1.000269980 1.000269980 1.000269980 1.000269980
+<pre><code>##               [,1]         [,2]          [,3]         [,4]          [,5]
+## [1,] -0.0003571476 0.0005987421 -0.0003570343 0.0005989737 -0.0003572973
+## [2,]  0.9998949844 1.0002698980  0.9998949304 1.0002696339  0.9998947676
 </code></pre>
 
-<p>With implicit futures, you&#39;ll need to manually set the seed to a L&#39;Ecuyer-CMRG seed, which is a vector of six integers. Here&#39;s how you can do it, advancing the seed for each iteration using <code>nextRNGStream</code>.</p>
+<p>And here with implicit futures:</p>
 
 <pre><code class="r">library(listenv)
-RNGkind(&quot;L&#39;Ecuyer-CMRG&quot;)
 set.seed(1)
-nextSeed &lt;- .Random.seed
-n &lt;- 10
+
+n &lt;- 5
 out &lt;- listenv()
 for(i in seq_len(n)) {
      out[[i]] %&lt;-% {
        ## some code here as in foreach
        tmp &lt;- rnorm(1e7)
        c(mean(tmp), sd(tmp))
-     } %seed% nextSeed
-     nextSeed &lt;- parallel::nextRNGStream(nextSeed)
+     } %seed% TRUE
 }
 do.call(cbind, as.list(out))
 </code></pre>
 
-<pre><code>##               [,1]          [,2]          [,3]         [,4]          [,5]
-## [1,] -0.0003724317 -0.0002463121 -0.0001795439 -0.000135745 -4.307792e-05
-## [2,]  1.0001297117  0.9997807864  0.9997580553  1.000020161  1.000075e+00
-##               [,6]          [,7]          [,8]          [,9]         [,10]
-## [1,] -0.0001291289 -6.030875e-05 -0.0000361746 -0.0001635208 -0.0001460433
-## [2,]  0.9998602945  1.000221e+00  1.0000757751  1.0000274952  0.9999632778
+<pre><code>##               [,1]         [,2]          [,3]         [,4]          [,5]
+## [1,] -0.0003571476 0.0005987421 -0.0003570343 0.0005989737 -0.0003572973
+## [2,]  0.9998949844 1.0002698980  0.9998949304 1.0002696339  0.9998947676
 </code></pre>
 
 <h1>8.3. The seed with foreach</h1>
