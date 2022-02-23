@@ -139,11 +139,11 @@ out <- foreach(i = 1:5) %dopar% {
 }
 ```
 
-    ## Running in process 1581278 
-    ## Running in process 1581276 
-    ## Running in process 1581274 
-    ## Running in process 1581273 
-    ## Running in process 1581277
+    ## Running in process 825935 
+    ## Running in process 825932 
+    ## Running in process 825934 
+    ## Running in process 825933 
+    ## Running in process 825938
 
 ``` r
 out
@@ -198,7 +198,7 @@ class(out[[5]])
 value(out[[5]])
 ```
 
-    ## [1] -0.0004692989  1.0002227162
+    ## [1] 0.0005097988 0.9998960294
 
 ## 3.4. Using implicit futures (with listenvs)
 
@@ -238,7 +238,7 @@ out[[2]]
     ## numbers are produced via the L'Ecuyer-CMRG method. To disable this check, use
     ## 'seed=NULL', or set option 'future.rng.onMisuse' to "ignore".
 
-    ## [1] -0.0003565227  0.9998352254
+    ## [1] 0.000308173 0.999999892
 
 ``` r
 out
@@ -274,7 +274,7 @@ system.time(
 ```
 
     ##    user  system elapsed 
-    ##   0.006   0.000   0.007
+    ##   0.006   0.000   0.006
 
 ``` r
 ## Check if the calculation is done. This check is a non-blocking call.
@@ -291,7 +291,7 @@ system.time(value(out))
 ```
 
     ##    user  system elapsed 
-    ##   0.001   0.000   1.880
+    ##   0.001   0.000   1.859
 
 ### Blocking in the context of a loop over futures
 
@@ -317,7 +317,7 @@ for(i in seq_len(n)) {
 ```
 
     ##    user  system elapsed 
-    ##   0.062   0.012   4.336
+    ##   0.090   0.002   4.655
 
 ``` r
 ## Not blocked as result already available once first four finished.
@@ -325,7 +325,7 @@ system.time(value(out[[2]]))
 ```
 
     ##    user  system elapsed 
-    ##       0       0       0
+    ##   0.000   0.000   0.001
 
 ``` r
 ## Not blocked as result already available once first four finished.
@@ -333,7 +333,7 @@ system.time(value(out[[4]]))
 ```
 
     ##    user  system elapsed 
-    ##   0.000   0.000   0.001
+    ##       0       0       0
 
 ``` r
 ## Blocked as results for 5th and 6th iterations are still being evaluated.
@@ -341,7 +341,7 @@ system.time(value(out[[6]]))
 ```
 
     ##    user  system elapsed 
-    ##   0.001   0.000   1.953
+    ##   0.001   0.000   1.832
 
 # 4. A tour of different backends
 
@@ -391,13 +391,13 @@ plan(cluster, workers = workers)
 Here we want to use two cores on one machine and two on another.
 
 ``` r
-workers <- c(rep('arwen.berkeley.edu', 2), rep('beren.berkeley.edu', 2))
+workers <- c(rep('arwen.berkeley.edu', 2), rep('gandalf.berkeley.edu', 2))
 plan(cluster, workers = workers)
 # Check we are getting workers in the right places:
 future_sapply(seq_along(workers), function(i) Sys.info()[['nodename']])
 ```
 
-    ## [1] "arwen" "arwen" "beren" "beren"
+    ## [1] "arwen"   "arwen"   "gandalf" "gandalf"
 
 ## 4.4. Distributed processing across multiple machines within a SLURM scheduler job
 
@@ -427,6 +427,12 @@ Here’s an example where I create a plot remotely and view it locally.
 
 ``` r
 plan(remote, workers = 'gandalf.berkeley.edu')
+```
+
+    ## Warning: Strategy 'remote' is deprecated in future (>= 1.24.0). Instead, use
+    ## 'cluster'.
+
+``` r
 ## requires password-less SSH
 
 ## future (ggplot call) is evaluated remotely
@@ -597,17 +603,17 @@ out[[1]]
     ## Lazy evaluation: FALSE
     ## Asynchronous evaluation: TRUE
     ## Local evaluation: TRUE
-    ## Environment: R_GlobalEnv
+    ## Environment: 0x5587bb835578
     ## Capture standard output: TRUE
     ## Capture condition classes: 'condition' (excluding 'nothing')
     ## Globals: 3 objects totaling 392 bytes (numeric 'n' of 56 bytes, matrix 'params' of 280 bytes, integer 'k' of 56 bytes)
     ## Packages: 3 packages ('listenv', 'stats', 'future')
-    ## L'Ecuyer-CMRG RNG seed: c(10407, 1687649425, -2007636617, -1698342492, -873966712, -1541224390, 1700177422)
+    ## L'Ecuyer-CMRG RNG seed: c(10407, 2070316700, -1459269755, 1667207225, -171710148, 650526079, 956464075)
     ## Resolved: FALSE
     ## Value: <not collected>
     ## Conditions captured: <none>
     ## Early signaling: FALSE
-    ## Owner process: f92f296c-f515-9d0a-2ff4-1877d852a923
+    ## Owner process: 2c8ee921-ce30-e87d-f22f-be270dbca870
     ## Class: 'MultisessionFuture', 'ClusterFuture', 'MultiprocessFuture', 'Future', 'environment'
 
 Note that these are “asynchronous” futures that are evaluated in the
@@ -632,7 +638,7 @@ To run each parameter across as many workers as are available on each of
 multiple machines:
 
 ``` r
-nodes <- c('arwen.berkeley.edu', 'beren.berkeley.edu', 'radagast.berkeley.edu', 'gandalf.berkeley.edu')
+nodes <- c('arwen.berkeley.edu', 'shelob.berkeley.edu', 'radagast.berkeley.edu', 'gandalf.berkeley.edu')
 plan(list(tweak(cluster, workers = nodes), multisession))
 ```
 
@@ -711,13 +717,15 @@ using `set.seed` to make the generated results reproducible.
 
 ## 8.2. The seed when using futures directly
 
-You can (and should when using RNG) set the seed in `future()`.
+You can (and should when using RNG) set the seed in `future()`. As of
+version 1.24.0 of the future package, the following works fine to safely
+set different seeds for the different workers.
 
 ``` r
 plan(multisession,workers=4)   # or some other plan
 
 set.seed(1)
-n <- 10
+n <- 5
 out <- list(); length(out) <- n
 for(i in seq_len(n)) {
      out[[i]] <- future( {
@@ -729,41 +737,31 @@ for(i in seq_len(n)) {
 sapply(out, value)
 ```
 
-    ##             [,1]        [,2]        [,3]        [,4]        [,5]        [,6]
-    ## [1,] 0.000598829 0.000598829 0.000598829 0.000598829 0.000598829 0.000598829
-    ## [2,] 1.000269980 1.000269980 1.000269980 1.000269980 1.000269980 1.000269980
-    ##             [,7]        [,8]        [,9]       [,10]
-    ## [1,] 0.000598829 0.000598829 0.000598829 0.000598829
-    ## [2,] 1.000269980 1.000269980 1.000269980 1.000269980
+    ##               [,1]         [,2]          [,3]         [,4]          [,5]
+    ## [1,] -0.0003571476 0.0005987421 -0.0003570343 0.0005989737 -0.0003572973
+    ## [2,]  0.9998949844 1.0002698980  0.9998949304 1.0002696339  0.9998947676
 
-With implicit futures, you’ll need to manually set the seed to a
-L’Ecuyer-CMRG seed, which is a vector of six integers. Here’s how you
-can do it, advancing the seed for each iteration using `nextRNGStream`.
+And here with implicit futures:
 
 ``` r
 library(listenv)
-RNGkind("L'Ecuyer-CMRG")
 set.seed(1)
-nextSeed <- .Random.seed
-n <- 10
+
+n <- 5
 out <- listenv()
 for(i in seq_len(n)) {
      out[[i]] %<-% {
        ## some code here as in foreach
        tmp <- rnorm(1e7)
        c(mean(tmp), sd(tmp))
-     } %seed% nextSeed
-     nextSeed <- parallel::nextRNGStream(nextSeed)
+     } %seed% TRUE
 }
 do.call(cbind, as.list(out))
 ```
 
-    ##               [,1]          [,2]          [,3]         [,4]          [,5]
-    ## [1,] -0.0003724317 -0.0002463121 -0.0001795439 -0.000135745 -4.307792e-05
-    ## [2,]  1.0001297117  0.9997807864  0.9997580553  1.000020161  1.000075e+00
-    ##               [,6]          [,7]          [,8]          [,9]         [,10]
-    ## [1,] -0.0001291289 -6.030875e-05 -0.0000361746 -0.0001635208 -0.0001460433
-    ## [2,]  0.9998602945  1.000221e+00  1.0000757751  1.0000274952  0.9999632778
+    ##               [,1]         [,2]          [,3]         [,4]          [,5]
+    ## [1,] -0.0003571476 0.0005987421 -0.0003570343 0.0005989737 -0.0003572973
+    ## [2,]  0.9998949844 1.0002698980  0.9998949304 1.0002696339  0.9998947676
 
 ## 8.3. The seed with foreach
 

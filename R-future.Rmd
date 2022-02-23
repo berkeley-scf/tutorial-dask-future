@@ -237,7 +237,7 @@ plan(cluster, workers = workers)
 Here we want to use two cores on one machine and two on another.
 
 ```{r, cluster2}
-workers <- c(rep('arwen.berkeley.edu', 2), rep('beren.berkeley.edu', 2))
+workers <- c(rep('arwen.berkeley.edu', 2), rep('gandalf.berkeley.edu', 2))
 plan(cluster, workers = workers)
 # Check we are getting workers in the right places:
 future_sapply(seq_along(workers), function(i) Sys.info()[['nodename']])
@@ -407,7 +407,7 @@ plan(list(tweak(cluster, workers = nodes), tweak(multisession, workers = 2)))
 To run each parameter across as many workers as are available on each of multiple machines:
 
 ```{r, nested-plan2, eval = FALSE}
-nodes <- c('arwen.berkeley.edu', 'beren.berkeley.edu', 'radagast.berkeley.edu', 'gandalf.berkeley.edu')
+nodes <- c('arwen.berkeley.edu', 'shelob.berkeley.edu', 'radagast.berkeley.edu', 'gandalf.berkeley.edu')
 plan(list(tweak(cluster, workers = nodes), multisession))
 ```
 
@@ -456,13 +456,14 @@ I could also have set `future.seed = 1` instead of setting the seed using `set.s
 
 ## 8.2. The seed when using futures directly
 
-You can (and should when using RNG) set the seed in `future()`. 
+You can (and should when using RNG) set the seed in `future()`.
+As of version 1.24.0 of the future package, the following works fine to safely set different seeds for the different workers.
 
 ```{r, rng-future}
 plan(multisession,workers=4)   # or some other plan
 
 set.seed(1)
-n <- 10
+n <- 5
 out <- list(); length(out) <- n
 for(i in seq_len(n)) {
      out[[i]] <- future( {
@@ -474,26 +475,23 @@ for(i in seq_len(n)) {
 sapply(out, value)
 ```
 
-With implicit futures, you'll need to manually set the seed to a L'Ecuyer-CMRG seed, which is a vector of six integers. Here's how you can do it, advancing the seed for each iteration using `nextRNGStream`.
+And here with implicit futures:
 
 
 ```{r, rng-future-implicit}
 library(listenv)
-RNGkind("L'Ecuyer-CMRG")
 set.seed(1)
-nextSeed <- .Random.seed
-n <- 10
+
+n <- 5
 out <- listenv()
 for(i in seq_len(n)) {
      out[[i]] %<-% {
        ## some code here as in foreach
        tmp <- rnorm(1e7)
        c(mean(tmp), sd(tmp))
-     } %seed% nextSeed
-     nextSeed <- parallel::nextRNGStream(nextSeed)
+     } %seed% TRUE
 }
 do.call(cbind, as.list(out))
-
 ```
 
 ## 8.3. The seed with foreach
