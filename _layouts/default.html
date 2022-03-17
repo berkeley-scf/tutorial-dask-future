@@ -52,15 +52,17 @@
         
       </header>
       <section>
-        <nav>
+       <div class="menu">
+         <nav>
           <a href="{{ "/" | absolute_url }}">Home</a>|
           <a href="python-dask">Dask in Python</a>|
           <a href="python-ray">Ray in Python</a>|
           <a href="R-future">future in R</a>
         </nav>
-        <p></p>
-
-      {{ content }}
+        </div>
+        <div class="main">
+          {{ content }}
+        </div>
 
       </section>
       <footer>
