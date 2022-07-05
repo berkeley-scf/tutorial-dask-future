@@ -4,6 +4,8 @@ layout: default
 author: Christopher Paciorek
 ---
 
+# Flexible parallel processing using the Dask package in Python and the future package in R
+
 ## 1. This Tutorial
 
 This tutorial covers the use of R's future and Python's Dask packages, well-established tools for parallelizing computions on a single machine or across multiple machines. There is also a bit of material on Python's Ray package, which was developed more recently (but has been around for a while).

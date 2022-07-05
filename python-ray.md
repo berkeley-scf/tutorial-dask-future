@@ -1,8 +1,9 @@
 ---
 layout: default
-title: Brief Notes on Parallel Processing Using Python's Ray Package
+title: Brief notes on parallel processing using the Ray package in Python
 ---
 
+# Brief notes on parallel processing using the Ray package in Python
 
 ## 1. Overview of Ray
 

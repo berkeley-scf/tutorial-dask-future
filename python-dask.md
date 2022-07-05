@@ -1,7 +1,9 @@
 ---
 layout: default
-title: Parallel Processing using  Python's Dask package
+title: Parallel processing using the Dask packge in Python
 ---
+
+# Parallel processing using the Dask packge in Python
 
 ## 1. Overview of Dask
 
@@ -67,7 +69,7 @@ from calc_mean import *
 
 The basic pattern for setting up a parallel loop is:
 
-#### For loop
+#### 3.1.1 For loop
 
 ```python
 import dask.multiprocessing
@@ -83,7 +85,7 @@ futures
 results = dask.compute(futures)  # compute all in parallel
 ```
 
-#### List comprehension
+#### 3.1.2 List comprehension
 
 ```python
 import dask.multiprocessing
@@ -187,12 +189,12 @@ Because computations are done in external compiled code (e.g., via numpy) it's e
 
 Dask dataframes are Pandas-like dataframes where each dataframe is split into groups of rows, stored as  smaller Pandas dataframes.
 
-One can do a lot of the kinds of computations that you would do on a Pandas dataframe on a Dask dataframe, but many operations are not possible. See [here](http://docs.dask.org/en/latest/dataframe-api.html).
+One can do a lot of the kinds of computations that you would do on a Pandas dataframe on a Dask dataframe, but many operations are not possible, as discussed in the [Dask dataframe API](http://docs.dask.org/en/latest/dataframe-api.html).
 
 By default dataframes are handled by the threads scheduler.
 
 Here's an example of reading from a dataset of flight delays (about 11 GB data).
-You can get the data [here](https://www.stat.berkeley.edu/share/paciorek/1987-2008.csvs.tgz).
+You can get [the flight delay data](https://www.stat.berkeley.edu/share/paciorek/1987-2008.csvs.tgz).
 
 
 ```python
@@ -233,7 +235,7 @@ You can think of operations on Dask bags as being like parallel map operations o
 By default bags are handled via the multiprocessing scheduler.
 
 Let's see some basic operations on a large dataset of Wikipedia log files.
-You can get a subset of the Wikipedia data [here](https://www.stat.berkeley.edu/share/paciorek/wikistats_example.tar.gz).
+You can get a [subset of the Wikipedia data](https://www.stat.berkeley.edu/share/paciorek/wikistats_example.tar.gz).
 
 
 ```python
@@ -278,11 +280,11 @@ Also you would not want to do `data = wiki.compute()` as that would pull the ent
 
 Dask arrays are numpy-like arrays where each array is split up by both rows and columns into smaller numpy arrays.
 
-One can do a lot of the kinds of computations that you would do on a numpy array on a Dask array, but many operations are not possible. See [here](http://docs.dask.org/en/latest/array-api.html).
+One can do a lot of the kinds of computations that you would do on a numpy array on a Dask array, but many operations are not possible, as discussed in the [Dask array API](http://docs.dask.org/en/latest/array-api.html).
 
 By default arrays are handled via the threads scheduler.
 
-#### Non-distributed arrays
+#### 4.3.1 Non-distributed arrays
 
 Let's first see operations on a single node, using a single 13 GB 2-d array. Note that Dask uses lazy evaluation, so creation of the array doesn't happen until an operation requiring output is done.
 
@@ -365,7 +367,7 @@ rs[0:5]
 ```
 
 
-#### Distributed arrays
+#### 4.3.2 Distributed arrays
 
 This should be straightforward based on using Dask distributed. However, one would want to
 be careful about creating arrays by distributing the data from a single Python process

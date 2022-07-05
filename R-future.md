@@ -1,11 +1,11 @@
 ---
+title: Parallel Processing using the  future package in R
 layout: default
-title: 'Parallel Processing using R’s future package'
 ---
 
-Chris Paciorek, Department of Statistics, UC Berkeley
+# Parallel Processing using the future package in R
 
-# 1. Overview: Futures and the R future package
+## 1. Overview: Futures and the R future package
 
 What is a future? It’s basically a flag used to tag a given operation
 such that when and where that operation is carried out is controlled at
@@ -19,7 +19,7 @@ developed the concept:
 -   the value is the result of an evaluated expression
 -   the state of a future is either unresolved or resolved
 
-## 1.1. Why use futures?
+### 1.1. Why use futures?
 
 The future package allows one to write one’s computational code without
 hard-coding whether or how parallelization would be done. Instead one
@@ -36,7 +36,7 @@ More concisely, the key ideas are:
     resources (without touching the actual code that does the
     computation).
 
-# 2. Overview of parallel backends
+## 2. Overview of parallel backends
 
 One uses `plan()` to control how parallelization is done, including what
 machine(s) to use and how many cores on each machine to use.
@@ -51,48 +51,12 @@ plan(multisession, workers = 4)
 
 This table gives an overview of the different plans.
 
-<table>
-<colgroup>
-<col style="width: 11%" />
-<col style="width: 56%" />
-<col style="width: 7%" />
-<col style="width: 23%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th>Type</th>
-<th>Description</th>
-<th>Multi-node</th>
-<th>Copies of objects made?</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>multisession</td>
-<td>background R processes</td>
-<td>no</td>
-<td>yes</td>
-</tr>
-<tr class="even">
-<td>multicore</td>
-<td>forked R processes (not available in Windows nor RStudio)</td>
-<td>no</td>
-<td>not if object not modified</td>
-</tr>
-<tr class="odd">
-<td>remote</td>
-<td>R process on another machine</td>
-<td>yes</td>
-<td>yes</td>
-</tr>
-<tr class="even">
-<td>cluster</td>
-<td>R processes on other machine(s)</td>
-<td>yes</td>
-<td>yes</td>
-</tr>
-</tbody>
-</table>
+| Type         | Description                                               | Multi-node | Copies of objects made?    |
+|--------------|-----------------------------------------------------------|------------|----------------------------|
+| multisession | background R processes                                    | no         | yes                        |
+| multicore    | forked R processes (not available in Windows nor RStudio) | no         | not if object not modified |
+| remote       | R process on another machine                              | yes        | yes                        |
+| cluster      | R processes on other machine(s)                           | yes        | yes                        |
 
 For the next section (Section 3), we’ll just assume use of
 `multisession` and will provide more details on the other plans in the
@@ -101,12 +65,12 @@ following section (Section 4).
 The deprecated `multiprocess` plan used either `multisession` on Windows
 and `multicore` on MacOS/Linux.
 
-# 3. Implementing operations in parallel
+## 3. Implementing operations in parallel
 
 The future package has a few main patterns for how you might parallelize
 a computation.
 
-## 3.1. Parallelized lapply statements and related
+### 3.1. Parallelized lapply statements and related
 
 You can parallelize lapply and related functions easily. This is a nice
 replacement for the confusingly similar set of such as `parLapply`,
@@ -123,7 +87,7 @@ output <- future_lapply(1:20, function(i) mean(rnorm(1e7)), future.seed = TRUE)
 Alternatively, you can use `furrr:future_map` to run a parallel map
 operation (i.e., taking an explicit functional programming perspective).
 
-## 3.2. foreach
+### 3.2. foreach
 
 You can also continue to use `foreach` if you like that approach.
 
@@ -139,11 +103,11 @@ out <- foreach(i = 1:5) %dopar% {
 }
 ```
 
-    ## Running in process 825935 
-    ## Running in process 825932 
-    ## Running in process 825934 
-    ## Running in process 825933 
-    ## Running in process 825938
+    ## Running in process 2026059 
+    ## Running in process 2026058 
+    ## Running in process 2026057 
+    ## Running in process 2026063 
+    ## Running in process 2026064
 
 ``` r
 out
@@ -164,7 +128,7 @@ out
     ## [[5]]
     ## [1] 3
 
-## 3.3. Using futures for parallelization
+### 3.3. Using futures for parallelization
 
 While `future_lapply` and `foreach` are fine, the future package
 introduces a new style of parallelizing code using an explicit “future”.
@@ -198,9 +162,9 @@ class(out[[5]])
 value(out[[5]])
 ```
 
-    ## [1] 0.0005097988 0.9998960294
+    ## [1] -0.0002774087  1.0001292851
 
-## 3.4. Using implicit futures (with listenvs)
+### 3.4. Using implicit futures (with listenvs)
 
 In addition to using `future()`, one can use the special `%<-%` operator
 to denote a future. The `%<-%` operator can only operate with an
@@ -238,7 +202,7 @@ out[[2]]
     ## numbers are produced via the L'Ecuyer-CMRG method. To disable this check, use
     ## 'seed=NULL', or set option 'future.rng.onMisuse' to "ignore".
 
-    ## [1] 0.000308173 0.999999892
+    ## [1] 0.0003175114 0.9998736516
 
 ``` r
 out
@@ -252,7 +216,7 @@ out <- as.list(out)
 options(warn = 0)
 ```
 
-## 3.5. Blocking and non-blocking calls
+### 3.5. Blocking and non-blocking calls
 
 A ‘blocking call’ prevents the user from continuing to evaluate more
 expressions. Often, futures are evaluated in an asynchronous way and
@@ -291,7 +255,7 @@ system.time(value(out))
 ```
 
     ##    user  system elapsed 
-    ##   0.001   0.000   1.859
+    ##   0.001   0.000   1.829
 
 ### Blocking in the context of a loop over futures
 
@@ -317,7 +281,7 @@ for(i in seq_len(n)) {
 ```
 
     ##    user  system elapsed 
-    ##   0.090   0.002   4.655
+    ##   0.263   0.001   4.170
 
 ``` r
 ## Not blocked as result already available once first four finished.
@@ -325,7 +289,7 @@ system.time(value(out[[2]]))
 ```
 
     ##    user  system elapsed 
-    ##   0.000   0.000   0.001
+    ##   0.001   0.000   0.001
 
 ``` r
 ## Not blocked as result already available once first four finished.
@@ -333,7 +297,7 @@ system.time(value(out[[4]]))
 ```
 
     ##    user  system elapsed 
-    ##       0       0       0
+    ##   0.001   0.000   0.001
 
 ``` r
 ## Blocked as results for 5th and 6th iterations are still being evaluated.
@@ -341,11 +305,11 @@ system.time(value(out[[6]]))
 ```
 
     ##    user  system elapsed 
-    ##   0.001   0.000   1.832
+    ##   0.001   0.000   1.813
 
-# 4. A tour of different backends
+## 4. A tour of different backends
 
-## 4.1. Serial (sequential) processing
+### 4.1. Serial (sequential) processing
 
 The `sequential` plan allows you to run code on a single local core.
 This might not seem all that useful since the goal is usually to
@@ -364,7 +328,7 @@ is not affected.
 Actually even better for debugging is the `transparent` plan, which
 provides additional useful output.
 
-## 4.2. Multiple core processing on one machine
+### 4.2. Multiple core processing on one machine
 
 We’ve already seen that we can use the `multisession` plan to
 parallelize across the cores of one machine.
@@ -373,7 +337,7 @@ parallelize across the cores of one machine.
 plan(multisession, workers = 2)
 ```
 
-## 4.3. Distributed processing across multiple machines via an ad hoc cluster
+### 4.3. Distributed processing across multiple machines via an ad hoc cluster
 
 If we know the names of the machines and can access them via
 password-less SSH (e.g., [using ssh
@@ -399,7 +363,7 @@ future_sapply(seq_along(workers), function(i) Sys.info()[['nodename']])
 
     ## [1] "arwen"   "arwen"   "gandalf" "gandalf"
 
-## 4.4. Distributed processing across multiple machines within a SLURM scheduler job
+### 4.4. Distributed processing across multiple machines within a SLURM scheduler job
 
 If you are using SLURM and in your sbatch or srun command you use
 `--ntasks`, then the following will allow you to use as many R workers
@@ -418,7 +382,7 @@ Note that for this to work on the Berkeley Savio campus cluster with
 multiple nodes, you will probably need to load the R module via your
 .bashrc so that all the nodes have R and dependent modules available.
 
-## 4.5. Off-loading work to another machine
+### 4.5. Off-loading work to another machine
 
 One can run a chunk of code on a remote machine, for example if you need
 a machine with more memory.
@@ -444,7 +408,7 @@ g %<-% { ggplot(mydf, aes(x=x, y=y)) + geom_point() }
 g
 ```
 
-![](R-future_files/figure-markdown_github/off-load-1.png)
+![](R-future_files/figure-gfm/off-load-1.png)<!-- -->
 
 ``` r
 ## future (ggplot call) is evaluated remotely
@@ -457,9 +421,9 @@ g %<-% R.devices::capturePlot({
 g
 ```
 
-![](R-future_files/figure-markdown_github/off-load-2.png)
+![](R-future_files/figure-gfm/off-load-2.png)<!-- -->
 
-# 5. Load-balancing and static vs. dynamic task allocation
+## 5. Load-balancing and static vs. dynamic task allocation
 
 -   `future_lapply` uses static (non-load-balanced) allocation:
     -   Groups iterations into tasks and creates only as many tasks as
@@ -476,7 +440,7 @@ g
     -   Good for load-balancing when tasks take very different times to
         complete.
 
-# 6. Avoiding copies when doing multi-process parallelization on a single node
+## 6. Avoiding copies when doing multi-process parallelization on a single node
 
 The future package automatically identifies the objects needed by your
 future-based code and makes copies of those objects for use in the
@@ -543,7 +507,7 @@ plan(multisession, workers = 3) # new processes - copying!
 system.time(tmp <- future_sapply(1:100, function(i) mean(x)))
 ```
 
-# 7. Nested futures/for loops
+## 7. Nested futures/for loops
 
 You can set up nested parallelization and use various plans to
 parallelize at each level.
@@ -603,23 +567,23 @@ out[[1]]
     ## Lazy evaluation: FALSE
     ## Asynchronous evaluation: TRUE
     ## Local evaluation: TRUE
-    ## Environment: 0x5587bb835578
+    ## Environment: R_GlobalEnv
     ## Capture standard output: TRUE
     ## Capture condition classes: 'condition' (excluding 'nothing')
     ## Globals: 3 objects totaling 392 bytes (numeric 'n' of 56 bytes, matrix 'params' of 280 bytes, integer 'k' of 56 bytes)
     ## Packages: 3 packages ('listenv', 'stats', 'future')
-    ## L'Ecuyer-CMRG RNG seed: c(10407, 2070316700, -1459269755, 1667207225, -171710148, 650526079, 956464075)
+    ## L'Ecuyer-CMRG RNG seed: c(10407, -1393030293, 790920992, -1633048160, -783319787, -662522929, -1859678854)
     ## Resolved: FALSE
     ## Value: <not collected>
     ## Conditions captured: <none>
     ## Early signaling: FALSE
-    ## Owner process: 2c8ee921-ce30-e87d-f22f-be270dbca870
+    ## Owner process: 5697eb19-d84d-25c0-8fa2-07611e8c51d1
     ## Class: 'MultisessionFuture', 'ClusterFuture', 'MultiprocessFuture', 'Future', 'environment'
 
 Note that these are “asynchronous” futures that are evaluated in the
 background while control returns to the user.
 
-## 7.1. Nested futures/for loops - some example plans
+### 7.1. Nested futures/for loops - some example plans
 
 Let’s see a few different plans one could use for the nested loops.
 
@@ -660,14 +624,14 @@ for more configuration examples.
 code to allow parallelization at multiple levels, you can change the
 plan without ever touching the core code again.
 
-## 7.2. Hybrid parallelization: multiple processes plus threaded linear algebra
+### 7.2. Hybrid parallelization: multiple processes plus threaded linear algebra
 
 If you have access to threaded BLAS (e.g., MKL or openBLAS), as long as
-you set OMP\_NUM\_THREADS greater than 1, then any linear algebra should
+you set OMP_NUM_THREADS greater than 1, then any linear algebra should
 be parallelized within each of the iterations in a loop or apply
 statement.
 
-# 8. Reliable random number generation (RNG)
+## 8. Reliable random number generation (RNG)
 
 In the code above, I was sometimes cavalier about the seeds for the
 random number generation in the different parallel computations.
@@ -685,7 +649,7 @@ which guarantees non-overlapping random numbers. There is a good
 discussion about seeds for `future_lapply` and `future_sapply` in the
 help for those functions.
 
-## 8.1. The seed for future\_lapply
+### 8.1. The seed for future_lapply
 
 Here we can set a single seed. Behind the scenes the L’Ecuyer-CMRG RNG
 is used so that the random numbers generated for each iteration are
@@ -708,14 +672,15 @@ future_sapply(1:n, function(i) rnorm(1), future.seed = TRUE)
 
     ## [1]  1.3775667 -1.7371292 -0.1362109  1.9301162
 
-Basically future\_lapply pregenerates a seed for each iteration using
+Basically future_lapply pregenerates a seed for each iteration using
 `parallel:::nextRNGStream`, which uses the L’Ecuyer algorithm. See [more
-details here](https://github.com/HenrikBengtsson/future/issues/126).
+details on seeds with future
+here](https://github.com/HenrikBengtsson/future/issues/126).
 
 I could also have set `future.seed = 1` instead of setting the seed
 using `set.seed` to make the generated results reproducible.
 
-## 8.2. The seed when using futures directly
+### 8.2. The seed when using futures directly
 
 You can (and should when using RNG) set the seed in `future()`. As of
 version 1.24.0 of the future package, the following works fine to safely
@@ -763,17 +728,17 @@ do.call(cbind, as.list(out))
     ## [1,] -0.0003571476 0.0005987421 -0.0003570343 0.0005989737 -0.0003572973
     ## [2,]  0.9998949844 1.0002698980  0.9998949304 1.0002696339  0.9998947676
 
-## 8.3. The seed with foreach
+### 8.3. The seed with foreach
 
 See the example code in `help(doFuture)` for template code on how to use
 the `%doRNG%` operator with foreach to ensure correct RNG with foreach.
 
-# 9. Submitting Slurm jobs from future using batchtools
+## 9. Submitting Slurm jobs from future using batchtools
 
 We can use the `future.batchtools` package to submit jobs to a cluster
 scheduler from within R.
 
-## 9.1. One Slurm job per worker
+### 9.1. One Slurm job per worker
 
 One downside is that this submits one job per worker. On clusters (such
 as Savio) that schedule an entire node at once, that won’t work.
@@ -794,7 +759,7 @@ plan(batchtools_slurm, workers = 5,
 output <- future_sapply(1:100, function(i) mean(rnorm(1e7)), future.seed = 1)
 ```
 
-## 9.2. Submitting Slurm jobs that are allocated per node
+### 9.2. Submitting Slurm jobs that are allocated per node
 
 You can use nested futures to deal with the one job per worker issue.
 Here the outer future is just a wrapper to allow the overall code to be
@@ -825,7 +790,7 @@ While this is feasible, I prefer to set up my cluster jobs outside of R
 and have the R code not have to know anything about how the scheduler
 works or what scheduler is available on a given cluster.
 
-# 10. Futurizing your code
+## 10. Futurizing your code
 
 Of course even with the future package one would generally need to write
 the code in anticipation of what might be parallelized.
