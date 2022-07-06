@@ -21,7 +21,7 @@ According to Henrik Bengtsson (the package developer) and those who developed th
  - the value is the result of an evaluated expression
  - the state of a future is either unresolved or resolved
 
-### 1.1. Why use futures?
+### Why use futures?
 
 The future package allows one to write one's computational code without hard-coding whether or how parallelization would be done. Instead one writes the code in a generic way and at the top of one's code sets the *plan* for how the parallel computation should be done given the computational resources available. Simply changing the *plan* changes how parallelization is done for any given run of the code.
 

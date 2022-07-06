@@ -19,7 +19,7 @@ developed the concept:
 -   the value is the result of an evaluated expression
 -   the state of a future is either unresolved or resolved
 
-### 1.1. Why use futures?
+### Why use futures?
 
 The future package allows one to write one’s computational code without
 hard-coding whether or how parallelization would be done. Instead one
@@ -103,11 +103,11 @@ out <- foreach(i = 1:5) %dopar% {
 }
 ```
 
-    ## Running in process 2026059 
-    ## Running in process 2026058 
-    ## Running in process 2026057 
-    ## Running in process 2026063 
-    ## Running in process 2026064
+    ## Running in process 2029876 
+    ## Running in process 2029877 
+    ## Running in process 2029879 
+    ## Running in process 2029881 
+    ## Running in process 2029880
 
 ``` r
 out
@@ -162,7 +162,7 @@ class(out[[5]])
 value(out[[5]])
 ```
 
-    ## [1] -0.0002774087  1.0001292851
+    ## [1] 0.0005058996 1.0001330163
 
 ### 3.4. Using implicit futures (with listenvs)
 
@@ -202,7 +202,7 @@ out[[2]]
     ## numbers are produced via the L'Ecuyer-CMRG method. To disable this check, use
     ## 'seed=NULL', or set option 'future.rng.onMisuse' to "ignore".
 
-    ## [1] 0.0003175114 0.9998736516
+    ## [1] 0.0001177362 0.9999278755
 
 ``` r
 out
@@ -247,7 +247,7 @@ system.time(resolved(out))
 ```
 
     ##    user  system elapsed 
-    ##   0.001   0.000   0.011
+    ##   0.000   0.000   0.011
 
 ``` r
 ## Get the value. This is a blocking call.
@@ -255,7 +255,7 @@ system.time(value(out))
 ```
 
     ##    user  system elapsed 
-    ##   0.001   0.000   1.829
+    ##   0.001   0.000   1.807
 
 ### Blocking in the context of a loop over futures
 
@@ -281,7 +281,7 @@ for(i in seq_len(n)) {
 ```
 
     ##    user  system elapsed 
-    ##   0.263   0.001   4.170
+    ##   0.291   0.003   4.304
 
 ``` r
 ## Not blocked as result already available once first four finished.
@@ -289,7 +289,7 @@ system.time(value(out[[2]]))
 ```
 
     ##    user  system elapsed 
-    ##   0.001   0.000   0.001
+    ##       0       0       0
 
 ``` r
 ## Not blocked as result already available once first four finished.
@@ -297,7 +297,7 @@ system.time(value(out[[4]]))
 ```
 
     ##    user  system elapsed 
-    ##   0.001   0.000   0.001
+    ##       0       0       0
 
 ``` r
 ## Blocked as results for 5th and 6th iterations are still being evaluated.
@@ -305,7 +305,7 @@ system.time(value(out[[6]]))
 ```
 
     ##    user  system elapsed 
-    ##   0.001   0.000   1.813
+    ##   0.001   0.000   1.892
 
 ## 4. A tour of different backends
 
@@ -572,12 +572,12 @@ out[[1]]
     ## Capture condition classes: 'condition' (excluding 'nothing')
     ## Globals: 3 objects totaling 392 bytes (numeric 'n' of 56 bytes, matrix 'params' of 280 bytes, integer 'k' of 56 bytes)
     ## Packages: 3 packages ('listenv', 'stats', 'future')
-    ## L'Ecuyer-CMRG RNG seed: c(10407, -1393030293, 790920992, -1633048160, -783319787, -662522929, -1859678854)
+    ## L'Ecuyer-CMRG RNG seed: c(10407, 1888433940, 560206125, -1753255751, 1180290435, -2125211192, 1344344292)
     ## Resolved: FALSE
     ## Value: <not collected>
     ## Conditions captured: <none>
     ## Early signaling: FALSE
-    ## Owner process: 5697eb19-d84d-25c0-8fa2-07611e8c51d1
+    ## Owner process: a96e94a3-2ca3-97fb-278f-4e9cf9b04904
     ## Class: 'MultisessionFuture', 'ClusterFuture', 'MultiprocessFuture', 'Future', 'environment'
 
 Note that these are “asynchronous” futures that are evaluated in the
