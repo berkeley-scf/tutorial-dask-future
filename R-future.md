@@ -103,11 +103,11 @@ out <- foreach(i = 1:5) %dopar% {
 }
 ```
 
-    ## Running in process 2029876 
-    ## Running in process 2029877 
-    ## Running in process 2029879 
-    ## Running in process 2029881 
-    ## Running in process 2029880
+    ## Running in process 4009488 
+    ## Running in process 4009482 
+    ## Running in process 4009483 
+    ## Running in process 4009489 
+    ## Running in process 4009484
 
 ``` r
 out
@@ -162,7 +162,7 @@ class(out[[5]])
 value(out[[5]])
 ```
 
-    ## [1] 0.0005058996 1.0001330163
+    ## [1] 0.000330357 1.000097760
 
 ### 3.4. Using implicit futures (with listenvs)
 
@@ -202,7 +202,7 @@ out[[2]]
     ## numbers are produced via the L'Ecuyer-CMRG method. To disable this check, use
     ## 'seed=NULL', or set option 'future.rng.onMisuse' to "ignore".
 
-    ## [1] 0.0001177362 0.9999278755
+    ## [1] -0.0001736414  0.9998202151
 
 ``` r
 out
@@ -238,7 +238,7 @@ system.time(
 ```
 
     ##    user  system elapsed 
-    ##   0.006   0.000   0.006
+    ##   0.005   0.000   0.006
 
 ``` r
 ## Check if the calculation is done. This check is a non-blocking call.
@@ -247,7 +247,7 @@ system.time(resolved(out))
 ```
 
     ##    user  system elapsed 
-    ##   0.000   0.000   0.011
+    ##   0.001   0.000   0.011
 
 ``` r
 ## Get the value. This is a blocking call.
@@ -255,7 +255,7 @@ system.time(value(out))
 ```
 
     ##    user  system elapsed 
-    ##   0.001   0.000   1.807
+    ##   0.001   0.000   1.890
 
 ### Blocking in the context of a loop over futures
 
@@ -281,7 +281,7 @@ for(i in seq_len(n)) {
 ```
 
     ##    user  system elapsed 
-    ##   0.291   0.003   4.304
+    ##   0.259   0.003   3.792
 
 ``` r
 ## Not blocked as result already available once first four finished.
@@ -305,7 +305,7 @@ system.time(value(out[[6]]))
 ```
 
     ##    user  system elapsed 
-    ##   0.001   0.000   1.892
+    ##   0.001   0.000   1.598
 
 ## 4. A tour of different backends
 
@@ -408,7 +408,7 @@ g %<-% { ggplot(mydf, aes(x=x, y=y)) + geom_point() }
 g
 ```
 
-![](R-future_files/figure-gfm/off-load-1.png)<!-- -->
+<img src="R-future_files/figure-gfm/off-load-1.png" title="example plots" alt="example plots"  />
 
 ``` r
 ## future (ggplot call) is evaluated remotely
@@ -421,7 +421,7 @@ g %<-% R.devices::capturePlot({
 g
 ```
 
-![](R-future_files/figure-gfm/off-load-2.png)<!-- -->
+<img src="R-future_files/figure-gfm/off-load-2.png" title="example plots" alt="example plots"  />
 
 ## 5. Load-balancing and static vs. dynamic task allocation
 
@@ -572,12 +572,12 @@ out[[1]]
     ## Capture condition classes: 'condition' (excluding 'nothing')
     ## Globals: 3 objects totaling 392 bytes (numeric 'n' of 56 bytes, matrix 'params' of 280 bytes, integer 'k' of 56 bytes)
     ## Packages: 3 packages ('listenv', 'stats', 'future')
-    ## L'Ecuyer-CMRG RNG seed: c(10407, 1888433940, 560206125, -1753255751, 1180290435, -2125211192, 1344344292)
+    ## L'Ecuyer-CMRG RNG seed: c(10407, 1122931918, 531623149, 2010096327, 15801998, 921459188, -1371577071)
     ## Resolved: FALSE
     ## Value: <not collected>
     ## Conditions captured: <none>
     ## Early signaling: FALSE
-    ## Owner process: a96e94a3-2ca3-97fb-278f-4e9cf9b04904
+    ## Owner process: cb31fb1b-e5fb-5f8e-2285-ab01da0e15a0
     ## Class: 'MultisessionFuture', 'ClusterFuture', 'MultiprocessFuture', 'Future', 'environment'
 
 Note that these are “asynchronous” futures that are evaluated in the
