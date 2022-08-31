@@ -262,7 +262,7 @@ One can run a chunk of code on a remote machine, for example if you need a machi
 
 Here's an example where I create a plot remotely and view it locally. 
 
-```{r, off-load, fig.cap = '', fig.width=5, fig.height=5}
+```{r, off-load, fig.cap = '', fig.width=5, fig.height=5, fig.alt='example plots'}
 plan(remote, workers = 'gandalf.berkeley.edu')
 ## requires password-less SSH
 
