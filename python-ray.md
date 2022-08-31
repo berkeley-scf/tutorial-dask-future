@@ -42,7 +42,7 @@ print(ray.get(futures)) # [0, 1, 4, 9]
 
 ## 3. Ray on multiple machines (nodes)
 
-Here we'll follow the [Ray instructions to start up Ray processes across multiple nodes within a Slurm job](https://docs.ray.io/en/master/cluster/slurm.html).
+Here we'll follow the [Ray instructions to start up Ray processes across multiple nodes within a Slurm job](https://docs.ray.io/en/latest/cluster/vms/user-guides/community/slurm.html).
 
 Make sure to request multiple cores per node via --cpus-per-task (on Savio you'd generally set this equal to the number of cores per node).
 
