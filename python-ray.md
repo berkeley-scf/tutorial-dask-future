@@ -13,7 +13,7 @@ In particular, some of the key ideas/features of Ray are:
 
   - Allowing users to parallelize independent computations across multiple cores on one or more machines.
   - Different users can run the same code on different computational resources (without touching the actual code that does the computation).
-  - One nice feature relative to Dask is that Ray allows one to share data across all worker processes on a node, without multiple copies of hte data, using the *object store*.
+  - One nice feature relative to Dask is that Ray allows one to share data across all worker processes on a node, without multiple copies of the data, using the *object store*.
   - Ray provides tools to build distributed (across multiple cores or nodes) applications where different processes interact with each other (using the notion of 'actors').
 
 These brief notes just scratch the surface of Ray and just recapitulate basic information available in the [Ray documentation](https://docs.ray.io/en/master/).
