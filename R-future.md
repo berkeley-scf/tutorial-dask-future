@@ -44,8 +44,10 @@ machine(s) to use and how many cores on each machine to use.
 For example,
 
 ``` r
-plan(multisession)  ## spreads work across multiple (all available) cores
-# also, explicitly can control number of workers
+## spread work across multiple (all available) cores
+## based on result of `parallelly::availableCores()`:
+plan(multisession)  
+## also, explicitly can control number of workers
 plan(multisession, workers = 4)
 ```
 
@@ -103,11 +105,11 @@ out <- foreach(i = 1:5) %dopar% {
 }
 ```
 
-    ## Running in process 4009488 
-    ## Running in process 4009482 
-    ## Running in process 4009483 
-    ## Running in process 4009489 
-    ## Running in process 4009484
+    ## Running in process 87724 
+    ## Running in process 87723 
+    ## Running in process 87722 
+    ## Running in process 87721 
+    ## Running in process 87725
 
 ``` r
 out
@@ -140,7 +142,7 @@ the individual iterations to run in parallel, based on the plan.
 because of the `seed` argument - see Section 8 for more details.)
 
 ``` r
-plan(multisession, workers = 4)   # or some other plan
+plan(multisession)   # or some other plan
 n <- 20
 out <- list(); length(out) <- n
 
@@ -162,7 +164,7 @@ class(out[[5]])
 value(out[[5]])
 ```
 
-    ## [1] 0.000330357 1.000097760
+    ## [1] -0.0009148784  0.9997338352
 
 ### 3.4. Using implicit futures (with listenvs)
 
@@ -202,7 +204,7 @@ out[[2]]
     ## numbers are produced via the L'Ecuyer-CMRG method. To disable this check, use
     ## 'seed=NULL', or set option 'future.rng.onMisuse' to "ignore".
 
-    ## [1] -0.0001736414  0.9998202151
+    ## [1] 0.0001829946 1.0002200884
 
 ``` r
 out
@@ -238,7 +240,7 @@ system.time(
 ```
 
     ##    user  system elapsed 
-    ##   0.005   0.000   0.006
+    ##   0.005   0.000   0.005
 
 ``` r
 ## Check if the calculation is done. This check is a non-blocking call.
@@ -247,7 +249,7 @@ system.time(resolved(out))
 ```
 
     ##    user  system elapsed 
-    ##   0.001   0.000   0.011
+    ##   0.001   0.001   0.011
 
 ``` r
 ## Get the value. This is a blocking call.
@@ -255,7 +257,7 @@ system.time(value(out))
 ```
 
     ##    user  system elapsed 
-    ##   0.001   0.000   1.890
+    ##   0.001   0.000   1.578
 
 ### Blocking in the context of a loop over futures
 
@@ -281,7 +283,7 @@ for(i in seq_len(n)) {
 ```
 
     ##    user  system elapsed 
-    ##   0.259   0.003   3.792
+    ##   0.202   0.005   3.591
 
 ``` r
 ## Not blocked as result already available once first four finished.
@@ -289,7 +291,7 @@ system.time(value(out[[2]]))
 ```
 
     ##    user  system elapsed 
-    ##       0       0       0
+    ##   0.000   0.000   0.001
 
 ``` r
 ## Not blocked as result already available once first four finished.
@@ -334,8 +336,14 @@ We’ve already seen that we can use the `multisession` plan to
 parallelize across the cores of one machine.
 
 ``` r
-plan(multisession, workers = 2)
+plan(multisession)
 ```
+
+By default, this will start as many workers as given in the result of
+`parallelly::availableCores()`, which should be the number of the
+computer or will be based on the resources available to your job, if you
+have a job running via a scheduler on a cluster, such as the Slurm
+scheduler for Linux clusters.
 
 ### 4.3. Distributed processing across multiple machines via an ad hoc cluster
 
@@ -363,12 +371,26 @@ future_sapply(seq_along(workers), function(i) Sys.info()[['nodename']])
 
     ## [1] "arwen"   "arwen"   "gandalf" "gandalf"
 
-### 4.4. Distributed processing across multiple machines within a SLURM scheduler job
+### 4.4. Distributed processing across multiple machines within a Slurm scheduler job
 
-If you are using SLURM and in your sbatch or srun command you use
-`--ntasks`, then the following will allow you to use as many R workers
-as the value of `ntasks`. One caveat is that one still needs to be able
-to access the various machines via password-less SSH.
+The future package can detect the available resources in the context of
+Slurm (and other schedulers). It uses `parallelly::availableWorkers()`.
+
+So you can simply call the cluster plan and get a sensible result in
+terms of the workers.
+
+``` r
+plan(cluster)
+# and verify we're actually connected to the workers:
+future_sapply(seq_along(workers), function(i)
+              cat("Worker running in process", Sys.getpid(), "on", Sys.info()[['nodename']], "\n"))
+```
+
+For more manual control, if you are using Slurm and in your `sbatch` or
+`srun` command you use `--ntasks`, then the following will allow you to
+use as many R workers as the value of `ntasks`. One caveat is that one
+still needs to be able to access the various machines via password-less
+SSH.
 
 ``` r
 workers <- system('srun hostname', intern = TRUE)
@@ -572,12 +594,12 @@ out[[1]]
     ## Capture condition classes: 'condition' (excluding 'nothing')
     ## Globals: 3 objects totaling 392 bytes (numeric 'n' of 56 bytes, matrix 'params' of 280 bytes, integer 'k' of 56 bytes)
     ## Packages: 3 packages ('listenv', 'stats', 'future')
-    ## L'Ecuyer-CMRG RNG seed: c(10407, 1122931918, 531623149, 2010096327, 15801998, 921459188, -1371577071)
+    ## L'Ecuyer-CMRG RNG seed: c(10407, 1773428395, 1534511470, 1391691407, 1872541454, 831018568, 2084811746)
     ## Resolved: FALSE
     ## Value: <not collected>
     ## Conditions captured: <none>
     ## Early signaling: FALSE
-    ## Owner process: cb31fb1b-e5fb-5f8e-2285-ab01da0e15a0
+    ## Owner process: 1157a386-bb8b-d086-cfda-2be582ca5cd7
     ## Class: 'MultisessionFuture', 'ClusterFuture', 'MultiprocessFuture', 'Future', 'environment'
 
 Note that these are “asynchronous” futures that are evaluated in the

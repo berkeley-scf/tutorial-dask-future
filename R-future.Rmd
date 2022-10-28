@@ -39,8 +39,10 @@ One uses `plan()` to control how parallelization is done, including what machine
 For example,
 
 ```{r, plan}
-plan(multisession)  ## spreads work across multiple (all available) cores
-# also, explicitly can control number of workers
+## spread work across multiple (all available) cores
+## based on result of `parallelly::availableCores()`:
+plan(multisession)  
+## also, explicitly can control number of workers
 plan(multisession, workers = 4)
 ```
 
@@ -102,7 +104,7 @@ While `future_lapply` and `foreach` are fine, the future package introduces a ne
 
 
 ```{r, future}
-plan(multisession, workers = 4)   # or some other plan
+plan(multisession)   # or some other plan
 n <- 20
 out <- list(); length(out) <- n
 
@@ -218,8 +220,10 @@ Actually even better for debugging is the `transparent` plan, which provides add
 We've already seen that we can use the `multisession` plan to parallelize across the cores of one machine.
 
 ```{r, multisession, eval = FALSE}
-plan(multisession, workers = 2)
+plan(multisession)
 ```
+
+By default, this will start as many workers as given in the result of `parallelly::availableCores()`, which should be the number of the computer or will be based on the resources available to your job, if you have a job running via a scheduler on a cluster, such as the Slurm scheduler for Linux clusters. 
 
 ### 4.3. Distributed processing across multiple machines via an ad hoc cluster
 
@@ -242,11 +246,23 @@ future_sapply(seq_along(workers), function(i) Sys.info()[['nodename']])
 ```
 
 
-### 4.4. Distributed processing across multiple machines within a SLURM scheduler job 
+### 4.4. Distributed processing across multiple machines within a Slurm scheduler job 
 
-If you are using SLURM and in your sbatch or srun command you use `--ntasks`, then the following will allow you to use as many R workers as the value of `ntasks`. One caveat is that one still needs to be able to access the various machines via password-less SSH.
+The future package can detect the available resources in the context of Slurm (and other schedulers).
+It uses `parallelly::availableWorkers()`.
 
-```{r, srun, eval = FALSE}
+So you can simply call the cluster plan and get a sensible result in terms of the workers.
+
+```{r, dist-default, eval = FALSE}
+plan(cluster)
+# and verify we're actually connected to the workers:
+future_sapply(seq_along(workers), function(i)
+              cat("Worker running in process", Sys.getpid(), "on", Sys.info()[['nodename']], "\n"))
+```
+
+For more manual control, if you are using Slurm and in your `sbatch` or `srun` command you use `--ntasks`, then the following will allow you to use as many R workers as the value of `ntasks`. One caveat is that one still needs to be able to access the various machines via password-less SSH.
+
+```{r, dist-srun, eval = FALSE}
 workers <- system('srun hostname', intern = TRUE)
 plan(cluster, workers = workers)
 # and verify we're actually connected to the workers:
