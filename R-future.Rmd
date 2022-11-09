@@ -51,15 +51,16 @@ This table gives an overview of the different plans.
 
 |Type          |Description                                                 |Multi-node|Copies of objects made?   |
 | ------------ | ---------------------------------------------------------- | -------- | ------------------------ |
+|sequential    |current R process (no parallelization; used for testing)    |no        |no                        |
 |multisession  |background R processes                                      |no        |yes                       |
 |multicore     |forked R processes (not available in Windows nor RStudio)   |no        |not if object not modified|
-|remote        |R process on another machine                                |yes       |yes                       |
 |cluster       |R processes on other machine(s)                             |yes       |yes                       |
 
 
 For the next section (Section 3), we'll just assume use of `multisession` and will provide more details on the other plans in the following section (Section 4).
 
 The deprecated `multiprocess` plan used either `multisession` on Windows and `multicore` on MacOS/Linux.
+The deprecated `remote` process is not needed because `cluster` provides equivalent functionality.
 
 ## 3. Implementing operations in parallel
 
@@ -245,6 +246,14 @@ plan(cluster, workers = workers)
 future_sapply(seq_along(workers), function(i) Sys.info()[['nodename']])
 ```
 
+We can verify that the workers are running on the various machines by checking the nodename of each of the workers:
+
+```{r, check-workers, eval=FALSE}
+tmp <- future_sapply(seq_len(nbrOfWorkers()), 
+              function(i)
+                cat("Worker running in process", Sys.getpid(),
+                    "on", Sys.info()[['nodename']], "\n"))
+```
 
 ### 4.4. Distributed processing across multiple machines within a Slurm scheduler job 
 
@@ -255,9 +264,6 @@ So you can simply call the cluster plan and get a sensible result in terms of th
 
 ```{r, dist-default, eval = FALSE}
 plan(cluster)
-# and verify we're actually connected to the workers:
-future_sapply(seq_along(workers), function(i)
-              cat("Worker running in process", Sys.getpid(), "on", Sys.info()[['nodename']], "\n"))
 ```
 
 For more manual control, if you are using Slurm and in your `sbatch` or `srun` command you use `--ntasks`, then the following will allow you to use as many R workers as the value of `ntasks`. One caveat is that one still needs to be able to access the various machines via password-less SSH.
@@ -265,10 +271,10 @@ For more manual control, if you are using Slurm and in your `sbatch` or `srun` c
 ```{r, dist-srun, eval = FALSE}
 workers <- system('srun hostname', intern = TRUE)
 plan(cluster, workers = workers)
-# and verify we're actually connected to the workers:
-future_sapply(seq_along(workers), function(i)
-              cat("Worker running in process", Sys.getpid(), "on", Sys.info()[['nodename']], "\n"))
 ```
+
+In either case, we can check that the workers are running on the various machines using the syntax in the section just above.
+
 
 Note that for this to work on the Berkeley Savio campus cluster with multiple nodes, you will probably need to load the R module via your .bashrc so that all the nodes have R and dependent modules available.
 
@@ -279,7 +285,7 @@ One can run a chunk of code on a remote machine, for example if you need a machi
 Here's an example where I create a plot remotely and view it locally. 
 
 ```{r, off-load, fig.cap = '', fig.width=5, fig.height=5, fig.alt='example plots'}
-plan(remote, workers = 'gandalf.berkeley.edu')
+plan(cluster, workers = 'gandalf.berkeley.edu')
 ## requires password-less SSH
 
 ## future (ggplot call) is evaluated remotely

@@ -55,9 +55,9 @@ This table gives an overview of the different plans.
 
 | Type         | Description                                               | Multi-node | Copies of objects made?    |
 |--------------|-----------------------------------------------------------|------------|----------------------------|
+| sequential   | current R process (no parallelization; used for testing)  | no         | no                         |
 | multisession | background R processes                                    | no         | yes                        |
 | multicore    | forked R processes (not available in Windows nor RStudio) | no         | not if object not modified |
-| remote       | R process on another machine                              | yes        | yes                        |
 | cluster      | R processes on other machine(s)                           | yes        | yes                        |
 
 For the next section (Section 3), we’ll just assume use of
@@ -65,7 +65,8 @@ For the next section (Section 3), we’ll just assume use of
 following section (Section 4).
 
 The deprecated `multiprocess` plan used either `multisession` on Windows
-and `multicore` on MacOS/Linux.
+and `multicore` on MacOS/Linux. The deprecated `remote` process is not
+needed because `cluster` provides equivalent functionality.
 
 ## 3. Implementing operations in parallel
 
@@ -105,11 +106,11 @@ out <- foreach(i = 1:5) %dopar% {
 }
 ```
 
-    ## Running in process 87724 
-    ## Running in process 87723 
-    ## Running in process 87722 
-    ## Running in process 87721 
-    ## Running in process 87725
+    ## Running in process 1527967 
+    ## Running in process 1527971 
+    ## Running in process 1527968 
+    ## Running in process 1527969 
+    ## Running in process 1527966
 
 ``` r
 out
@@ -164,7 +165,7 @@ class(out[[5]])
 value(out[[5]])
 ```
 
-    ## [1] -0.0009148784  0.9997338352
+    ## [1] -0.0003675136  1.0001162311
 
 ### 3.4. Using implicit futures (with listenvs)
 
@@ -204,7 +205,7 @@ out[[2]]
     ## numbers are produced via the L'Ecuyer-CMRG method. To disable this check, use
     ## 'seed=NULL', or set option 'future.rng.onMisuse' to "ignore".
 
-    ## [1] 0.0001829946 1.0002200884
+    ## [1] -0.000321647  0.999975787
 
 ``` r
 out
@@ -240,7 +241,7 @@ system.time(
 ```
 
     ##    user  system elapsed 
-    ##   0.005   0.000   0.005
+    ##   0.006   0.000   0.006
 
 ``` r
 ## Check if the calculation is done. This check is a non-blocking call.
@@ -257,7 +258,7 @@ system.time(value(out))
 ```
 
     ##    user  system elapsed 
-    ##   0.001   0.000   1.578
+    ##   0.000   0.000   1.581
 
 ### Blocking in the context of a loop over futures
 
@@ -283,7 +284,7 @@ for(i in seq_len(n)) {
 ```
 
     ##    user  system elapsed 
-    ##   0.202   0.005   3.591
+    ##   0.212   0.010   3.576
 
 ``` r
 ## Not blocked as result already available once first four finished.
@@ -291,7 +292,7 @@ system.time(value(out[[2]]))
 ```
 
     ##    user  system elapsed 
-    ##   0.000   0.000   0.001
+    ##   0.001   0.000   0.000
 
 ``` r
 ## Not blocked as result already available once first four finished.
@@ -307,7 +308,7 @@ system.time(value(out[[6]]))
 ```
 
     ##    user  system elapsed 
-    ##   0.001   0.000   1.598
+    ##   0.001   0.000   1.560
 
 ## 4. A tour of different backends
 
@@ -371,6 +372,16 @@ future_sapply(seq_along(workers), function(i) Sys.info()[['nodename']])
 
     ## [1] "arwen"   "arwen"   "gandalf" "gandalf"
 
+We can verify that the workers are running on the various machines by
+checking the nodename of each of the workers:
+
+``` r
+tmp <- future_sapply(seq_len(nbrOfWorkers()), 
+              function(i)
+                cat("Worker running in process", Sys.getpid(),
+                    "on", Sys.info()[['nodename']], "\n"))
+```
+
 ### 4.4. Distributed processing across multiple machines within a Slurm scheduler job
 
 The future package can detect the available resources in the context of
@@ -381,9 +392,6 @@ terms of the workers.
 
 ``` r
 plan(cluster)
-# and verify we're actually connected to the workers:
-future_sapply(seq_along(workers), function(i)
-              cat("Worker running in process", Sys.getpid(), "on", Sys.info()[['nodename']], "\n"))
 ```
 
 For more manual control, if you are using Slurm and in your `sbatch` or
@@ -395,10 +403,10 @@ SSH.
 ``` r
 workers <- system('srun hostname', intern = TRUE)
 plan(cluster, workers = workers)
-# and verify we're actually connected to the workers:
-future_sapply(seq_along(workers), function(i)
-              cat("Worker running in process", Sys.getpid(), "on", Sys.info()[['nodename']], "\n"))
 ```
+
+In either case, we can check that the workers are running on the various
+machines using the syntax in the section just above.
 
 Note that for this to work on the Berkeley Savio campus cluster with
 multiple nodes, you will probably need to load the R module via your
@@ -412,13 +420,7 @@ a machine with more memory.
 Here’s an example where I create a plot remotely and view it locally.
 
 ``` r
-plan(remote, workers = 'gandalf.berkeley.edu')
-```
-
-    ## Warning: Strategy 'remote' is deprecated in future (>= 1.24.0). Instead, use
-    ## 'cluster'.
-
-``` r
+plan(cluster, workers = 'gandalf.berkeley.edu')
 ## requires password-less SSH
 
 ## future (ggplot call) is evaluated remotely
@@ -594,12 +596,12 @@ out[[1]]
     ## Capture condition classes: 'condition' (excluding 'nothing')
     ## Globals: 3 objects totaling 392 bytes (numeric 'n' of 56 bytes, matrix 'params' of 280 bytes, integer 'k' of 56 bytes)
     ## Packages: 3 packages ('listenv', 'stats', 'future')
-    ## L'Ecuyer-CMRG RNG seed: c(10407, 1773428395, 1534511470, 1391691407, 1872541454, 831018568, 2084811746)
+    ## L'Ecuyer-CMRG RNG seed: c(10407, 574391501, -808282789, -1069103781, -1300483739, 683162025, 2131933792)
     ## Resolved: FALSE
     ## Value: <not collected>
     ## Conditions captured: <none>
     ## Early signaling: FALSE
-    ## Owner process: 1157a386-bb8b-d086-cfda-2be582ca5cd7
+    ## Owner process: 26921a9f-aa8c-182f-73d5-9a85bb0a2ec0
     ## Class: 'MultisessionFuture', 'ClusterFuture', 'MultiprocessFuture', 'Future', 'environment'
 
 Note that these are “asynchronous” futures that are evaluated in the

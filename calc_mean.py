@@ -13,3 +13,13 @@ def calc_mean_vargs(inputs):
     return([np.mean(data), np.std(data)])
 
 
+a=3
+b=7
+print(a)
+
+print(a)
+def myfun():
+    print('hello')
+
+def myfun2():
+    print('hello')
