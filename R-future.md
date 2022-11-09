@@ -65,7 +65,7 @@ For the next section (Section 3), we’ll just assume use of
 following section (Section 4).
 
 The deprecated `multiprocess` plan used either `multisession` on Windows
-and `multicore` on MacOS/Linux. The deprecated `remote` process is not
+and `multicore` on MacOS/Linux. The deprecated `remote` plan is not
 needed because `cluster` provides equivalent functionality.
 
 ## 3. Implementing operations in parallel
@@ -106,11 +106,11 @@ out <- foreach(i = 1:5) %dopar% {
 }
 ```
 
-    ## Running in process 1527967 
-    ## Running in process 1527971 
-    ## Running in process 1527968 
-    ## Running in process 1527969 
-    ## Running in process 1527966
+    ## Running in process 1531995 
+    ## Running in process 1531996 
+    ## Running in process 1531998 
+    ## Running in process 1531994 
+    ## Running in process 1532000
 
 ``` r
 out
@@ -165,7 +165,7 @@ class(out[[5]])
 value(out[[5]])
 ```
 
-    ## [1] -0.0003675136  1.0001162311
+    ## [1] 0.0002933896 0.9998945259
 
 ### 3.4. Using implicit futures (with listenvs)
 
@@ -205,7 +205,7 @@ out[[2]]
     ## numbers are produced via the L'Ecuyer-CMRG method. To disable this check, use
     ## 'seed=NULL', or set option 'future.rng.onMisuse' to "ignore".
 
-    ## [1] -0.000321647  0.999975787
+    ## [1] -0.0001400345  1.0001699060
 
 ``` r
 out
@@ -241,7 +241,7 @@ system.time(
 ```
 
     ##    user  system elapsed 
-    ##   0.006   0.000   0.006
+    ##   0.005   0.000   0.006
 
 ``` r
 ## Check if the calculation is done. This check is a non-blocking call.
@@ -250,7 +250,7 @@ system.time(resolved(out))
 ```
 
     ##    user  system elapsed 
-    ##   0.001   0.001   0.011
+    ##   0.001   0.000   0.010
 
 ``` r
 ## Get the value. This is a blocking call.
@@ -258,7 +258,7 @@ system.time(value(out))
 ```
 
     ##    user  system elapsed 
-    ##   0.000   0.000   1.581
+    ##   0.001   0.000   1.542
 
 ### Blocking in the context of a loop over futures
 
@@ -284,7 +284,7 @@ for(i in seq_len(n)) {
 ```
 
     ##    user  system elapsed 
-    ##   0.212   0.010   3.576
+    ##   0.199   0.003   3.602
 
 ``` r
 ## Not blocked as result already available once first four finished.
@@ -292,7 +292,7 @@ system.time(value(out[[2]]))
 ```
 
     ##    user  system elapsed 
-    ##   0.001   0.000   0.000
+    ##   0.000   0.000   0.001
 
 ``` r
 ## Not blocked as result already available once first four finished.
@@ -308,7 +308,7 @@ system.time(value(out[[6]]))
 ```
 
     ##    user  system elapsed 
-    ##   0.001   0.000   1.560
+    ##   0.001   0.000   1.645
 
 ## 4. A tour of different backends
 
@@ -596,12 +596,12 @@ out[[1]]
     ## Capture condition classes: 'condition' (excluding 'nothing')
     ## Globals: 3 objects totaling 392 bytes (numeric 'n' of 56 bytes, matrix 'params' of 280 bytes, integer 'k' of 56 bytes)
     ## Packages: 3 packages ('listenv', 'stats', 'future')
-    ## L'Ecuyer-CMRG RNG seed: c(10407, 574391501, -808282789, -1069103781, -1300483739, 683162025, 2131933792)
+    ## L'Ecuyer-CMRG RNG seed: c(10407, -354730906, 715201811, 1259879564, 1583359846, 1221803483, -872582004)
     ## Resolved: FALSE
     ## Value: <not collected>
     ## Conditions captured: <none>
     ## Early signaling: FALSE
-    ## Owner process: 26921a9f-aa8c-182f-73d5-9a85bb0a2ec0
+    ## Owner process: 6f9d2ff6-7a37-5b8e-04f5-cf4d88449d50
     ## Class: 'MultisessionFuture', 'ClusterFuture', 'MultiprocessFuture', 'Future', 'environment'
 
 Note that these are “asynchronous” futures that are evaluated in the

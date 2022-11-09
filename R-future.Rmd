@@ -60,7 +60,7 @@ This table gives an overview of the different plans.
 For the next section (Section 3), we'll just assume use of `multisession` and will provide more details on the other plans in the following section (Section 4).
 
 The deprecated `multiprocess` plan used either `multisession` on Windows and `multicore` on MacOS/Linux.
-The deprecated `remote` process is not needed because `cluster` provides equivalent functionality.
+The deprecated `remote` plan is not needed because `cluster` provides equivalent functionality.
 
 ## 3. Implementing operations in parallel
 
