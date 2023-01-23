@@ -106,11 +106,11 @@ out <- foreach(i = 1:5) %dopar% {
 }
 ```
 
-    ## Running in process 1531995 
-    ## Running in process 1531996 
-    ## Running in process 1531998 
-    ## Running in process 1531994 
-    ## Running in process 1532000
+    ## Running in process 16521 
+    ## Running in process 16525 
+    ## Running in process 16522 
+    ## Running in process 16520 
+    ## Running in process 16519
 
 ``` r
 out
@@ -165,7 +165,7 @@ class(out[[5]])
 value(out[[5]])
 ```
 
-    ## [1] 0.0002933896 0.9998945259
+    ## [1] -0.0002726529  0.9995739110
 
 ### 3.4. Using implicit futures (with listenvs)
 
@@ -205,7 +205,7 @@ out[[2]]
     ## numbers are produced via the L'Ecuyer-CMRG method. To disable this check, use
     ## 'seed=NULL', or set option 'future.rng.onMisuse' to "ignore".
 
-    ## [1] -0.0001400345  1.0001699060
+    ## [1] 4.318634e-05 1.000212e+00
 
 ``` r
 out
@@ -241,7 +241,7 @@ system.time(
 ```
 
     ##    user  system elapsed 
-    ##   0.005   0.000   0.006
+    ##   0.006   0.000   0.007
 
 ``` r
 ## Check if the calculation is done. This check is a non-blocking call.
@@ -250,7 +250,7 @@ system.time(resolved(out))
 ```
 
     ##    user  system elapsed 
-    ##   0.001   0.000   0.010
+    ##   0.001   0.000   0.011
 
 ``` r
 ## Get the value. This is a blocking call.
@@ -258,7 +258,7 @@ system.time(value(out))
 ```
 
     ##    user  system elapsed 
-    ##   0.001   0.000   1.542
+    ##   0.001   0.000   1.573
 
 ### Blocking in the context of a loop over futures
 
@@ -284,7 +284,7 @@ for(i in seq_len(n)) {
 ```
 
     ##    user  system elapsed 
-    ##   0.199   0.003   3.602
+    ##   0.218   0.008   3.690
 
 ``` r
 ## Not blocked as result already available once first four finished.
@@ -292,7 +292,7 @@ system.time(value(out[[2]]))
 ```
 
     ##    user  system elapsed 
-    ##   0.000   0.000   0.001
+    ##   0.001   0.000   0.000
 
 ``` r
 ## Not blocked as result already available once first four finished.
@@ -300,7 +300,7 @@ system.time(value(out[[4]]))
 ```
 
     ##    user  system elapsed 
-    ##       0       0       0
+    ##   0.001   0.000   0.000
 
 ``` r
 ## Blocked as results for 5th and 6th iterations are still being evaluated.
@@ -308,7 +308,7 @@ system.time(value(out[[6]]))
 ```
 
     ##    user  system elapsed 
-    ##   0.001   0.000   1.645
+    ##   0.001   0.000   1.568
 
 ## 4. A tour of different backends
 
@@ -432,7 +432,7 @@ g %<-% { ggplot(mydf, aes(x=x, y=y)) + geom_point() }
 g
 ```
 
-<img src="R-future_files/figure-gfm/off-load-1.png" title="example plots" alt="example plots"  />
+<img src="R-future_files/figure-gfm/off-load-1.png" alt="example plots"  />
 
 ``` r
 ## future (ggplot call) is evaluated remotely
@@ -445,7 +445,7 @@ g %<-% R.devices::capturePlot({
 g
 ```
 
-<img src="R-future_files/figure-gfm/off-load-2.png" title="example plots" alt="example plots"  />
+<img src="R-future_files/figure-gfm/off-load-2.png" alt="example plots"  />
 
 ## 5. Load-balancing and static vs. dynamic task allocation
 
@@ -487,6 +487,8 @@ with the same state as the original R process.
 -   And there is no time involved in making copies.
 -   However, if you modify objects in the worker processes then copies
     are made.
+-   You can use these global variables in functions you call in parallel
+    or pass the variables into functions as function arguments.
 
 So, the take-home message is that using `multicore` on non-Windows
 machines can have a big advantage when working with large data objects.
@@ -596,12 +598,12 @@ out[[1]]
     ## Capture condition classes: 'condition' (excluding 'nothing')
     ## Globals: 3 objects totaling 392 bytes (numeric 'n' of 56 bytes, matrix 'params' of 280 bytes, integer 'k' of 56 bytes)
     ## Packages: 3 packages ('listenv', 'stats', 'future')
-    ## L'Ecuyer-CMRG RNG seed: c(10407, -354730906, 715201811, 1259879564, 1583359846, 1221803483, -872582004)
+    ## L'Ecuyer-CMRG RNG seed: c(10407, -1711519478, -474720727, -374701061, -228026188, 1545069810, -1700948632)
     ## Resolved: FALSE
     ## Value: <not collected>
     ## Conditions captured: <none>
     ## Early signaling: FALSE
-    ## Owner process: 6f9d2ff6-7a37-5b8e-04f5-cf4d88449d50
+    ## Owner process: 327355b7-40a2-515c-5f31-74400ad3c44e
     ## Class: 'MultisessionFuture', 'ClusterFuture', 'MultiprocessFuture', 'Future', 'environment'
 
 Note that these are “asynchronous” futures that are evaluated in the

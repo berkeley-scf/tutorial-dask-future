@@ -332,6 +332,7 @@ R worker processes with the same state as the original R process.
   - So **the additional processes do not use additional memory for those objects** (despite what is shown in *top* as memory used by each process).
   - And there is no time involved in making copies.
   - However, if you modify objects in the worker processes then copies are made.
+  - You can use these global variables in functions you call in parallel or pass the variables into functions as function arguments.
 
 So, the take-home message is that using `multicore` on non-Windows machines can have a big advantage when working with large data objects.
 
