@@ -3,6 +3,11 @@ layout: default
 title: Parallel processing using the Dask packge in Python
 ---
 
+<script
+  src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"
+  type="text/javascript">
+</script>
+
 # Parallel processing using the Dask packge in Python
 
 ## 1. Overview of Dask
@@ -855,7 +860,7 @@ The general problem is that we want the random numbers generated on each worker 
 
 Using the basic numpy RNG, one can simply set different seeds for each task, but as mentioned above that doesn't guarantee non-overlapping random numbers.
 
-We can use functionality with numpy's PCG64 or MT19937 generators to be completely safe in our parallel random number generation. Each provide a `jumped()` function that moves the RNG ahead as if one had generated a very large number of random variables ($2^{128}$cd for the Mersenne Twister and nearly that for the PCG64).
+We can use functionality with numpy's PCG64 or MT19937 generators to be completely safe in our parallel random number generation. Each provide a `jumped()` function that moves the RNG ahead as if one had generated a very large number of random variables ($2^{128}$ for the Mersenne Twister and nearly that for the PCG64).
 
 Here’s how we can set up the use of the PCG64 generator:
 
