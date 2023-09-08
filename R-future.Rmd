@@ -84,7 +84,22 @@ Alternatively, you can use `furrr:future_map` to run a parallel map operation (i
 
 You can also continue to use `foreach` if you like that approach.
 
-```{r, foreach}
+As of version 1.0.0 of `doFuture`, you can do this, using the `%doFuture%` operatior.
+
+```{r, foreach-old}
+plan(multisession)  # or some other plan
+
+library(doFuture, quietly = TRUE)
+
+out <- foreach(i = 1:5) %doFuture% {
+    cat("Running in process", Sys.getpid(), "\n")
+    mean(1:i)
+}
+out
+
+Previously, one would use this approach with the `%dopar%` operator:
+
+```{r, foreach-old}
 plan(multisession)  # or some other plan
 
 library(doFuture, quietly = TRUE)
@@ -96,6 +111,8 @@ out <- foreach(i = 1:5) %dopar% {
 }
 out
 ```
+
+Using `%doFuture%` has various advantages listed [here](https://www.jottr.org/2023/06/26/dofuture/).
 
 ### 3.3. Using futures for parallelization
 
@@ -517,7 +534,10 @@ do.call(cbind, as.list(out))
 
 ### 8.3. The seed with foreach
 
-See the example code in `help(doFuture)` for template code on how to use the `%doRNG%` operator with foreach to ensure correct RNG with foreach.
+When using `%doFuture%`, you can simply include `.options.future = list(seed = TRUE)` to ensure parallel RNG is done safely.
+If you forget and have RNG in your parallelized code, `doFuture` will warn you.
+
+Before version 1.0.0 of `doFuture`, one would need to use the `%doRNG%` operator with foreach to ensure correct RNG with foreach.
 
 ## 9. Submitting Slurm jobs from future using batchtools
 

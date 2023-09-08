@@ -855,73 +855,71 @@ The general problem is that we want the random numbers generated on each worker 
 
 Using the basic numpy RNG, one can simply set different seeds for each task, but as mentioned above that doesn't guarantee non-overlapping random numbers.
 
-In recent versions of numpy there has been attention paid to this problem and there are now [multiple approaches to getting high-quality random number generation for parallel code](https://numpy.org/doc/stable/reference/random/parallel.html).
+We can use functionality with numpy's PCG64 or MT19937 generators to be completely safe in our parallel random number generation. Each provide a `jumped()` function that moves the RNG ahead as if one had generated a very large number of random variables ($2^{128}$cd for the Mersenne Twister and nearly that for the PCG64).
 
-One approach is to generate one random seed per task such that the blocks of random numbers avoid overlapping with high probability, as implemented in numpy's SeedSequence approach.
-
-```python
-import dask.multiprocessing
-dask.config.set(scheduler = 'processes', num_workers = 4)  
-
-results = []
-n = 10000000
-p = 10
-
-seed = 1
-ss = np.random.SeedSequence(seed)
-child_seeds = ss.spawn(p)
-
-def calc_mean(i, n, seed):
-    import numpy as np
-    rng = numpy.random.default_rng(seed)
-    data = rng.normal(size = n)
-    return([np.mean(data), np.std(data)])
-
-for i in range(p):
-    results.append(dask.delayed(calc_mean)(i, n, child_seeds[i]))  # add lazy task
-
-output = dask.compute(results)  
-```
-
-A second approach is to advance the state of the random number generator as if a large number of random numbers had been drawn. 
+Here’s how we can set up the use of the PCG64 generator:
 
 ```python
-import dask.multiprocessing
-dask.config.set(scheduler = 'processes', num_workers = 4)  
-
-results = []
-n = 10000000
-p = 10
-
-seed = 1
-rng = np.random.PCG64(seed)
-
-def calc_mean(i, n, rng):
-    import numpy as np
-    gen = np.random.Generator(rng.jumped(i))  ## jump in large steps, one jump per task
-    data = gen.normal(size = n)
-    return([np.mean(data), np.std(data)])
-
-
-for i in range(p):
-    results.append(dask.delayed(calc_mean)(i, n, rng))  # add lazy task
-
-output = dask.compute(results)  # compute all in parallel
+bitGen = np.random.PCG64(1)
+rng = np.random.Generator(bitGen)
+rng.random(size = 3)
 ```
 
-Note that above, I've done everything at the level of the computational tasks. One could presumably
-do this at the level of the workers, but one would need to figure out how to maintain the state of the generator from one task to the next for any given worker.
-
-Finally, dask array seems to still use the old (deprecated) numpy `RandomState` functionality. You can set the seed as below, but it's not clear to me what it does in terms of random number generation on the different workers.
-
+Now let’s see how to jump forward. And then verify that jumping forward two increments is the same as making two separate jumps.
 
 ```python
-import dask.array as da
-seed = 1234
-state = da.random.RandomState(seed)
-x = state.normal(0, 1, size=(10,10), chunks=(5, 5))
-help(state)  # documentation doesn't shed much light...
+bitGen = np.random.PCG64(1)
+bitGen = bitGen.jumped(1)
+rng = np.random.Generator(bitGen)
+rng.normal(size = 3)
+
+bitGen = np.random.PCG64(1)
+bitGen = bitGen.jumped(2)
+rng = np.random.Generator(bitGen)
+rng.normal(size = 3)
+
+bitGen = np.random.PCG64(1)
+bitGen = bitGen.jumped(1)
+bitGen = bitGen.jumped(1)
+rng = np.random.Generator(bitGen)
+rng.normal(size = 3)
 ```
+
+We can also use `jumped()` with the Mersenne Twister.
+
+```python
+bitGen = np.random.MT19937(1)
+bitGen = bitGen.jumped(1)
+rng = np.random.Generator(bitGen)
+rng.normal(size = 3)
+```
+
+
+So the strategy to parallelize across tasks (or potentially workers if random number generation is done sequentially for tasks done by a single worker) is to give each task the same seed and use `jumped(i)` where `i` indexes the tasks (or workers).
+
+```python
+def myrandomfun(i):
+    bitGen = np.random.PCG(1)
+    bitGen = bitGen.jumped(i)
+    # insert code with random number generation
+```
+
+One caution is that it appears that the period for PCG64 is $2^{128}$ and that `jumped(1)` jumps forward by nearly that many random numbers. That seems quite strange, and I don’t understand it.
+
+Alternatively as [recommended in the docs](https://numpy.org/doc/stable/reference/random/bit_generators/pcg64.html):
+
+```python
+n_tasks = 10
+sg = np.random.SeedSequence(1)
+rngs = [Generator(PCG64(s)) for s in sg.spawn(n_tasks)]
+## Now pass elements of `rngs` into your function that is being computed in parallel
+
+def myrandomfun(rng):
+    # insert code with random number generation, such as:
+    z = rng.normal(size = 5)
+```
+
+
 
 ## 9. Submitting SLURM jobs from Dask
 
