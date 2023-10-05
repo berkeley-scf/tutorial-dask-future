@@ -289,7 +289,7 @@ One can do a lot of the kinds of computations that you would do on a numpy array
 
 By default arrays are handled via the threads scheduler.
 
-#### 4.3.1 Non-distributed arrays
+#### 4.3.1 Arrays on a single node/machine
 
 Let's first see operations on a single node, using a single 13 GB 2-d array. Note that Dask uses lazy evaluation, so creation of the array doesn't happen until an operation requiring output is done.
 
@@ -372,7 +372,7 @@ rs[0:5]
 ```
 
 
-#### 4.3.2 Distributed arrays
+#### 4.3.2 Arrays split across multiple nodes/machines
 
 This should be straightforward based on using Dask distributed. However, one would want to
 be careful about creating arrays by distributing the data from a single Python process
