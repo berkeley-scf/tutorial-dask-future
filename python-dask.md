@@ -716,7 +716,8 @@ In general you want to delay the input objects. There are a couple reasons why:
   - When using the distributed scheduler *only*, delaying the inputs will prevent sending the data separately for every task (rather it should send the data separately for each worker).
 
 In this example, most of the "computational" time is actually spent transferring the data
-rather than computing the mean.
+rather than computing the mean. Whether there is a copy per task or a copy per process seems to depend on exactly what the parallelized code is doing (perhaps based on whether there is random number generation in the code).
+
 
 ```python
 dask.config.set(scheduler = 'processes', num_workers = 4)  
@@ -741,9 +742,10 @@ calc(x, 1)
 time.time() - t0
 ```
 
-Here we see that if we use the Distributed (local) scheduler,
-we get much faster performance, likely because Dask avoids
-making copies of the input for each task.
+Here's an example of using  the Distributed (local) scheduler.
+Copies have to be made, but if we delay the data object, there is only one copy per worker.
+Note that with the Dask distributed scheduler, it is complicated to assess what is going on, because the scheduler seems to try to optimize assignment of tasks to workers in a way that may cause an imbalance in the number of tasks assigned to each worker. In this example, all the tasks are assigned to a single worker.
+
 
 ```python
 from dask.distributed import Client, LocalCluster
@@ -765,8 +767,8 @@ time.time() - t0    # 3.6 sec.
 ```
 
 That took a few seconds if we delay the data but takes ~20 seconds if we don't.
-Note that Dask does warn us if it detects a situation like this where we
-haven't delayed the data.
+
+Also, Dask gives a warning about sending the data to the workers in advance. I’m not sure of the distinction between what it is recommending and use of `dask.delayed(x)`. When I tried to use `scatter()` in various ways, I wasn't able to silence the warning.
 
 Note that in either case, we incur the memory usage of the original 'x' plus copies of 'x' on the workers.
 

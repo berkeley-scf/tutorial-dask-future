@@ -145,7 +145,7 @@ See this outline for an overview comparison of future ( R ), Dask (Python) and R
     - future
         - generally copy one per worker, but one per task with dynamic allocation
     - Dask
-        - generally one copy per worker if done correctly (data should be delayed)
+        - generally one copy per worker if done correctly (data should be delayed if using distributed scheduler)
     - Ray
         - one copy per node if done correctly (use `ray.put` to use object store)
 
