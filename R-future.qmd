@@ -1,15 +1,25 @@
 ---
 title: Parallel Processing using the  future package in R
-layout: default
+date: 2025-04-22
+format:
+  html:
+    theme: cosmo
+    css: assets/styles.css
+    toc: true
+    code-copy: true
+    code-block-bg: true
+    code-block-border-left: "#31BAE9" 
+engine: knitr
+ipynb-shell-interactivity: all
+code-overflow: wrap
 ---
 
-```{r setup, include=FALSE}
+```{r setup}
+#| include: false
 # knitr::opts_chunk$set(eval = FALSE)
 library(future)
 library(future.apply)
 ```
-
-# Parallel Processing using the future package in R
 
 ## 1. Overview: Futures and the  R future package
 
@@ -84,25 +94,28 @@ Alternatively, you can use `furrr:future_map` to run a parallel map operation (i
 
 You can also continue to use `foreach` if you like that approach.
 
-As of version 1.0.0 of `doFuture`, you can do this, using the `%doFuture%` operatior.
+As of version 1.0.0 of `doFuture`, you can do this, using the `%dofuture%` operatior.
 
-```{r, foreach-old}
+```{r, foreach}
 plan(multisession)  # or some other plan
 
 library(doFuture, quietly = TRUE)
+registerDoFuture()
 
-out <- foreach(i = 1:5) %doFuture% {
+out <- foreach(i = 1:5) %dofuture% {
     cat("Running in process", Sys.getpid(), "\n")
     mean(1:i)
 }
 out
+```
 
 Previously, one would use this approach with the `%dopar%` operator:
 
 ```{r, foreach-old}
+#| eval: false
 plan(multisession)  # or some other plan
 
-library(doFuture, quietly = TRUE)
+library(dofuture, quietly = TRUE)
 registerDoFuture()
 
 out <- foreach(i = 1:5) %dopar% {
@@ -112,7 +125,7 @@ out <- foreach(i = 1:5) %dopar% {
 out
 ```
 
-Using `%doFuture%` has various advantages listed [here](https://www.jottr.org/2023/06/26/dofuture/).
+Using `%dofuture%` has various advantages listed [here](https://www.jottr.org/2023/06/26/dofuture/).
 
 ### 3.3. Using futures for parallelization
 
@@ -224,9 +237,10 @@ system.time(value(out[[6]]))
 
 The `sequential` plan allows you to run code on a single local core. This might not seem all that useful since the goal is usually to parallelize, but this helps in debugging and allows someone to run future-based code even if they only have one core available.
 
-```{r, sequ, eval = FALSE}
+```{r, sequ}
+#| eval:false
 plan(sequential)
-## future_lapply, foreach with doFuture, etc. all will still work
+## future_lapply, foreach with dofuture, etc. all will still work
 ```
 
 Note that like the parallel plans, the `sequential` plan evaluates all code in an isolated ('local') environment, so your R working environment is not affected. 
@@ -237,7 +251,8 @@ Actually even better for debugging is the `transparent` plan, which provides add
 
 We've already seen that we can use the `multisession` plan to parallelize across the cores of one machine.
 
-```{r, multisession, eval = FALSE}
+```{r, multisession}
+#| eval: false
 plan(multisession)
 ```
 
@@ -249,7 +264,8 @@ If we know the names of the machines and can access them via password-less SSH (
 
 Here we want to use four cores on one machine.
 
-```{r, cluster, eval = FALSE}
+```{r, cluster}
+#| eval: false
 workers <- rep('arwen.berkeley.edu', 4)
 plan(cluster, workers = workers)
 ```
@@ -265,7 +281,8 @@ future_sapply(seq_along(workers), function(i) Sys.info()[['nodename']])
 
 We can verify that the workers are running on the various machines by checking the nodename of each of the workers:
 
-```{r, check-workers, eval=FALSE}
+```{r, check-workers}
+#| eval: false
 tmp <- future_sapply(seq_len(nbrOfWorkers()), 
               function(i)
                 cat("Worker running in process", Sys.getpid(),
@@ -279,13 +296,15 @@ It uses `parallelly::availableWorkers()`.
 
 So you can simply call the cluster plan and get a sensible result in terms of the workers.
 
-```{r, dist-default, eval = FALSE}
+```{r, dist-default}
+#| eval: false
 plan(cluster)
 ```
 
 For more manual control, if you are using Slurm and in your `sbatch` or `srun` command you use `--ntasks`, then the following will allow you to use as many R workers as the value of `ntasks`. One caveat is that one still needs to be able to access the various machines via password-less SSH.
 
-```{r, dist-srun, eval = FALSE}
+```{r, dist-srun}
+#| eval: false
 workers <- system('srun hostname', intern = TRUE)
 plan(cluster, workers = workers)
 ```
@@ -301,7 +320,11 @@ One can run a chunk of code on a remote machine, for example if you need a machi
 
 Here's an example where I create a plot remotely and view it locally. 
 
-```{r, off-load, fig.cap = '', fig.width=5, fig.height=5, fig.alt='example plots'}
+```{r, off-load}
+#| fig-cap: ''
+#| fig-width: 5
+#| fig-height: 5
+#| fig-alt: 'example plots'
 plan(cluster, workers = 'gandalf.berkeley.edu')
 ## requires password-less SSH
 
@@ -372,7 +395,8 @@ watch -n 0.1 free -h
 
 Now you can try running this code either with (using `multicore`) or without (using `multisession`) forking:
 
-```{r, copies, eval = FALSE}
+```{r, copies}
+#| eval: false
 ## allow total size of global variables to be large enough...
 options(future.globals.maxSize = 1e9)
 
@@ -434,7 +458,8 @@ Let's see a few different plans one could use for the nested loops.
 
 To use eight cores on the current machine, two cores for each of the four outer iteration:
 
-```{r, nested-plan, eval = FALSE}
+```{r, nested-plan}
+#| eval: false
 ## One option:
 plan(list(tweak(multisession, workers = 4), tweak(multisession, workers = 2)))
 ## Another option
@@ -444,7 +469,8 @@ plan(list(tweak(cluster, workers = nodes), tweak(multisession, workers = 2)))
 
 To run each parameter across as many workers as are available on each of multiple machines:
 
-```{r, nested-plan2, eval = FALSE}
+```{r, nested-plan2}
+#| eval: false
 nodes <- c('arwen.berkeley.edu', 'shelob.berkeley.edu', 'radagast.berkeley.edu', 'gandalf.berkeley.edu')
 plan(list(tweak(cluster, workers = nodes), multisession))
 ```
@@ -454,7 +480,8 @@ Note that you can't use a multicore future at multiple levels as future prevents
 If there are many inner iterations and few outer iterations, we might simply do the
 outer iterations sequentially:
 
-```{r, nested-plan3, eval = FALSE}
+```{r, nested-plan3}
+#| eval: false
 plan(list(sequential, multisession))
 ```
 
@@ -534,8 +561,8 @@ do.call(cbind, as.list(out))
 
 ### 8.3. The seed with foreach
 
-When using `%doFuture%`, you can simply include `.options.future = list(seed = TRUE)` to ensure parallel RNG is done safely.
-If you forget and have RNG in your parallelized code, `doFuture` will warn you.
+When using `%dofuture%`, you can simply include `.options.future = list(seed = TRUE)` to ensure parallel RNG is done safely.
+If you forget and have RNG in your parallelized code, `%dofuture%` will warn you.
 
 Before version 1.0.0 of `doFuture`, one would need to use the `%doRNG%` operator with foreach to ensure correct RNG with foreach.
 
@@ -551,7 +578,8 @@ an entire node at once, that won't work.
 
 On the SCF it is fine (so long as you don't have, say, tens of thousands of jobs). Here's an example. Note that the `resources` argument tells what the Slurm arguments should be for *each* worker.
 
-```{r, slurm-submit, eval=FALSE}
+```{r, slurm-submit}
+#| eval: false
 library(future.apply)
 library(future.batchtools)
 ## Starts five workers as separate jobs.
@@ -567,7 +595,8 @@ output <- future_sapply(1:100, function(i) mean(rnorm(1e7)), future.seed = 1)
 
 You can use nested futures to deal with the one job per worker issue. Here the outer future is just a wrapper to allow the overall code to be run within a single Slurm job.
 
-```{r, slurm-onejob, eval=FALSE}
+```{r, slurm-onejob}
+#| eval: false
 library(future.apply)
 library(future.batchtools)
 numWorkers <- 5
@@ -596,7 +625,8 @@ Of course even with the future package one would generally need to write the cod
 
 However, in the case of lapply and sapply, you could even do this to "futurize" someone else's code:
 
-```{r, futurize, eval = FALSE}
+```{r, futurize}
+#| eval: false
 lapply <- future_lapply
 sapply <- future_sapply
 ```

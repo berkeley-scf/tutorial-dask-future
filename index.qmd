@@ -1,10 +1,18 @@
 ---
 title: Flexible parallel processing using the R future and Python Dask packages
-layout: default
-author: Christopher Paciorek
+date: 2025-04-22
+format:
+  html:
+    theme: cosmo
+    css: assets/styles.css
+    toc: true
+    code-copy: true
+    code-block-bg: true
+    code-block-border-left: "#31BAE9" 
+engine: knitr
+ipynb-shell-interactivity: all
+code-overflow: wrap
 ---
-
-# Flexible parallel processing using the Dask package in Python and the future package in R
 
 ## 1. This Tutorial
 
@@ -13,14 +21,6 @@ This tutorial covers the use of R's future and Python's Dask packages, well-esta
 You should be able to replicate much of what is covered here provided you have Rand Python on your computer, but some of the parallelization approaches may not work on Windows.
 
 This tutorial assumes you have a working knowledge of either R or Python, but not necessarily knowledge of parallelization in R or Python.
-
-Materials for this tutorial, including the Markdown files and associated code files that were used to create these documents are available on [GitHub](https://github.com/berkeley-scf/tutorial-dask-future) in the `gh-pages` branch.  You can download the files by doing a git clone from a terminal window on a UNIX-like machine, as follows:
-
-```bash
-git clone https://github.com/berkeley-scf/tutorial-dask-future
-```
-
-This tutorial by Christopher Paciorek of the UC Berkeley Statistical Computing Facility is licensed under a Creative Commons Attribution 3.0 Unported License.
 
 ## 2. Some useful terminology
 
@@ -149,15 +149,3 @@ See this outline for an overview comparison of future ( R ), Dask (Python) and R
     - Ray
         - one copy per node if done correctly (use `ray.put` to use object store)
 
-
-## 5. Python's Dask package
-
-Please see the [Python dask materials](python-dask).
-
-## 6. R future package
-
-Please see [R future materials](R-future).
-
-## 7. Python's Ray package
-
-For a very brief introduction to Ray, please see the [Python Ray materials](python-ray).

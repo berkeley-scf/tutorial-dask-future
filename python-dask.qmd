@@ -1,6 +1,17 @@
 ---
-layout: default
 title: Parallel processing using the Dask packge in Python
+date: 2025-04-22
+format:
+  html:
+    theme: cosmo
+    css: assets/styles.css
+    toc: true
+    code-copy: true
+    code-block-bg: true
+    code-block-border-left: "#31BAE9" 
+engine: knitr
+ipynb-shell-interactivity: all
+code-overflow: wrap
 ---
 
 <script
@@ -8,7 +19,6 @@ title: Parallel processing using the Dask packge in Python
   type="text/javascript">
 </script>
 
-# Parallel processing using the Dask packge in Python
 
 ## 1. Overview of Dask
 
@@ -24,7 +34,8 @@ The idea of a 'future' or 'delayed' operation is to tag operations such that the
 
 Let's import dask to get started.
 
-```python
+```{python}
+#| eval: false
 import dask
 ```
 
@@ -35,7 +46,8 @@ One specifies a "scheduler" to control how parallelization is done, including wh
 
 For example,
 
-```python
+```{python}
+#| eval: false
 import dask.multiprocessing
 # spread work across multiple cores, one worker per core
 dask.config.set(scheduler='processes', num_workers = 4)  
@@ -63,7 +75,8 @@ Dask has a large variety of patterns for how you might parallelize a computation
 
 We'll simply parallelize computation of the mean of a large number of random numbers across multiple replicates as can be seen in `calc_mean.py`.
 
-```python
+```{python}
+#| eval: false
 from calc_mean import *
 ```
 
@@ -76,7 +89,8 @@ The basic pattern for setting up a parallel loop is:
 
 #### 3.1.1 For loop
 
-```python
+```{python}
+#| eval: false
 import dask.multiprocessing
 dask.config.set(scheduler='processes', num_workers = 4)  
 
@@ -92,7 +106,8 @@ results = dask.compute(futures)  # compute all in parallel
 
 #### 3.1.2 List comprehension
 
-```python
+```{python}
+#| eval: false
 import dask.multiprocessing
 dask.config.set(scheduler='processes', num_workers = 4)  
 
@@ -105,7 +120,8 @@ results = dask.compute(futures)
 
 You could set the scheduler in the `compute` call:
 
-```python
+```{python}
+#| eval: false
 results = dask.compute(futures, scheduler = 'processes')
 ```
 
@@ -118,7 +134,8 @@ We can do parallel map operations (i.e., a *map* in the map-reduce or functional
 For this we need to use the *distributed* scheduler, which we'll discuss more later.
 Note that the distributed scheduler can work on one node or on multiple nodes.
 
-```python
+```{python}
+#| eval: false
 # Ignore this setup for now; we'll see it again later
 from dask.distributed import Client, LocalCluster
 cluster = LocalCluster(n_workers = 4)
@@ -141,7 +158,8 @@ The map operation appears to cache results. If you rerun the above with the same
 
 You can use `delayed` in more complicated situations than the simple iterations shown above.
 
-```python
+```{python}
+#| eval: false
 def inc(x):
     return x + 1
 
@@ -160,7 +178,8 @@ z.visualize(filename = 'task_graph.svg')
 
 One can also tell Dask to always delay evaluation of a given function:
 
-```python
+```{python}
+#| eval: false
 @dask.delayed
 def inc(x):
     return x + 1
@@ -202,7 +221,8 @@ Here's an example of reading from a dataset of flight delays (about 11 GB data).
 You can get [the flight delay data](https://www.stat.berkeley.edu/share/paciorek/1987-2008.csvs.tgz).
 
 
-```python
+```{python}
+#| eval: false
 import dask
 dask.config.set(scheduler='threads', num_workers = 4)  
 import dask.dataframe as ddf
@@ -221,7 +241,8 @@ byDest.compute()               # this takes a while too
 
 You should see this:
 
-```python
+```{python}
+#| eval: false
 Dest
 ACV    26.200000
 BFL     1.000000
@@ -243,7 +264,8 @@ Let's see some basic operations on a large dataset of Wikipedia log files.
 You can get a [subset of the Wikipedia data](https://www.stat.berkeley.edu/share/paciorek/wikistats_example.tar.gz).
 
 
-```python
+```{python}
+#| eval: false
 import dask.multiprocessing
 dask.config.set(scheduler='processes', num_workers = 4)  # multiprocessing is the default
 import dask.bag as db
@@ -271,15 +293,20 @@ obama[0:5]
 
 That should look like this:
 
-```python
-['20081113 100000 en Image:Flickr_Obama_Springfield_01.jpg 25 306083\n', '20081004 130000 en Special:FilePath/Opinion_polling_for_the_United_States_presidential_election,_2008,_Barack_Obama_Fred_Thompson.png 1 1224\n', '20081004 130000 en Special:FilePath/Opinion_polling_for_the_United_States_presidential_election,_2008,_Barack_Obama_Rudy_Giuliani.png 1 1212\n', '20081217 160000 en File:Michelle,_Malia_and_Sasha_Obama_at_DNC.jpg 7 97330\n', '20081217 160000 en File:Michelle,_Oprah_Winfrey_and_Barack_Obama.jpg 6 120260\n']
+```{python}
+#| eval: false
+['20081113 100000 en Image:Flickr_Obama_Springfield_01.jpg 25 306083', '20081004 130000 en Special:FilePath/Opinion_polling_for_the_United_States_presidential_election,_2008,_Barack_Obama_Fred_Thompson.png 1 1224', '20081004 130000 en Special:FilePath/Opinion_polling_for_the_United_States_presidential_election,_2008,_Barack_Obama_Rudy_Giuliani.png 1 1212', '20081217 160000 en File:Michelle,_Malia_and_Sasha_Obama_at_DNC.jpg 7 97330', '20081217 160000 en File:Michelle,_Oprah_Winfrey_and_Barack_Obama.jpg 6 120260']
 ```
 
 Note that it is quite inefficient to do the `find()` (and therefore necessarily reading
 the data in) and then compute on top of that intermediate result in
 two separate calls to `compute()`. More in Section 6.
 
-Also you would not want to do `data = wiki.compute()` as that would pull the entire dataset into your main Python session as a single (very large) list.
+::: {.callout-important title="Memory use danger"}
+Be careful about running `compute` such that it produces a large object in the main Python session.
+
+E.g., above you would not want to do `data = wiki.compute()` as that would pull the entire dataset into your main Python session as a single (very large) list.
+:::
 
 ### 4.3. Arrays (numpy)
 
@@ -295,7 +322,8 @@ Let's first see operations on a single node, using a single 13 GB 2-d array. Not
 
 Here we specify that the chunks (the sub-arrays) are 10000 by 10000.
 
-```python
+```{python}
+#| eval: false
 import dask
 dask.config.set(scheduler = 'threads', num_workers = 4) 
 import dask.array as da
@@ -313,7 +341,8 @@ but this doesn't seem to actually make a difference, presumably because the
 mean calculation can be done in pieces and only a small number of summary statistics
 moved between workers.
 
-```python
+```{python}
+#| eval: false
 import dask
 dask.config.set(scheduler='threads', num_workers = 4)  
 import dask.array as da
@@ -332,7 +361,8 @@ actual row mean calculations.
 
 But this doesn't really clarify the story...
 
-```python
+```{python}
+#| eval: false
 import dask
 dask.config.set(scheduler='threads', num_workers = 4)  
 import dask.array as da
@@ -358,7 +388,8 @@ Dask will avoid storing all the chunks in memory. (It appears to just generate t
 Here we have an 80 GB array but we never use more than a few GB of memory (based on `top` or `free -h`).
 
 
-```python
+```{python}
+#| eval: false
 import dask
 dask.config.set(scheduler='threads', num_workers = 4)  
 import dask.array as da
@@ -382,7 +413,8 @@ as that would involve copying between machines.
 
 ### 5.1. Using threads (no copying)
 
-```python
+```{python}
+#| eval: false
 dask.config.set(scheduler='threads', num_workers = 4)  
 n = 100000000
 p = 4
@@ -417,7 +449,8 @@ Exactly why one form of numpy code encounters the GIL and the other is not clear
 
 We can effectively parallelize regardless of the GIL by using multiple Python processes. 
 
-```python
+```{python}
+#| eval: false
 import dask.multiprocessing
 dask.config.set(scheduler='processes', num_workers = 4)  
 n = 100000000
@@ -430,11 +463,13 @@ results = dask.compute(futures)
 time.time() - t0  # 4.0 sec.
 ```
 
-IMPORTANT: The above code will work when run in an interactive Python
+::: {.callout-important title="Interactive vs. background use"}
+The above code will work when run in an interactive Python
 session. However, if you want to run it within a Python script (i.e., in a background/batch job),
 you'll need to configure the scheduler and run the code within an `if __name__ == '__main__'` block:
 
-```python
+```{python}
+#| eval: false
 import dask.multiprocessing
 
 if __name__ == '__main__':
@@ -448,6 +483,8 @@ if __name__ == '__main__':
     time.time() - t0  # 4.0 sec.
 ```
 
+:::
+
 ### 5.3. Multi-process parallelization via Dask Distributed (local)
 
 According to the Dask documentation, using `Distributed` on a local machine
@@ -455,7 +492,8 @@ has advantages over multiprocessing, including the diagnostic dashboard
 (see Section 7) and better handling of when copies need to be made.  As we saw previously,
 using Distributed also allows us to use the handy `map()` operation.
 
-```python
+```{python}
+#| eval: false
 from dask.distributed import Client, LocalCluster
 cluster = LocalCluster(n_workers = 4)
 c = Client(cluster)
@@ -466,11 +504,14 @@ results = dask.compute(futures)
 time.time() - t0   # 3.4 sec.
 ```
 
-IMPORTANT: The above code will work when run in an interactive Python
+::: {.callout-important title="Interactive vs. background use"}
+The above code will work when run in an interactive Python
 session. However, if you want to run it within a Python script (i.e., in a background/batch job),
-you'll need to set up the cluster and run the code within an `if __name__ == '__main__'` block:
+you'll need to configure the scheduler and run the code within an `if __name__ == '__main__'` block:
 
-```python
+
+```{python}
+#| eval: false
 from dask.distributed import Client, LocalCluster
 
 if __name__ == '__main__':
@@ -484,6 +525,7 @@ if __name__ == '__main__':
 	results = dask.compute(futures)
 	time.time() - t0   # 7 sec.
 ```
+:::
 
 ### 5.4. Distributed processing across multiple machines via an ad hoc cluster
 
@@ -505,7 +547,8 @@ dask-ssh --scheduler ${SCHED} radagast.berkeley.edu radagast.berkeley.edu arwen.
 
 Then in Python, connect to the cluster via the scheduler.
 
-```python
+```{python}
+#| eval: false
 from dask.distributed import Client
 import os
 c = Client(address = os.getenv('SCHED') + ':8786')
@@ -521,7 +564,8 @@ c.shutdown()
 
 Alternatively, you can start the workers from within Python:
 
-```python
+```{python}
+#| eval: false
 from dask.distributed import Client, SSHCluster
 # first host is the scheduler
 cluster = SSHCluster(
@@ -534,9 +578,9 @@ c = Client(cluster)
 c.shutdown()
 ```
 
-### 5.5. Distributed processing using multiple machines within a SLURM scheduler job
+### 5.5. Distributed processing using multiple machines within a Slurm scheduler job
 
-To run within a SLURM job we can use `dask-ssh` or a combination of `dask-scheduler`
+To run within a Slurm job we can use `dask-ssh` or a combination of `dask-scheduler`
 and `dask-worker`.. 
 
 Provided that we have used --ntasks or --nodes and --ntasks-per-node to set the
@@ -549,14 +593,16 @@ First we'll start the scheduler and the workers.
 export SCHED=$(hostname):8786
 dask-scheduler&
 sleep 50   
-# On Savio, I've gotten issues with the local directory being in my home directory, so use /tmp
+# On the UC Berkeley Savio cluster, I've gotten issues with the local directory being in my home directory,
+# so use /tmp
 srun dask-worker tcp://${SCHED} --local-directory /tmp &   # might need machinename.berkeley.edu:8786
 sleep 100   # might need even more time to make sure workers start up fully
 ```
 
 Then in Python, connect to the cluster via the scheduler.
 
-```python
+```{python}
+#| eval: false
 import os, time, dask
 from dask.distributed import Client
 c = Client(address = os.getenv('SCHED'))
@@ -570,16 +616,18 @@ results = dask.compute(futures)
 time.time() - t0
 ```
 
-Let's process the 500 GB of Wikipedia log data on Savio. (Note that
-when I tried this on the SCF I had some errors that might be related
-to the SCF not being set up for fast parallel I/O.)
+Let's process the 500 GB of Wikipedia log data. (Note that
+when I tried this on our local department cluster, I had some errors that might be related
+to the SCF not being set up for fast parallel I/O.) You'll need to change the path to
+the data if using this code yourself.
 
-```python
+```{python}
+#| eval: false
 import os
 from dask.distributed import Client
 c = Client(address = os.getenv('SCHED'))
 import dask.bag as db
-wiki = db.read_text('/global/scratch/paciorek/wikistats_full/dated/part*')
+wiki = db.read_text('wikistats_full/dated/part*')
 import time
 t0 = time.time()
 wiki.count().compute()
@@ -604,8 +652,8 @@ wiki.filter(find).count().compute()
 
 
 Alternatively, we can use dask-ssh, but I've had problems sometimes with
-using SSH to connect between nodes of a SLURM job, so the approach above
-is likely to be more robust as it relies on SLURM itself to connect
+using SSH to connect between nodes of a Slurm job, so the approach above
+is likely to be more robust as it relies on Slurm itself to connect
 between nodes.
 
 ```bash
@@ -620,7 +668,8 @@ dask-ssh --scheduler ${SCHED} --hostfile .hosts
 
 We can set up nested parallelization (or an arbitrary set of computations) and just have Dask's delayed functionality figure out how to do the parallelization, provided there is a single call to the compute() method.
 
-```python
+```{python}
+#| eval: false
 import time, dask.multiprocessing
 dask.config.set(scheduler = 'processes', num_workers = 4)  
 
@@ -676,11 +725,12 @@ that may be much more efficient than making separate calls.
 Here's an example with Dask dataframe on the airline delay data, where we make sure to
 do all our computations as part of one graph:
 
-```python
+```{python}
+#| eval: false
 import dask
 dask.config.set(scheduler='processes', num_workers = 6)  
 import dask.dataframe as ddf
-air = ddf.read_csv('/scratch/users/paciorek/243/AirlineData/csvs/*.csv.bz2',
+air = ddf.read_csv('AirlineData/csvs/*.csv.bz2',
       compression = 'bz2',
       encoding = 'latin1',   # (unexpected) latin1 value(s) 2001 file TailNum field
       dtype = {'Distance': 'float64', 'CRSElapsedTime': 'float64',
@@ -719,7 +769,8 @@ In this example, most of the "computational" time is actually spent transferring
 rather than computing the mean. Whether there is a copy per task or a copy per process seems to depend on exactly what the parallelized code is doing (perhaps based on whether there is random number generation in the code).
 
 
-```python
+```{python}
+#| eval: false
 dask.config.set(scheduler = 'processes', num_workers = 4)  
 
 import numpy as np
@@ -747,7 +798,8 @@ Copies have to be made, but if we delay the data object, there is only one copy 
 Note that with the Dask distributed scheduler, it is complicated to assess what is going on, because the scheduler seems to try to optimize assignment of tasks to workers in a way that may cause an imbalance in the number of tasks assigned to each worker. In this example, all the tasks are assigned to a single worker.
 
 
-```python
+```{python}
+#| eval: false
 from dask.distributed import Client, LocalCluster
 cluster = LocalCluster(n_workers = 4)
 c = Client(cluster)
@@ -776,14 +828,15 @@ Note that in either case, we incur the memory usage of the original 'x' plus cop
 
 For this to make the most sense we want to be on a system where we can read multiple files
 without having the bottleneck of accessing a single spinning hard disk. For example the
-Savio filesystem is set up for fast parallel I/O.
+UC Berkeley Savio cluster filesystem is set up for fast parallel I/O.
 
 On systems with a single spinning hard disk or a single SSD, you might experiment
 to see how effectively things scale as you read (or write) multiple files in parallel.
 
-Here we'll demo on Savio to take advantage of the fast, parallel I/O.
+Here we'll demo this. Ideally you would do this on a system with fast, parallel I/O.
 
-```python
+```{python}
+#| eval: false
 import dask.multiprocessing
 dask.config.set(scheduler = 'processes', num_workers = 24) 
 
@@ -792,7 +845,7 @@ dask.config.set(scheduler = 'processes', num_workers = 24)
 ## dataset back to master process to avoid copying cost
 def readfun(yr):
     import pandas as pd
-    out = pd.read_csv('/global/scratch/paciorek/airline/' + str(yr) + '.csv.bz2',
+    out = pd.read_csv('airline/' + str(yr) + '.csv.bz2',
                       header = 0, encoding = 'latin1',
                       dtype = {'Distance': 'float64', 'CRSElapsedTime': 'float64',
                       'TailNum': 'object', 'CancellationCode': 'object'})
@@ -820,7 +873,7 @@ but we do see that it was quite a bit faster than sequentially reading the data 
 
 ### 6.6. Adaptive scaling
 
-With a resource manager like Kubernetes, Dask can scale the number of workers up and down to adapt to the computational needs of a workflow. Similarly, if submitting jobs to SLURM via Dask, it will scale up and down automatically - see Section 9.
+With a resource manager like Kubernetes, Dask can scale the number of workers up and down to adapt to the computational needs of a workflow. Similarly, if submitting jobs to Slurm via Dask, it will scale up and down automatically - see Section 9.
 
 ## 7. Monitoring jobs
 
@@ -829,7 +882,8 @@ Dask distributed provides a web interface showing the status of your work.
 
 By default Dask uses port 8787 for the web interface.
 
-```python
+```{python}
+#| eval: false
 from dask.distributed import Client, LocalCluster
 cluster = LocalCluster(n_workers = 4)
 c = Client(cluster)
@@ -866,7 +920,8 @@ We can use functionality with numpy's PCG64 or MT19937 generators to be complete
 
 Here’s how we can set up the use of the PCG64 generator:
 
-```python
+```{python}
+#| eval: false
 bitGen = np.random.PCG64(1)
 rng = np.random.Generator(bitGen)
 rng.random(size = 3)
@@ -874,7 +929,8 @@ rng.random(size = 3)
 
 Now let’s see how to jump forward. And then verify that jumping forward two increments is the same as making two separate jumps.
 
-```python
+```{python}
+#| eval: false
 bitGen = np.random.PCG64(1)
 bitGen = bitGen.jumped(1)
 rng = np.random.Generator(bitGen)
@@ -894,7 +950,8 @@ rng.normal(size = 3)
 
 We can also use `jumped()` with the Mersenne Twister.
 
-```python
+```{python}
+#| eval: false
 bitGen = np.random.MT19937(1)
 bitGen = bitGen.jumped(1)
 rng = np.random.Generator(bitGen)
@@ -904,7 +961,8 @@ rng.normal(size = 3)
 
 So the strategy to parallelize across tasks (or potentially workers if random number generation is done sequentially for tasks done by a single worker) is to give each task the same seed and use `jumped(i)` where `i` indexes the tasks (or workers).
 
-```python
+```{python}
+#| eval: false
 def myrandomfun(i):
     bitGen = np.random.PCG(1)
     bitGen = bitGen.jumped(i)
@@ -915,7 +973,8 @@ One caution is that it appears that the period for PCG64 is $2^{128}$ and that `
 
 Alternatively as [recommended in the docs](https://numpy.org/doc/stable/reference/random/bit_generators/pcg64.html):
 
-```python
+```{python}
+#| eval: false
 n_tasks = 10
 sg = np.random.SeedSequence(1)
 rngs = [Generator(PCG64(s)) for s in sg.spawn(n_tasks)]
@@ -928,30 +987,31 @@ def myrandomfun(rng):
 
 
 
-## 9. Submitting SLURM jobs from Dask
+## 9. Submitting Slurm jobs from Dask
 
-One can submit jobs to a scheduler such as SLURM from within Python. In general I don't recommend
-this as it requires you to be running Python within a stand-alone server while the SLURM
+One can submit jobs to a scheduler such as Slurm from within Python. In general I don't recommend
+this as it requires you to be running Python within a stand-alone server while the Slurm
 job is running, but here is how one can do it.
 
-Note that the SLURMCluster() call defines the parameters of a single SLURM job, but
+Note that the SLURMCluster() call defines the parameters of a single Slurm job, but
 `scale()` is what starts one or more jobs. If you ask for more workers than there are
-processes defined in your job definition, more than one SLURM job will be launched.
+processes defined in your job definition, more than one Slurm job will be launched.
 
 Be careful to request as many processes as cores; if you leave out `processes`, it will
 assume only one Python process (i.e., Dask worker) per job. (Also the memory argument
 is required.)
 
-The `queue` argument is the SLURM partition you want to submit to.
+The `queue` argument is the Slurm partition you want to submit to.
 
-```python
+```{python}
+#| eval: false
 import dask_jobqueue
 ## Each job will include 16 Dask workers and a total of 16 cores (1 per worker)
 cluster = dask_jobqueue.SLURMCluster(processes=16, cores=16, memory = '24GB',
                                      queue='low', walltime = '3:00:00')
 
 ## The following will now start 32 Dask workers in job(s) on the 'low' partition.
-## In this case, that requires two SLURM jobs of 16 workers each.
+## In this case, that requires two Slurm jobs of 16 workers each.
 cluster.scale(32)  
 from dask.distributed import Client
 c = Client(cluster)
@@ -966,23 +1026,25 @@ Dask is requiring the specification of 'memory' though this is not always requir
 On a cluster like Savio where you may need to provide an account (-A flag), you pass
 that via the `project` argument to `SLURMCluster`.
 
-If you'd like to see the SLURM job script that Dask constructs and submits, you can run:
+If you'd like to see the Slurm job script that Dask constructs and submits, you can run:
 
-```python
+```{python}
+#| eval: false
 cluster.job_script()
 ```
 
 ### 9.1. Adaptive scaling
 
-If you use `cluster.adapt()` in place of `cluster.scale()`, Dask will start and stop SLURM jobs to start and stop workers as needed.  Note that on a shared cluster, you will almost certainly want to set a maximum number of workers to run at once so you don't accidentally submit 100s or 1000s of jobs.
+If you use `cluster.adapt()` in place of `cluster.scale()`, Dask will start and stop Slurm jobs to start and stop workers as needed.  Note that on a shared cluster, you will almost certainly want to set a maximum number of workers to run at once so you don't accidentally submit 100s or 1000s of jobs.
 
-I'm still figuring out how this works. It seems to work well when having each SLURM job control one worker on one core - in that case Dask starts a set of workers and uses those workers to iterate through the tasks. However when I try to use 16 workers per SLURM job, Dask submits a series of single 16-core jobs rather than using two 16-core jobs that stay active while working through the tasks.
+I'm still figuring out how this works. It seems to work well when having each Slurm job control one worker on one core - in that case Dask starts a set of workers and uses those workers to iterate through the tasks. However when I try to use 16 workers per Slurm job, Dask submits a series of single 16-core jobs rather than using two 16-core jobs that stay active while working through the tasks.
 
-```python
+```{python}
+#| eval: false
 import dask_jobqueue
 ## Each job will include 16 Dask workers and a total of 16 cores (1 per worker)
 ## This should now start up to 32 Dask workers, but only one set of 16 workers seems to start
-## and SLURM jobs start and stop in quick succession.
+## and Slurm jobs start and stop in quick succession.
 ## cluster = dask_jobqueue.SLURMCluster(processes=16, cores=16, memory='24 GB',
 ## queue='low', walltime = '3:00:00')  
 

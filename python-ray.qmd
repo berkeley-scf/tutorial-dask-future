@@ -1,9 +1,23 @@
 ---
-layout: default
 title: Brief notes on parallel processing using the Ray package in Python
+date: 2025-04-22
+format:
+  html:
+    theme: cosmo
+    css: assets/styles.css
+    toc: true
+    code-copy: true
+    code-block-bg: true
+    code-block-border-left: "#31BAE9" 
+engine: knitr
+ipynb-shell-interactivity: all
+code-overflow: wrap
+---
 ---
 
-# Brief notes on parallel processing using the Ray package in Python
+::: {.callout-warning}
+Note that we haven't updated this material in a few years.
+:::
 
 ## 1. Overview of Ray
 
@@ -22,7 +36,8 @@ These brief notes just scratch the surface of Ray and just recapitulate basic in
 
 On one machine, we can initialize Ray from within Python.
 
-```python
+```{python}
+#| eval: false
 import ray
 ray.init()
 ## alternatively, to specify a specific number of cores:
@@ -31,7 +46,8 @@ ray.init(num_cpus = 4)
 
 To run a computation in parallel, we decorate the function of interest with the `remote` tag:
 
-```python
+```{python}
+#| eval: false
 @ray.remote
 def f(x):
     return x * x
@@ -67,9 +83,6 @@ srun --nodes=1 --ntasks=1 -w "$head_node" \
     ray start --head --node-ip-address="$head_node_ip" --port=$port \
     --num-cpus "${SLURM_CPUS_PER_TASK}" --block &
 
-# optional, though may be useful in certain versions of Ray < 1.0.
-sleep 10
-
 # number of nodes other than the head node
 worker_num=$((SLURM_JOB_NUM_NODES - 1))
 
@@ -85,14 +98,15 @@ done
 
 Then in Python, we need to connect to the Ray head node process:
 
-```python
+```{python}
+#| eval: false
 import ray, os
 ray.init(address = os.getenv('ip_head'))
 ```
 
 You should see something like this:
 
-```python
+```
 2021-03-16 14:39:48,520	INFO worker.py:654 -- Connecting to existing Ray cluster at address: 128.32.135.190:6379
 {'node_ip_address': '128.32.135.190', 'raylet_ip_address': '128.32.135.190', 'redis_address': '128.32.135.190:6379', 'object_store_address': '/tmp/ray/session_2021-03-16_14-39-26_045290_3521776/sockets/plasma_store', 'raylet_socket_name': '/tmp/ray/session_2021-03-16_14-39-26_045290_3521776/sockets/raylet', 'webui_url': 'localhost:8265', 'session_dir': '/tmp/ray/session_2021-03-16_14-39-26_045290_3521776', 'metrics_export_port': 63983, 'node_id': '2a3f113e2093d8a8abe3e0ddc9730f8cf6b4478372afe489208b2dcf'}
 ```
@@ -104,7 +118,8 @@ The object store allows one to avoid making copies of data for each worker proce
 
 Let's try this out.
 
-```python
+```{python}
+#| eval: false
 ray.init(num_cpus = 4)   # four worker processes on the local machine
 
 @ray.remote
@@ -136,7 +151,8 @@ One can also run `ray memory` from the command line (not from within Python) to 
 
 One can also create the object via a remote call and then use it.
 
-```python
+```{python}
+#| eval: false
 @ray.remote
 def create(n):
     import numpy as np
