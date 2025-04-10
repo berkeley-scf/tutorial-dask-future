@@ -12,4 +12,3 @@ def calc_mean_vargs(inputs):
     data = rng.normal(size = inputs[1])
     return([np.mean(data), np.std(data)])
 
-
