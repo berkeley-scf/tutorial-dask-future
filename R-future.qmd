@@ -49,10 +49,10 @@ One uses `plan()` to control how parallelization is done, including what machine
 For example,
 
 ```{r, plan}
-## spread work across multiple (all available) cores
+## Spread work across multiple (all available) cores
 ## based on result of `parallelly::availableCores()`:
 plan(multisession)  
-## also, explicitly can control number of workers
+## Alternatively, explicitly can control number of workers:
 plan(multisession, workers = 4)
 ```
 
@@ -198,7 +198,7 @@ system.time(
        }, seed = TRUE)
 )
 ## Check if the calculation is done. This check is a non-blocking call.
-## That said, it's surprising it takes even 0.2 seconds. Not sure why.
+## That said, it's surprising it takes even 0.2 seconds. I'm not sure why.
 system.time(resolved(out))
 ## Get the value. This is a blocking call.
 system.time(value(out))

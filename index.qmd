@@ -98,7 +98,7 @@ a large number of simple processing units for massively parallel calculation.
 The idea of general purpose GPU (GPGPU) computing is to exploit this
 capability for general computation. 
 
-Most researchers don't program for a GPU directly but rather use software (often machine learning software such as Tensorflow or PyTorch) that has been programmed to take advantage of a GPU if one is available.
+Most researchers don't program for a GPU directly but rather use software (often machine learning software such as PyTorch, JAX, or Tensorflow) that has been programmed to take advantage of a GPU if one is available.
 
 #### Spark and Hadoop
 

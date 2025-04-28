@@ -439,7 +439,7 @@ results = dask.compute(futures)
 time.time() - t0    # 21 sec.
 ```
 
-The computation here effectively parallelizes. However, if instead of using the `default_rng` Generator consturctor, one uses the old numpy syntax of `np.random.normal(size = n)`, one would see it takes four times as long, so is not parallelizing.
+The computation here effectively parallelizes. However, if instead of using the `default_rng` Generator constructor, one uses the old numpy syntax of `np.random.normal(size = n)`, one would see it takes four times as long, so is not parallelizing.
 
 The problem is presumably occurring because of Python's Global Interpreter Lock (GIL): any computations done in pure Python code can not be parallelized using the 'threaded' scheduler. However, computations on numeric data in numpy arrays, pandas dataframes and other C/C++/Cython-based code would parallelize.
 
