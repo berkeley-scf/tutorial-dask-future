@@ -273,7 +273,7 @@ plan(cluster, workers = workers)
 Here we want to use two cores on one machine and two on another.
 
 ```{r, cluster2}
-workers <- c(rep('arwen.berkeley.edu', 2), rep('gandalf.berkeley.edu', 2))
+workers <- c(rep('radagast.berkeley.edu', 2), rep('gandalf.berkeley.edu', 2))
 plan(cluster, workers = workers)
 # Check we are getting workers in the right places:
 future_sapply(seq_along(workers), function(i) Sys.info()[['nodename']])
@@ -471,7 +471,7 @@ To run each parameter across as many workers as are available on each of multipl
 
 ```{r, nested-plan2}
 #| eval: false
-nodes <- c('arwen.berkeley.edu', 'shelob.berkeley.edu', 'radagast.berkeley.edu', 'gandalf.berkeley.edu')
+nodes <- c('dorothy.berkeley.edu', 'radagast.berkeley.edu', 'gandalf.berkeley.edu')
 plan(list(tweak(cluster, workers = nodes), multisession))
 ```
 
