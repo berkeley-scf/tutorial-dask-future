@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://computing.stat.berkeley.edu/tutorial-dask-future/python-ray.html</loc>
+    <lastmod>2025-04-28T23:13:30.403Z</lastmod>
+  </url>
+  <url>
+    <loc>https://computing.stat.berkeley.edu/tutorial-dask-future/R-future.html</loc>
+    <lastmod>2025-04-28T23:13:29.807Z</lastmod>
+  </url>
+  <url>
+    <loc>https://computing.stat.berkeley.edu/tutorial-dask-future/python-dask.html</loc>
+    <lastmod>2025-04-28T23:13:30.399Z</lastmod>
+  </url>
+  <url>
+    <loc>https://computing.stat.berkeley.edu/tutorial-dask-future/index.html</loc>
+    <lastmod>2025-04-28T23:13:30.371Z</lastmod>
+  </url>
+  <url>
+    <loc>https://computing.stat.berkeley.edu/tutorial-dask-future/license.html</loc>
+    <lastmod>2025-04-28T23:13:30.375Z</lastmod>
+  </url>
+</urlset>

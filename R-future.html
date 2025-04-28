@@ -1,0 +1,1358 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.6.40">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="dcterms.date" content="2025-04-22">
+
+<title>Parallel Processing using the future package in R</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-549806ee2085284f45b00abea8c6df48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-649e5f0678146f359c225094671654aa.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+
+<body class="nav-sidebar docked">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./R-future.html">future in R</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header sidebar-header-stacked">
+      <a href="https://statistics.berkeley.edu" class="sidebar-logo-link">
+      <img src="./assets/img/logo.svg" alt="" class="sidebar-logo py-0 d-lg-inline d-none">
+      </a>
+    <div class="sidebar-title mb-0 py-0">
+      <a href="./">SCF Dask and Future Tutorial</a> 
+        <div class="sidebar-tools-main">
+    <a href="https://github.com/berkeley-scf/tutorial-dask-future" title="" class="quarto-navigation-tool px-1" aria-label="GitHub"><i class="bi bi-github"></i></a>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Overview</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./python-dask.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Dask in Python</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./python-ray.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Ray in Python</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./R-future.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">future in R</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./license.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">License</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#overview-futures-and-the-r-future-package" id="toc-overview-futures-and-the-r-future-package" class="nav-link active" data-scroll-target="#overview-futures-and-the-r-future-package">1. Overview: Futures and the R future package</a>
+  <ul class="collapse">
+  <li><a href="#why-use-futures" id="toc-why-use-futures" class="nav-link" data-scroll-target="#why-use-futures">Why use futures?</a></li>
+  </ul></li>
+  <li><a href="#overview-of-parallel-backends" id="toc-overview-of-parallel-backends" class="nav-link" data-scroll-target="#overview-of-parallel-backends">2. Overview of parallel backends</a></li>
+  <li><a href="#implementing-operations-in-parallel" id="toc-implementing-operations-in-parallel" class="nav-link" data-scroll-target="#implementing-operations-in-parallel">3. Implementing operations in parallel</a>
+  <ul class="collapse">
+  <li><a href="#parallelized-lapply-statements-and-related" id="toc-parallelized-lapply-statements-and-related" class="nav-link" data-scroll-target="#parallelized-lapply-statements-and-related">3.1. Parallelized lapply statements and related</a></li>
+  <li><a href="#foreach" id="toc-foreach" class="nav-link" data-scroll-target="#foreach">3.2. foreach</a></li>
+  <li><a href="#using-futures-for-parallelization" id="toc-using-futures-for-parallelization" class="nav-link" data-scroll-target="#using-futures-for-parallelization">3.3. Using futures for parallelization</a></li>
+  <li><a href="#using-implicit-futures-with-listenvs" id="toc-using-implicit-futures-with-listenvs" class="nav-link" data-scroll-target="#using-implicit-futures-with-listenvs">3.4. Using implicit futures (with listenvs)</a></li>
+  <li><a href="#blocking-and-non-blocking-calls" id="toc-blocking-and-non-blocking-calls" class="nav-link" data-scroll-target="#blocking-and-non-blocking-calls">3.5. Blocking and non-blocking calls</a></li>
+  <li><a href="#blocking-in-the-context-of-a-loop-over-futures" id="toc-blocking-in-the-context-of-a-loop-over-futures" class="nav-link" data-scroll-target="#blocking-in-the-context-of-a-loop-over-futures">Blocking in the context of a loop over futures</a></li>
+  </ul></li>
+  <li><a href="#a-tour-of-different-backends" id="toc-a-tour-of-different-backends" class="nav-link" data-scroll-target="#a-tour-of-different-backends">4. A tour of different backends</a>
+  <ul class="collapse">
+  <li><a href="#serial-sequential-processing" id="toc-serial-sequential-processing" class="nav-link" data-scroll-target="#serial-sequential-processing">4.1. Serial (sequential) processing</a></li>
+  <li><a href="#multiple-core-processing-on-one-machine" id="toc-multiple-core-processing-on-one-machine" class="nav-link" data-scroll-target="#multiple-core-processing-on-one-machine">4.2. Multiple core processing on one machine</a></li>
+  <li><a href="#distributed-processing-across-multiple-machines-via-an-ad-hoc-cluster" id="toc-distributed-processing-across-multiple-machines-via-an-ad-hoc-cluster" class="nav-link" data-scroll-target="#distributed-processing-across-multiple-machines-via-an-ad-hoc-cluster">4.3. Distributed processing across multiple machines via an ad hoc cluster</a></li>
+  <li><a href="#distributed-processing-across-multiple-machines-within-a-slurm-scheduler-job" id="toc-distributed-processing-across-multiple-machines-within-a-slurm-scheduler-job" class="nav-link" data-scroll-target="#distributed-processing-across-multiple-machines-within-a-slurm-scheduler-job">4.4. Distributed processing across multiple machines within a Slurm scheduler job</a></li>
+  <li><a href="#off-loading-work-to-another-machine" id="toc-off-loading-work-to-another-machine" class="nav-link" data-scroll-target="#off-loading-work-to-another-machine">4.5. Off-loading work to another machine</a></li>
+  </ul></li>
+  <li><a href="#load-balancing-and-static-vs.-dynamic-task-allocation" id="toc-load-balancing-and-static-vs.-dynamic-task-allocation" class="nav-link" data-scroll-target="#load-balancing-and-static-vs.-dynamic-task-allocation">5. Load-balancing and static vs.&nbsp;dynamic task allocation</a></li>
+  <li><a href="#avoiding-copies-when-doing-multi-process-parallelization-on-a-single-node" id="toc-avoiding-copies-when-doing-multi-process-parallelization-on-a-single-node" class="nav-link" data-scroll-target="#avoiding-copies-when-doing-multi-process-parallelization-on-a-single-node">6. Avoiding copies when doing multi-process parallelization on a single node</a></li>
+  <li><a href="#nested-futuresfor-loops" id="toc-nested-futuresfor-loops" class="nav-link" data-scroll-target="#nested-futuresfor-loops">7. Nested futures/for loops</a>
+  <ul class="collapse">
+  <li><a href="#nested-futuresfor-loops---some-example-plans" id="toc-nested-futuresfor-loops---some-example-plans" class="nav-link" data-scroll-target="#nested-futuresfor-loops---some-example-plans">7.1. Nested futures/for loops - some example plans</a></li>
+  <li><a href="#hybrid-parallelization-multiple-processes-plus-threaded-linear-algebra" id="toc-hybrid-parallelization-multiple-processes-plus-threaded-linear-algebra" class="nav-link" data-scroll-target="#hybrid-parallelization-multiple-processes-plus-threaded-linear-algebra">7.2. Hybrid parallelization: multiple processes plus threaded linear algebra</a></li>
+  </ul></li>
+  <li><a href="#reliable-random-number-generation-rng" id="toc-reliable-random-number-generation-rng" class="nav-link" data-scroll-target="#reliable-random-number-generation-rng">8. Reliable random number generation (RNG)</a>
+  <ul class="collapse">
+  <li><a href="#the-seed-for-future_lapply" id="toc-the-seed-for-future_lapply" class="nav-link" data-scroll-target="#the-seed-for-future_lapply">8.1. The seed for future_lapply</a></li>
+  <li><a href="#the-seed-when-using-futures-directly" id="toc-the-seed-when-using-futures-directly" class="nav-link" data-scroll-target="#the-seed-when-using-futures-directly">8.2. The seed when using futures directly</a></li>
+  <li><a href="#the-seed-with-foreach" id="toc-the-seed-with-foreach" class="nav-link" data-scroll-target="#the-seed-with-foreach">8.3. The seed with foreach</a></li>
+  </ul></li>
+  <li><a href="#submitting-slurm-jobs-from-future-using-batchtools" id="toc-submitting-slurm-jobs-from-future-using-batchtools" class="nav-link" data-scroll-target="#submitting-slurm-jobs-from-future-using-batchtools">9. Submitting Slurm jobs from future using batchtools</a>
+  <ul class="collapse">
+  <li><a href="#one-slurm-job-per-worker" id="toc-one-slurm-job-per-worker" class="nav-link" data-scroll-target="#one-slurm-job-per-worker">9.1. One Slurm job per worker</a></li>
+  <li><a href="#submitting-slurm-jobs-that-are-allocated-per-node" id="toc-submitting-slurm-jobs-that-are-allocated-per-node" class="nav-link" data-scroll-target="#submitting-slurm-jobs-that-are-allocated-per-node">9.2. Submitting Slurm jobs that are allocated per node</a></li>
+  </ul></li>
+  <li><a href="#futurizing-your-code" id="toc-futurizing-your-code" class="nav-link" data-scroll-target="#futurizing-your-code">10. Futurizing your code</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Parallel Processing using the future package in R</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">April 22, 2025</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="overview-futures-and-the-r-future-package" class="level2">
+<h2 class="anchored" data-anchor-id="overview-futures-and-the-r-future-package">1. Overview: Futures and the R future package</h2>
+<p>What is a future? It’s basically a flag used to tag a given operation such that when and where that operation is carried out is controlled at a higher level. If there are multiple operations tagged then this allows for parallelization across those operations.</p>
+<p>According to Henrik Bengtsson (the package developer) and those who developed the concept:</p>
+<ul>
+<li>a future is an abstraction for a value that will be available later</li>
+<li>the value is the result of an evaluated expression</li>
+<li>the state of a future is either unresolved or resolved</li>
+</ul>
+<section id="why-use-futures" class="level3">
+<h3 class="anchored" data-anchor-id="why-use-futures">Why use futures?</h3>
+<p>The future package allows one to write one’s computational code without hard-coding whether or how parallelization would be done. Instead one writes the code in a generic way and at the top of one’s code sets the <em>plan</em> for how the parallel computation should be done given the computational resources available. Simply changing the <em>plan</em> changes how parallelization is done for any given run of the code.</p>
+<p>More concisely, the key ideas are:</p>
+<ul>
+<li>Separate what to parallelize from how and where the parallelization is actually carried out.</li>
+<li>Different users can run the same code on different computational resources (without touching the actual code that does the computation).</li>
+</ul>
+</section>
+</section>
+<section id="overview-of-parallel-backends" class="level2">
+<h2 class="anchored" data-anchor-id="overview-of-parallel-backends">2. Overview of parallel backends</h2>
+<p>One uses <code>plan()</code> to control how parallelization is done, including what machine(s) to use and how many cores on each machine to use.</p>
+<p>For example,</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Spread work across multiple (all available) cores</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="do">## based on result of `parallelly::availableCores()`:</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">plan</span>(multisession)  </span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="do">## Alternatively, explicitly can control number of workers:</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">plan</span>(multisession, <span class="at">workers =</span> <span class="dv">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>This table gives an overview of the different plans.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 11%">
+<col style="width: 56%">
+<col style="width: 7%">
+<col style="width: 23%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Type</th>
+<th>Description</th>
+<th>Multi-node</th>
+<th>Copies of objects made?</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>sequential</td>
+<td>current R process (no parallelization; used for testing)</td>
+<td>no</td>
+<td>no</td>
+</tr>
+<tr class="even">
+<td>multisession</td>
+<td>background R processes</td>
+<td>no</td>
+<td>yes</td>
+</tr>
+<tr class="odd">
+<td>multicore</td>
+<td>forked R processes (not available in Windows nor RStudio)</td>
+<td>no</td>
+<td>not if object not modified</td>
+</tr>
+<tr class="even">
+<td>cluster</td>
+<td>R processes on other machine(s)</td>
+<td>yes</td>
+<td>yes</td>
+</tr>
+</tbody>
+</table>
+<p>For the next section (Section 3), we’ll just assume use of <code>multisession</code> and will provide more details on the other plans in the following section (Section 4).</p>
+<p>The deprecated <code>multiprocess</code> plan used either <code>multisession</code> on Windows and <code>multicore</code> on MacOS/Linux. The deprecated <code>remote</code> plan is not needed because <code>cluster</code> provides equivalent functionality.</p>
+</section>
+<section id="implementing-operations-in-parallel" class="level2">
+<h2 class="anchored" data-anchor-id="implementing-operations-in-parallel">3. Implementing operations in parallel</h2>
+<p>The future package has a few main patterns for how you might parallelize a computation.</p>
+<section id="parallelized-lapply-statements-and-related" class="level3">
+<h3 class="anchored" data-anchor-id="parallelized-lapply-statements-and-related">3.1. Parallelized lapply statements and related</h3>
+<p>You can parallelize lapply and related functions easily. This is a nice replacement for the confusingly similar set of such as <code>parLapply</code>, <code>mclapply</code>, and <code>mpi.parSapply</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(future.apply)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plan</span>(multisession)  <span class="co"># or some other plan</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>output <span class="ot">&lt;-</span> <span class="fu">future_lapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">20</span>, <span class="cf">function</span>(i) <span class="fu">mean</span>(<span class="fu">rnorm</span>(<span class="fl">1e7</span>)), <span class="at">future.seed =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># or sapply:</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co"># output &lt;- future_sapply(1:20, function(i) mean(rnorm(1e7)), future.seed = TRUE)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Alternatively, you can use <code>furrr:future_map</code> to run a parallel map operation (i.e., taking an explicit functional programming perspective).</p>
+</section>
+<section id="foreach" class="level3">
+<h3 class="anchored" data-anchor-id="foreach">3.2. foreach</h3>
+<p>You can also continue to use <code>foreach</code> if you like that approach.</p>
+<p>As of version 1.0.0 of <code>doFuture</code>, you can do this, using the <code>%dofuture%</code> operatior.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plan</span>(multisession)  <span class="co"># or some other plan</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(doFuture, <span class="at">quietly =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">registerDoFuture</span>()</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>out <span class="ot">&lt;-</span> <span class="fu">foreach</span>(<span class="at">i =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>) <span class="sc">%dofuture%</span> {</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">cat</span>(<span class="st">"Running in process"</span>, <span class="fu">Sys.getpid</span>(), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mean</span>(<span class="dv">1</span><span class="sc">:</span>i)</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Running in process 228246 
+Running in process 228244 
+Running in process 228249 
+Running in process 228247 
+Running in process 228245 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>out</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[[1]]
+[1] 1
+
+[[2]]
+[1] 1.5
+
+[[3]]
+[1] 2
+
+[[4]]
+[1] 2.5
+
+[[5]]
+[1] 3</code></pre>
+</div>
+</div>
+<p>Previously, one would use this approach with the <code>%dopar%</code> operator:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plan</span>(multisession)  <span class="co"># or some other plan</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dofuture, <span class="at">quietly =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="fu">registerDoFuture</span>()</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>out <span class="ot">&lt;-</span> <span class="fu">foreach</span>(<span class="at">i =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>) <span class="sc">%dopar%</span> {</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">cat</span>(<span class="st">"Running in process"</span>, <span class="fu">Sys.getpid</span>(), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mean</span>(<span class="dv">1</span><span class="sc">:</span>i)</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>out</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Using <code>%dofuture%</code> has various advantages listed <a href="https://www.jottr.org/2023/06/26/dofuture/">here</a>.</p>
+</section>
+<section id="using-futures-for-parallelization" class="level3">
+<h3 class="anchored" data-anchor-id="using-futures-for-parallelization">3.3. Using futures for parallelization</h3>
+<p>While <code>future_lapply</code> and <code>foreach</code> are fine, the future package introduces a new style of parallelizing code using an explicit “future”. Here we include the code for individual iterations inside <code>future()</code> to mark the unit of computation. The future package will then distribute the individual iterations to run in parallel, based on the plan.</p>
+<p>(Here the code is safe in terms of parallel randon number generation because of the <code>seed</code> argument - see Section 8 for more details.)</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plan</span>(multisession)   <span class="co"># or some other plan</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">20</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>out <span class="ot">&lt;-</span> <span class="fu">list</span>(); <span class="fu">length</span>(out) <span class="ot">&lt;-</span> n</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="fu">seq_len</span>(n)) {</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>     out[[i]] <span class="ot">&lt;-</span> <span class="fu">future</span>( {</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>       <span class="do">## simply insert code here as you would with foreach; for example:</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>       tmp <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="fl">1e7</span>)</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>       <span class="fu">c</span>(<span class="fu">mean</span>(tmp), <span class="fu">sd</span>(tmp))</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>     }, <span class="at">seed =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(out[[<span class="dv">5</span>]])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "MultisessionFuture" "ClusterFuture"      "MultiprocessFuture"
+[4] "Future"             "environment"       </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Each return values (e.g., 'out[[1]]') is a wrapper, so use value() to access:</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">value</span>(out[[<span class="dv">5</span>]])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.0002898683 0.9999048541</code></pre>
+</div>
+</div>
+</section>
+<section id="using-implicit-futures-with-listenvs" class="level3">
+<h3 class="anchored" data-anchor-id="using-implicit-futures-with-listenvs">3.4. Using implicit futures (with listenvs)</h3>
+<p>In addition to using <code>future()</code>, one can use the special <code>%&lt;-%</code> operator to denote a future. The <code>%&lt;-%</code> operator can only operate with an environment. So we create a <code>listenv</code>, which is basically an environment that can be treated like a list.</p>
+<p>This approach creates implicit futures, and one does not need to use <code>value</code> to get the result.</p>
+<p>(Note that, as seen in the warnings, the code here is not safe in terms of parallel randon number generation - see Section 8 for more information.)</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(listenv)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="fu">plan</span>(multisession, <span class="at">workers =</span> <span class="dv">4</span>)</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">20</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>out <span class="ot">&lt;-</span> <span class="fu">listenv</span>()</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="fu">seq_len</span>(n)) {</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>     out[[i]] <span class="sc">%&lt;-%</span> {</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>       <span class="co"># some code here as you would with foreach; for example:</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>       tmp <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="fl">1e7</span>)</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>       <span class="fu">c</span>(<span class="fu">mean</span>(tmp), <span class="fu">sd</span>(tmp))</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>     }</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>out[[<span class="dv">2</span>]]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: UNRELIABLE VALUE: Future ('&lt;none&gt;') unexpectedly generated random
+numbers without specifying argument 'seed'. There is a risk that those random
+numbers are not statistically sound and the overall results might be invalid.
+To fix this, specify 'seed=TRUE'. This ensures that proper, parallel-safe
+random numbers are produced via the L'Ecuyer-CMRG method. To disable this
+check, use 'seed=NULL', or set option 'future.rng.onMisuse' to "ignore".</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.0003449889 0.9997519067</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>out</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>A 'listenv' vector with 20 elements (unnamed).</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="at">warn =</span> <span class="sc">-</span><span class="dv">1</span>)  <span class="do">## suppress RNG warnings </span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>out <span class="ot">&lt;-</span> <span class="fu">as.list</span>(out)</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="at">warn =</span> <span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="blocking-and-non-blocking-calls" class="level3">
+<h3 class="anchored" data-anchor-id="blocking-and-non-blocking-calls">3.5. Blocking and non-blocking calls</h3>
+<p>A ‘blocking call’ prevents the user from continuing to evaluate more expressions. Often, futures are evaluated in an asynchronous way and therefore are non-blocking except for when the actual evaluated value of the expression is requested.</p>
+<p>Here we see that control returns to the user right away. However, asking for the value of the expression is a blocking call.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="do">## future() is non-blocking (as is %&lt;-%)</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="fu">system.time</span>(</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>     out <span class="ot">&lt;-</span> <span class="fu">future</span>( {</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>       <span class="do">## some code here as in foreach</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>       tmp <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="fl">2e7</span>)</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>       <span class="fu">c</span>(<span class="fu">mean</span>(tmp), <span class="fu">sd</span>(tmp))</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>       }, <span class="at">seed =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   user  system elapsed 
+  0.026   0.000   0.027 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Check if the calculation is done. This check is a non-blocking call.</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="do">## That said, it's surprising it takes even 0.2 seconds. I'm not sure why.</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="fu">system.time</span>(<span class="fu">resolved</span>(out))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   user  system elapsed 
+  0.000   0.000   0.011 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Get the value. This is a blocking call.</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="fu">system.time</span>(<span class="fu">value</span>(out))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   user  system elapsed 
+  0.001   0.000   1.547 </code></pre>
+</div>
+</div>
+</section>
+<section id="blocking-in-the-context-of-a-loop-over-futures" class="level3">
+<h3 class="anchored" data-anchor-id="blocking-in-the-context-of-a-loop-over-futures">Blocking in the context of a loop over futures</h3>
+<p>In contrast, in a for loop, creation of additional futures is blocked if all workers are busy evaluating other futures. So in this case, evaluation of the first four futures blocks, but once the last two futures start to be evaluated, control returns to the user while those futures are evaluated in the background.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plan</span>(multisession, <span class="at">workers =</span> <span class="dv">2</span>)</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">6</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>out <span class="ot">&lt;-</span> <span class="fu">list</span>(); <span class="fu">length</span>(out) <span class="ot">&lt;-</span> n</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a><span class="do">## Blocked until all six futures dispatched, so blocked until first four finish.</span></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a><span class="fu">system.time</span>(</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="fu">seq_len</span>(n)) {</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>     out[[i]] <span class="ot">&lt;-</span> <span class="fu">future</span>( {</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>       tmp <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="fl">2e7</span>)</span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>       <span class="fu">c</span>(<span class="fu">mean</span>(tmp), <span class="fu">sd</span>(tmp))</span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>     }, <span class="at">seed =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a>})</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   user  system elapsed 
+  0.290   0.009   3.774 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Not blocked as result already available once first four finished.</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="fu">system.time</span>(<span class="fu">value</span>(out[[<span class="dv">2</span>]]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   user  system elapsed 
+  0.000   0.000   0.001 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Not blocked as result already available once first four finished.</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="fu">system.time</span>(<span class="fu">value</span>(out[[<span class="dv">4</span>]]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   user  system elapsed 
+      0       0       0 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Blocked as results for 5th and 6th iterations are still being evaluated.</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="fu">system.time</span>(<span class="fu">value</span>(out[[<span class="dv">6</span>]]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   user  system elapsed 
+  0.000   0.000   1.568 </code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="a-tour-of-different-backends" class="level2">
+<h2 class="anchored" data-anchor-id="a-tour-of-different-backends">4. A tour of different backends</h2>
+<section id="serial-sequential-processing" class="level3">
+<h3 class="anchored" data-anchor-id="serial-sequential-processing">4.1. Serial (sequential) processing</h3>
+<p>The <code>sequential</code> plan allows you to run code on a single local core. This might not seem all that useful since the goal is usually to parallelize, but this helps in debugging and allows someone to run future-based code even if they only have one core available.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plan</span>(sequential)</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="do">## future_lapply, foreach with dofuture, etc. all will still work</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Note that like the parallel plans, the <code>sequential</code> plan evaluates all code in an isolated (‘local’) environment, so your R working environment is not affected.</p>
+<p>Actually even better for debugging is the <code>transparent</code> plan, which provides additional useful output.</p>
+</section>
+<section id="multiple-core-processing-on-one-machine" class="level3">
+<h3 class="anchored" data-anchor-id="multiple-core-processing-on-one-machine">4.2. Multiple core processing on one machine</h3>
+<p>We’ve already seen that we can use the <code>multisession</code> plan to parallelize across the cores of one machine.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plan</span>(multisession)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>By default, this will start as many workers as given in the result of <code>parallelly::availableCores()</code>, which should be the number of the computer or will be based on the resources available to your job, if you have a job running via a scheduler on a cluster, such as the Slurm scheduler for Linux clusters.</p>
+</section>
+<section id="distributed-processing-across-multiple-machines-via-an-ad-hoc-cluster" class="level3">
+<h3 class="anchored" data-anchor-id="distributed-processing-across-multiple-machines-via-an-ad-hoc-cluster">4.3. Distributed processing across multiple machines via an ad hoc cluster</h3>
+<p>If we know the names of the machines and can access them via password-less SSH (e.g., <a href="https://statistics.berkeley.edu/computing/ssh-keys">using ssh keys</a>), then we can simply provide the names of the machines to create a cluster and use the ‘cluster’ plan.</p>
+<p>Here we want to use four cores on one machine.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>workers <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="st">'arwen.berkeley.edu'</span>, <span class="dv">4</span>)</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plan</span>(cluster, <span class="at">workers =</span> workers)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Here we want to use two cores on one machine and two on another.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>workers <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="st">'radagast.berkeley.edu'</span>, <span class="dv">2</span>), <span class="fu">rep</span>(<span class="st">'gandalf.berkeley.edu'</span>, <span class="dv">2</span>))</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plan</span>(cluster, <span class="at">workers =</span> workers)</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Check we are getting workers in the right places:</span></span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a><span class="fu">future_sapply</span>(<span class="fu">seq_along</span>(workers), <span class="cf">function</span>(i) <span class="fu">Sys.info</span>()[[<span class="st">'nodename'</span>]])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "gandalf"  "gandalf"  "radagast" "radagast"</code></pre>
+</div>
+</div>
+<p>We can verify that the workers are running on the various machines by checking the nodename of each of the workers:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>tmp <span class="ot">&lt;-</span> <span class="fu">future_sapply</span>(<span class="fu">seq_len</span>(<span class="fu">nbrOfWorkers</span>()), </span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>              <span class="cf">function</span>(i)</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>                <span class="fu">cat</span>(<span class="st">"Worker running in process"</span>, <span class="fu">Sys.getpid</span>(),</span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"on"</span>, <span class="fu">Sys.info</span>()[[<span class="st">'nodename'</span>]], <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="distributed-processing-across-multiple-machines-within-a-slurm-scheduler-job" class="level3">
+<h3 class="anchored" data-anchor-id="distributed-processing-across-multiple-machines-within-a-slurm-scheduler-job">4.4. Distributed processing across multiple machines within a Slurm scheduler job</h3>
+<p>The future package can detect the available resources in the context of Slurm (and other schedulers). It uses <code>parallelly::availableWorkers()</code>.</p>
+<p>So you can simply call the cluster plan and get a sensible result in terms of the workers.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plan</span>(cluster)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>For more manual control, if you are using Slurm and in your <code>sbatch</code> or <code>srun</code> command you use <code>--ntasks</code>, then the following will allow you to use as many R workers as the value of <code>ntasks</code>. One caveat is that one still needs to be able to access the various machines via password-less SSH.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>workers <span class="ot">&lt;-</span> <span class="fu">system</span>(<span class="st">'srun hostname'</span>, <span class="at">intern =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plan</span>(cluster, <span class="at">workers =</span> workers)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>In either case, we can check that the workers are running on the various machines using the syntax in the section just above.</p>
+<p>Note that for this to work on the Berkeley Savio campus cluster with multiple nodes, you will probably need to load the R module via your .bashrc so that all the nodes have R and dependent modules available.</p>
+</section>
+<section id="off-loading-work-to-another-machine" class="level3">
+<h3 class="anchored" data-anchor-id="off-loading-work-to-another-machine">4.5. Off-loading work to another machine</h3>
+<p>One can run a chunk of code on a remote machine, for example if you need a machine with more memory.</p>
+<p>Here’s an example where I create a plot remotely and view it locally.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plan</span>(cluster, <span class="at">workers =</span> <span class="st">'gandalf.berkeley.edu'</span>)</span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a><span class="do">## requires password-less SSH</span></span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a><span class="do">## future (ggplot call) is evaluated remotely</span></span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a>mydf <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">y =</span> <span class="fu">rnorm</span>(<span class="dv">10</span>), <span class="at">x =</span> <span class="fu">rnorm</span>(<span class="dv">10</span>))</span>
+<span id="cb40-7"><a href="#cb40-7" aria-hidden="true" tabindex="-1"></a>g <span class="sc">%&lt;-%</span> { <span class="fu">ggplot</span>(mydf, <span class="fu">aes</span>(<span class="at">x=</span>x, <span class="at">y=</span>y)) <span class="sc">+</span> <span class="fu">geom_point</span>() }</span>
+<span id="cb40-8"><a href="#cb40-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-9"><a href="#cb40-9" aria-hidden="true" tabindex="-1"></a><span class="do">## plot locally</span></span>
+<span id="cb40-10"><a href="#cb40-10" aria-hidden="true" tabindex="-1"></a>g</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="R-future_files/figure-html/off-load-1.png" class="img-fluid figure-img" alt="example plots" width="480"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="do">## future (ggplot call) is evaluated remotely</span></span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>g <span class="sc">%&lt;-%</span> R.devices<span class="sc">::</span><span class="fu">capturePlot</span>({</span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>   <span class="fu">filled.contour</span>(volcano, <span class="at">color.palette =</span> terrain.colors)</span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>   <span class="fu">title</span>(<span class="at">main =</span> <span class="st">"volcano data: filled contour map"</span>)</span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a>   })         </span>
+<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a><span class="do">## plot locally</span></span>
+<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a>g</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in restoreRecordedPlot(x, reloadPkgs): snapshot recorded in different R
+version (4.4.3)</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="R-future_files/figure-html/off-load-2.png" class="img-fluid figure-img" alt="example plots" width="480"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="load-balancing-and-static-vs.-dynamic-task-allocation" class="level2">
+<h2 class="anchored" data-anchor-id="load-balancing-and-static-vs.-dynamic-task-allocation">5. Load-balancing and static vs.&nbsp;dynamic task allocation</h2>
+<ul>
+<li><code>future_lapply</code> uses static (non-load-balanced) allocation:
+<ul>
+<li>Groups iterations into tasks and creates only as many tasks as there are workers.</li>
+<li>This is good for reducing overhead but can potentially result in bad load-balancing if the tasks assigned to one worker take a very different time to complete from those assigned to a different worker.</li>
+<li>The <code>future.scheduling</code> argument gives the user control over using static vs.&nbsp;dynamic allocation.</li>
+</ul></li>
+<li>Explicit or implicit futures use dynamic (load-balanced) allocation:
+<ul>
+<li>Involves dispatching one task per iteration, with the resulting overhead (i.e., latency).</li>
+<li>Good for load-balancing when tasks take very different times to complete.</li>
+</ul></li>
+</ul>
+</section>
+<section id="avoiding-copies-when-doing-multi-process-parallelization-on-a-single-node" class="level2">
+<h2 class="anchored" data-anchor-id="avoiding-copies-when-doing-multi-process-parallelization-on-a-single-node">6. Avoiding copies when doing multi-process parallelization on a single node</h2>
+<p>The future package automatically identifies the objects needed by your future-based code and makes copies of those objects for use in the worker processes.</p>
+<p>If you’re working with large objects, making a copy of the objects for each of the worker processes can be a significant time cost and can greatly increase your memory use.</p>
+<p>On non-Windows machines, the <code>multicore</code> plan (not available on Windows or in RStudio) forks the main R process. This creates R worker processes with the same state as the original R process.</p>
+<ul>
+<li>Interestingly, this means that global variables in the forked worker processes are just references to the objects in memory in the original R process.</li>
+<li>So <strong>the additional processes do not use additional memory for those objects</strong> (despite what is shown in <em>top</em> as memory used by each process).</li>
+<li>And there is no time involved in making copies.</li>
+<li>However, if you modify objects in the worker processes then copies are made.</li>
+<li>You can use these global variables in functions you call in parallel or pass the variables into functions as function arguments.</li>
+</ul>
+<p>So, the take-home message is that using <code>multicore</code> on non-Windows machines can have a big advantage when working with large data objects.</p>
+<p>Unfortunately, the <em>top</em> program on Linux or MacOS will make it look like additional memory is being used. Instead, on a Linux machine, you can use the command <code>free -h</code> to see the usable remaining memory. Look under the ‘Available’ column of the ‘Mem’ row. For example, below we see 6.5 GB available and 8.2 GB used. (Note that the ‘free’ column omits memory that is actually available but is temporarily in use for caching.)</p>
+<pre><code>paciorek@smeagol:~/staff/workshops/r-future&gt; free -h
+              total        used        free      shared  buff/cache   available
+Mem:            15G        8.2G        4.3G        453M        3.1G        6.5G
+Swap:          7.6G        2.9G        4.7G</code></pre>
+<p>Here’s some demo code to show that forking uses less memory.</p>
+<p>First run <code>free</code> via <code>watch</code> in one terminal so you can monitor <code>free -h</code> while running the R code:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="ex">watch</span> <span class="at">-n</span> 0.1 free <span class="at">-h</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Now you can try running this code either with (using <code>multicore</code>) or without (using <code>multisession</code>) forking:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="do">## allow total size of global variables to be large enough...</span></span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="at">future.globals.maxSize =</span> <span class="fl">1e9</span>)</span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a><span class="do">## Try with multicore:</span></span>
+<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="fl">5e7</span>)</span>
+<span id="cb45-6"><a href="#cb45-6" aria-hidden="true" tabindex="-1"></a><span class="fu">plan</span>(multicore, <span class="at">workers =</span> <span class="dv">3</span>)  <span class="co"># forks; no copying!</span></span>
+<span id="cb45-7"><a href="#cb45-7" aria-hidden="true" tabindex="-1"></a><span class="fu">system.time</span>(tmp <span class="ot">&lt;-</span> <span class="fu">future_sapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">100</span>, <span class="cf">function</span>(i) <span class="fu">mean</span>(x)))</span>
+<span id="cb45-8"><a href="#cb45-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb45-9"><a href="#cb45-9" aria-hidden="true" tabindex="-1"></a><span class="do">## Try with multisession:</span></span>
+<span id="cb45-10"><a href="#cb45-10" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="fl">5e7</span>)</span>
+<span id="cb45-11"><a href="#cb45-11" aria-hidden="true" tabindex="-1"></a><span class="fu">plan</span>(multisession, <span class="at">workers =</span> <span class="dv">3</span>) <span class="co"># new processes - copying!</span></span>
+<span id="cb45-12"><a href="#cb45-12" aria-hidden="true" tabindex="-1"></a><span class="fu">system.time</span>(tmp <span class="ot">&lt;-</span> <span class="fu">future_sapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">100</span>, <span class="cf">function</span>(i) <span class="fu">mean</span>(x)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="nested-futuresfor-loops" class="level2">
+<h2 class="anchored" data-anchor-id="nested-futuresfor-loops">7. Nested futures/for loops</h2>
+<p>You can set up nested parallelization and use various plans to parallelize at each level.</p>
+<p>For example, suppose you are running a simulation study with four scenarios and each scenario involving <code>n</code> simulations. In that case you have two loops over which you could choose to parallelize.</p>
+<p>Here’s some syntax to set up parallelization over the scenarios (outer loop) only. Note that when the plan involves multiple levels we need to use <code>tweak</code> if we want to modify the defaults for a type of future.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plan</span>(<span class="fu">list</span>(<span class="fu">tweak</span>(multisession, <span class="at">workers =</span> <span class="dv">4</span>), sequential))</span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>params <span class="ot">&lt;-</span> <span class="fu">cbind</span>(<span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">1</span>,<span class="dv">1</span>), <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">1</span>,<span class="dv">2</span>))</span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a>p <span class="ot">&lt;-</span> <span class="fu">nrow</span>(params)  <span class="co"># 4 in this case</span></span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">10</span></span>
+<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a>out <span class="ot">&lt;-</span> <span class="fu">listenv</span>()</span>
+<span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(k <span class="cf">in</span> <span class="fu">seq_len</span>(p)) {                         <span class="co"># outer loop: parameter sweep</span></span>
+<span id="cb46-8"><a href="#cb46-8" aria-hidden="true" tabindex="-1"></a>     out[[k]] <span class="ot">&lt;-</span> <span class="fu">future</span>( {    </span>
+<span id="cb46-9"><a href="#cb46-9" aria-hidden="true" tabindex="-1"></a>        out_single_param <span class="ot">&lt;-</span> <span class="fu">listenv</span>()</span>
+<span id="cb46-10"><a href="#cb46-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span>(i <span class="cf">in</span> <span class="fu">seq_len</span>(n)) {                 <span class="co"># inner loop: replications</span></span>
+<span id="cb46-11"><a href="#cb46-11" aria-hidden="true" tabindex="-1"></a>          out_single_param[[i]] <span class="sc">%&lt;-%</span> {</span>
+<span id="cb46-12"><a href="#cb46-12" aria-hidden="true" tabindex="-1"></a>            tmp <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="fl">2e7</span>, params[k, <span class="dv">1</span>], params[k, <span class="dv">2</span>])</span>
+<span id="cb46-13"><a href="#cb46-13" aria-hidden="true" tabindex="-1"></a>            <span class="fu">c</span>(<span class="fu">mean</span>(tmp), <span class="fu">sd</span>(tmp))</span>
+<span id="cb46-14"><a href="#cb46-14" aria-hidden="true" tabindex="-1"></a>          }</span>
+<span id="cb46-15"><a href="#cb46-15" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb46-16"><a href="#cb46-16" aria-hidden="true" tabindex="-1"></a>        <span class="fu">matrix</span>(<span class="fu">unlist</span>(out_single_param), <span class="at">ncol =</span> <span class="dv">2</span>, <span class="at">byrow =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb46-17"><a href="#cb46-17" aria-hidden="true" tabindex="-1"></a>     }, <span class="at">seed =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb46-18"><a href="#cb46-18" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb46-19"><a href="#cb46-19" aria-hidden="true" tabindex="-1"></a><span class="do">## non-blocking - note that control returns to the user since we have</span></span>
+<span id="cb46-20"><a href="#cb46-20" aria-hidden="true" tabindex="-1"></a><span class="do">## four outer iterations and four workers</span></span>
+<span id="cb46-21"><a href="#cb46-21" aria-hidden="true" tabindex="-1"></a>out</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>A 'listenv' vector with 4 elements (unnamed).</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="do">## asking for an actual value is a blocking call</span></span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>out[[<span class="dv">1</span>]]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>MultisessionFuture:
+Label: '&lt;none&gt;'
+Expression:
+{
+    out_single_param &lt;- listenv()
+    for (i in seq_len(n)) {
+        out_single_param[[i]] %&lt;-% {
+            tmp &lt;- rnorm(2e+07, params[k, 1], params[k, 2])
+            c(mean(tmp), sd(tmp))
+        }
+    }
+    matrix(unlist(out_single_param), ncol = 2, byrow = TRUE)
+}
+Lazy evaluation: FALSE
+Asynchronous evaluation: TRUE
+Local evaluation: TRUE
+Environment: R_GlobalEnv
+Capture standard output: TRUE
+Capture condition classes: 'condition' (excluding 'nothing')
+Globals: 3 objects totaling 392 bytes (numeric 'n' of 56 bytes, matrix 'params' of 280 bytes, integer 'k' of 56 bytes)
+Packages: 3 packages ('listenv', 'stats', 'future')
+L'Ecuyer-CMRG RNG seed: c(10407, 685259277, -1301327100, -794103175, 644605022, -1466457024, 113265414)
+Resolved: FALSE
+Value: &lt;not collected&gt;
+Conditions captured: &lt;none&gt;
+Early signaling: FALSE
+Owner process: 760598a1-7676-01da-5744-4cfc7c88fba3
+Class: 'MultisessionFuture', 'ClusterFuture', 'MultiprocessFuture', 'Future', 'environment'</code></pre>
+</div>
+</div>
+<p>Note that these are “asynchronous” futures that are evaluated in the background while control returns to the user.</p>
+<section id="nested-futuresfor-loops---some-example-plans" class="level3">
+<h3 class="anchored" data-anchor-id="nested-futuresfor-loops---some-example-plans">7.1. Nested futures/for loops - some example plans</h3>
+<p>Let’s see a few different plans one could use for the nested loops.</p>
+<p>To use eight cores on the current machine, two cores for each of the four outer iteration:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="do">## One option:</span></span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plan</span>(<span class="fu">list</span>(<span class="fu">tweak</span>(multisession, <span class="at">workers =</span> <span class="dv">4</span>), <span class="fu">tweak</span>(multisession, <span class="at">workers =</span> <span class="dv">2</span>)))</span>
+<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a><span class="do">## Another option</span></span>
+<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a>nodes <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="st">'localhost'</span>, <span class="dv">4</span>)</span>
+<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a><span class="fu">plan</span>(<span class="fu">list</span>(<span class="fu">tweak</span>(cluster, <span class="at">workers =</span> nodes), <span class="fu">tweak</span>(multisession, <span class="at">workers =</span> <span class="dv">2</span>)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>To run each parameter across as many workers as are available on each of multiple machines:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>nodes <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">'dorothy.berkeley.edu'</span>, <span class="st">'radagast.berkeley.edu'</span>, <span class="st">'gandalf.berkeley.edu'</span>)</span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plan</span>(<span class="fu">list</span>(<span class="fu">tweak</span>(cluster, <span class="at">workers =</span> nodes), multisession))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Note that you can’t use a multicore future at multiple levels as future prevents nested multicore parallelization.</p>
+<p>If there are many inner iterations and few outer iterations, we might simply do the outer iterations sequentially:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plan</span>(<span class="fu">list</span>(sequential, multisession))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>See the <a href="https://cran.r-project.org/web/packages/future/vignettes/future-3-topologies.html">future vignette on topologies</a> for more configuration examples.</p>
+<p><strong>Nested parallelization via future is flexible</strong>: once you’ve set your code to allow parallelization at multiple levels, you can change the plan without ever touching the core code again.</p>
+</section>
+<section id="hybrid-parallelization-multiple-processes-plus-threaded-linear-algebra" class="level3">
+<h3 class="anchored" data-anchor-id="hybrid-parallelization-multiple-processes-plus-threaded-linear-algebra">7.2. Hybrid parallelization: multiple processes plus threaded linear algebra</h3>
+<p>If you have access to threaded BLAS (e.g., MKL or openBLAS), as long as you set OMP_NUM_THREADS greater than 1, then any linear algebra should be parallelized within each of the iterations in a loop or apply statement.</p>
+</section>
+</section>
+<section id="reliable-random-number-generation-rng" class="level2">
+<h2 class="anchored" data-anchor-id="reliable-random-number-generation-rng">8. Reliable random number generation (RNG)</h2>
+<p>In the code above, I was sometimes cavalier about the seeds for the random number generation in the different parallel computations.</p>
+<p>The general problem is that we want the random numbers generated on each worker to not overlap with the random numbers generated on other workers. But random number generation involves numbers from a periodic sequence. Simply setting different seeds on different workers does not guarantee non-overlapping random numbers (though in most cases they probably would not overlap).</p>
+<p>The future package <a href="https://www.jottr.org/2020/09/22/push-for-statical-sound-rng/#random-number-generation-in-the-future-framework">integrates well with the L’Ecuyer parallel RNG approach</a>, which guarantees non-overlapping random numbers. There is a good discussion about seeds for <code>future_lapply</code> and <code>future_sapply</code> in the help for those functions.</p>
+<section id="the-seed-for-future_lapply" class="level3">
+<h3 class="anchored" data-anchor-id="the-seed-for-future_lapply">8.1. The seed for future_lapply</h3>
+<p>Here we can set a single seed. Behind the scenes the L’Ecuyer-CMRG RNG is used so that the random numbers generated for each iteration are independent. Note there is some overhead here when the number of iterations is large.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(future.apply)</span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">4</span></span>
+<span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb53-4"><a href="#cb53-4" aria-hidden="true" tabindex="-1"></a><span class="fu">future_sapply</span>(<span class="dv">1</span><span class="sc">:</span>n, <span class="cf">function</span>(i) <span class="fu">rnorm</span>(<span class="dv">1</span>), <span class="at">future.seed =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1]  1.3775667 -1.7371292 -0.1362109  1.9301162</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a><span class="fu">future_sapply</span>(<span class="dv">1</span><span class="sc">:</span>n, <span class="cf">function</span>(i) <span class="fu">rnorm</span>(<span class="dv">1</span>), <span class="at">future.seed =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1]  1.3775667 -1.7371292 -0.1362109  1.9301162</code></pre>
+</div>
+</div>
+<p>Basically future_lapply pregenerates a seed for each iteration using <code>parallel:::nextRNGStream</code>, which uses the L’Ecuyer algorithm. See <a href="https://github.com/HenrikBengtsson/future/issues/126">more details on seeds with future here</a>.</p>
+<p>I could also have set <code>future.seed = 1</code> instead of setting the seed using <code>set.seed</code> to make the generated results reproducible.</p>
+</section>
+<section id="the-seed-when-using-futures-directly" class="level3">
+<h3 class="anchored" data-anchor-id="the-seed-when-using-futures-directly">8.2. The seed when using futures directly</h3>
+<p>You can (and should when using RNG) set the seed in <code>future()</code>. As of version 1.24.0 of the future package, the following works fine to safely set different seeds for the different workers.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb57"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plan</span>(multisession,<span class="at">workers=</span><span class="dv">4</span>)   <span class="co"># or some other plan</span></span>
+<span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb57-3"><a href="#cb57-3" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb57-4"><a href="#cb57-4" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">5</span></span>
+<span id="cb57-5"><a href="#cb57-5" aria-hidden="true" tabindex="-1"></a>out <span class="ot">&lt;-</span> <span class="fu">list</span>(); <span class="fu">length</span>(out) <span class="ot">&lt;-</span> n</span>
+<span id="cb57-6"><a href="#cb57-6" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="fu">seq_len</span>(n)) {</span>
+<span id="cb57-7"><a href="#cb57-7" aria-hidden="true" tabindex="-1"></a>     out[[i]] <span class="ot">&lt;-</span> <span class="fu">future</span>( {</span>
+<span id="cb57-8"><a href="#cb57-8" aria-hidden="true" tabindex="-1"></a>       <span class="do">## some code here as in foreach</span></span>
+<span id="cb57-9"><a href="#cb57-9" aria-hidden="true" tabindex="-1"></a>       tmp <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="fl">1e7</span>)</span>
+<span id="cb57-10"><a href="#cb57-10" aria-hidden="true" tabindex="-1"></a>       <span class="fu">c</span>(<span class="fu">mean</span>(tmp), <span class="fu">sd</span>(tmp))</span>
+<span id="cb57-11"><a href="#cb57-11" aria-hidden="true" tabindex="-1"></a>     }, <span class="at">seed =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb57-12"><a href="#cb57-12" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb57-13"><a href="#cb57-13" aria-hidden="true" tabindex="-1"></a><span class="fu">sapply</span>(out, value)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>              [,1]         [,2]          [,3]         [,4]          [,5]
+[1,] -0.0003571476 0.0005987421 -0.0003570343 0.0005989737 -0.0003572973
+[2,]  0.9998949844 1.0002698980  0.9998949304 1.0002696339  0.9998947676</code></pre>
+</div>
+</div>
+<p>And here with implicit futures:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb59"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(listenv)</span>
+<span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb59-4"><a href="#cb59-4" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">5</span></span>
+<span id="cb59-5"><a href="#cb59-5" aria-hidden="true" tabindex="-1"></a>out <span class="ot">&lt;-</span> <span class="fu">listenv</span>()</span>
+<span id="cb59-6"><a href="#cb59-6" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="fu">seq_len</span>(n)) {</span>
+<span id="cb59-7"><a href="#cb59-7" aria-hidden="true" tabindex="-1"></a>     out[[i]] <span class="sc">%&lt;-%</span> {</span>
+<span id="cb59-8"><a href="#cb59-8" aria-hidden="true" tabindex="-1"></a>       <span class="do">## some code here as in foreach</span></span>
+<span id="cb59-9"><a href="#cb59-9" aria-hidden="true" tabindex="-1"></a>       tmp <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="fl">1e7</span>)</span>
+<span id="cb59-10"><a href="#cb59-10" aria-hidden="true" tabindex="-1"></a>       <span class="fu">c</span>(<span class="fu">mean</span>(tmp), <span class="fu">sd</span>(tmp))</span>
+<span id="cb59-11"><a href="#cb59-11" aria-hidden="true" tabindex="-1"></a>     } <span class="sc">%seed%</span> <span class="cn">TRUE</span></span>
+<span id="cb59-12"><a href="#cb59-12" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb59-13"><a href="#cb59-13" aria-hidden="true" tabindex="-1"></a><span class="fu">do.call</span>(cbind, <span class="fu">as.list</span>(out))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>              [,1]         [,2]          [,3]         [,4]          [,5]
+[1,] -0.0003571476 0.0005987421 -0.0003570343 0.0005989737 -0.0003572973
+[2,]  0.9998949844 1.0002698980  0.9998949304 1.0002696339  0.9998947676</code></pre>
+</div>
+</div>
+</section>
+<section id="the-seed-with-foreach" class="level3">
+<h3 class="anchored" data-anchor-id="the-seed-with-foreach">8.3. The seed with foreach</h3>
+<p>When using <code>%dofuture%</code>, you can simply include <code>.options.future = list(seed = TRUE)</code> to ensure parallel RNG is done safely. If you forget and have RNG in your parallelized code, <code>%dofuture%</code> will warn you.</p>
+<p>Before version 1.0.0 of <code>doFuture</code>, one would need to use the <code>%doRNG%</code> operator with foreach to ensure correct RNG with foreach.</p>
+</section>
+</section>
+<section id="submitting-slurm-jobs-from-future-using-batchtools" class="level2">
+<h2 class="anchored" data-anchor-id="submitting-slurm-jobs-from-future-using-batchtools">9. Submitting Slurm jobs from future using batchtools</h2>
+<p>We can use the <code>future.batchtools</code> package to submit jobs to a cluster scheduler from within R.</p>
+<section id="one-slurm-job-per-worker" class="level3">
+<h3 class="anchored" data-anchor-id="one-slurm-job-per-worker">9.1. One Slurm job per worker</h3>
+<p>One downside is that this submits one job per worker. On clusters (such as Savio) that schedule an entire node at once, that won’t work.</p>
+<p>On the SCF it is fine (so long as you don’t have, say, tens of thousands of jobs). Here’s an example. Note that the <code>resources</code> argument tells what the Slurm arguments should be for <em>each</em> worker.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb61"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(future.apply)</span>
+<span id="cb61-2"><a href="#cb61-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(future.batchtools)</span>
+<span id="cb61-3"><a href="#cb61-3" aria-hidden="true" tabindex="-1"></a><span class="do">## Starts five workers as separate jobs.</span></span>
+<span id="cb61-4"><a href="#cb61-4" aria-hidden="true" tabindex="-1"></a><span class="fu">plan</span>(batchtools_slurm, <span class="at">workers =</span> <span class="dv">5</span>,</span>
+<span id="cb61-5"><a href="#cb61-5" aria-hidden="true" tabindex="-1"></a>                       <span class="at">resources =</span> <span class="fu">list</span>(<span class="at">nodes =</span> <span class="st">"1"</span>, <span class="at">ntasks =</span> <span class="st">"1"</span>,</span>
+<span id="cb61-6"><a href="#cb61-6" aria-hidden="true" tabindex="-1"></a>                       <span class="at">cpus_per_task =</span> <span class="st">"1"</span>, <span class="at">walltime =</span> <span class="st">"00:05:00"</span>),</span>
+<span id="cb61-7"><a href="#cb61-7" aria-hidden="true" tabindex="-1"></a>                       <span class="at">template =</span> <span class="st">"batchtools.slurm.tmpl"</span>)</span>
+<span id="cb61-8"><a href="#cb61-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb61-9"><a href="#cb61-9" aria-hidden="true" tabindex="-1"></a>output <span class="ot">&lt;-</span> <span class="fu">future_sapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">100</span>, <span class="cf">function</span>(i) <span class="fu">mean</span>(<span class="fu">rnorm</span>(<span class="fl">1e7</span>)), <span class="at">future.seed =</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="submitting-slurm-jobs-that-are-allocated-per-node" class="level3">
+<h3 class="anchored" data-anchor-id="submitting-slurm-jobs-that-are-allocated-per-node">9.2. Submitting Slurm jobs that are allocated per node</h3>
+<p>You can use nested futures to deal with the one job per worker issue. Here the outer future is just a wrapper to allow the overall code to be run within a single Slurm job.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb62"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(future.apply)</span>
+<span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(future.batchtools)</span>
+<span id="cb62-3"><a href="#cb62-3" aria-hidden="true" tabindex="-1"></a>numWorkers <span class="ot">&lt;-</span> <span class="dv">5</span></span>
+<span id="cb62-4"><a href="#cb62-4" aria-hidden="true" tabindex="-1"></a><span class="do">## five workers</span></span>
+<span id="cb62-5"><a href="#cb62-5" aria-hidden="true" tabindex="-1"></a><span class="fu">plan</span>(<span class="fu">list</span>(<span class="fu">tweak</span>(batchtools_slurm, <span class="at">workers =</span> <span class="dv">1</span>,</span>
+<span id="cb62-6"><a href="#cb62-6" aria-hidden="true" tabindex="-1"></a>                       <span class="at">resources =</span> <span class="fu">list</span>(</span>
+<span id="cb62-7"><a href="#cb62-7" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">nodes =</span> <span class="st">"1"</span>,</span>
+<span id="cb62-8"><a href="#cb62-8" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">ntasks =</span> <span class="fu">as.character</span>(numWorkers),</span>
+<span id="cb62-9"><a href="#cb62-9" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">cpus_per_task =</span> <span class="st">"1"</span>,</span>
+<span id="cb62-10"><a href="#cb62-10" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">partition =</span> <span class="st">"high"</span>,</span>
+<span id="cb62-11"><a href="#cb62-11" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">walltime =</span> <span class="st">"00:05:00"</span>),</span>
+<span id="cb62-12"><a href="#cb62-12" aria-hidden="true" tabindex="-1"></a>                       <span class="at">template =</span> <span class="st">"batchtools.slurm.tmpl"</span>),</span>
+<span id="cb62-13"><a href="#cb62-13" aria-hidden="true" tabindex="-1"></a>          <span class="fu">tweak</span>(multisession, <span class="at">workers =</span> numWorkers)))</span>
+<span id="cb62-14"><a href="#cb62-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-15"><a href="#cb62-15" aria-hidden="true" tabindex="-1"></a><span class="do">## Now make sure to call `future_sapply` within an outer call to `future()`:</span></span>
+<span id="cb62-16"><a href="#cb62-16" aria-hidden="true" tabindex="-1"></a>myfuture <span class="ot">&lt;-</span> <span class="fu">future</span>({ <span class="fu">future_sapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">100</span>, <span class="cf">function</span>(i) <span class="fu">mean</span>(<span class="fu">rnorm</span>(<span class="fl">1e7</span>)),</span>
+<span id="cb62-17"><a href="#cb62-17" aria-hidden="true" tabindex="-1"></a>                                   <span class="at">future.seed =</span> <span class="dv">1</span>) })</span>
+<span id="cb62-18"><a href="#cb62-18" aria-hidden="true" tabindex="-1"></a>out <span class="ot">&lt;-</span> <span class="fu">value</span>(myfuture)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>While this is feasible, I prefer to set up my cluster jobs outside of R and have the R code not have to know anything about how the scheduler works or what scheduler is available on a given cluster.</p>
+</section>
+</section>
+<section id="futurizing-your-code" class="level2">
+<h2 class="anchored" data-anchor-id="futurizing-your-code">10. Futurizing your code</h2>
+<p>Of course even with the future package one would generally need to write the code in anticipation of what might be parallelized.</p>
+<p>However, in the case of lapply and sapply, you could even do this to “futurize” someone else’s code:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb63"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a>lapply <span class="ot">&lt;-</span> future_lapply</span>
+<span id="cb63-2"><a href="#cb63-2" aria-hidden="true" tabindex="-1"></a>sapply <span class="ot">&lt;-</span> future_sapply</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>and then just set a plan and run, since the arguments to <code>future_lapply</code> are the same as <code>lapply</code>.</p>
+<p>Note it’s not possible to do this with <code>parLapply</code> as it requires passing a cluster object as an argument, but something like this would be possible with <code>mclapply</code>.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp("https:\/\/computing\.stat\.berkeley\.edu\/tutorial-dask-future");
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
