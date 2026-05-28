@@ -1,6 +1,6 @@
 ---
 title: Parallel Processing using the  future package in R
-date: 2025-04-22
+date: 2026-05-29
 format:
   html:
     theme: cosmo
@@ -78,7 +78,16 @@ The future package has a few main patterns for how you might parallelize a compu
 
 ### 3.1. Parallelized lapply statements and related
 
-You can parallelize lapply and related functions easily. This is a nice replacement for the confusingly similar set of such as `parLapply`, `mclapply`, and `mpi.parSapply`.
+With the new `futurize` package it's even easier than before to parallelize lapply and related statements.
+
+```{r, futurize_lapply}
+library(futurize)
+plan(multisession)  # or some other plan
+output <- lapply(1:20, function(i) mean(rnorm(1e7))) |> futurize(seed = TRUE)
+```
+
+
+Without using `futurize()` you need to slightly change your commands to use the `futureverse` versions of the commands. These commands are nice replacements for the confusingly similar set of such as `parLapply`, `mclapply`, and `mpi.parSapply`.
 
 ```{r, future_lapply}
 library(future.apply)
@@ -88,13 +97,25 @@ output <- future_lapply(1:20, function(i) mean(rnorm(1e7)), future.seed = TRUE)
 # output <- future_sapply(1:20, function(i) mean(rnorm(1e7)), future.seed = TRUE)
 ```
 
-Alternatively, you can use `furrr:future_map` to run a parallel map operation (i.e., taking an explicit functional programming perspective).
+Alternatively, you can use `furrr:future_map` to run a parallel map operation (i.e., taking an explicit functional programming perspective), or pipe a `map` function call to `futurize`, similar to as shown above.
 
 ### 3.2. foreach
 
-You can also continue to use `foreach` if you like that approach.
+You can also  use `foreach` if you like that approach.
 
-As of version 1.0.0 of `doFuture`, you can do this, using the `%dofuture%` operatior.
+Again `futurize` makes this very easy.
+
+```{r, futurize_foreach}
+library(futurize)
+
+plan(multisession)  # or some other plan
+out <- foreach(i = 1:5) %do% {
+    cat("Running in process", Sys.getpid(), "\n")
+    mean(1:i)
+    } |> futurize()
+```
+
+Alternatively (as of version 1.0.0 of `doFuture`), you can do this, using the `%dofuture%` operatior.
 
 ```{r, foreach}
 plan(multisession)  # or some other plan
@@ -310,6 +331,10 @@ plan(cluster, workers = workers)
 ```
 
 In either case, we can check that the workers are running on the various machines using the syntax in the section just above.
+
+::: {.callout-warning}
+Don't pass a numeric value to the `workers` argument in a multi-node situation as that will only start that many workers on the first node you have access to.
+:::
 
 
 Note that for this to work on the Berkeley Savio campus cluster with multiple nodes, you will probably need to load the R module via your .bashrc so that all the nodes have R and dependent modules available.
